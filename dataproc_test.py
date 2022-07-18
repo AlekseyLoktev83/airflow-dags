@@ -31,9 +31,9 @@ with DAG(
         cluster_id='c9qc9m3jccl8v7vigq10',
 #        main_python_file_uri='hdfs:///user/hive/warehouse/src/JUPITER_ROLLING_VOLUMES_HDFS_FDM.py',
         main_python_file_uri='s3a://jupiter-app-test-storage/src/dataproc/JUPITER/MAIN.py',
-        python_file_uris=[
-            's3a://jupiter-app-test-storage/src/dataproc/SHARED/EXTRACT_SETTING2.py',
-        ],
+#         python_file_uris=[
+#             's3a://jupiter-app-test-storage/src/dataproc/SHARED/EXTRACT_SETTING2.py',
+#         ],
         file_uris=[
             's3a://data-proc-public/jobs/sources/data/config.json',
         ],
