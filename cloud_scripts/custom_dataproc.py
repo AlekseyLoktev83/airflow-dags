@@ -66,7 +66,7 @@ class DataprocCreatePysparkJobOperator(BaseOperator):
 
     def execute(self, context: 'Context') -> None:
         cluster_id = self.cluster_id or context['task_instance'].xcom_pull(key='cluster_id')
-        args = self.args or json.loads(context['task_instance'].xcom_pull(key='args'))
+#         args = self.args or json.loads(context['task_instance'].xcom_pull(key='args'))
        
         yandex_conn_id = self.connection_id or context['task_instance'].xcom_pull(
             key='yandexcloud_connection_id'
