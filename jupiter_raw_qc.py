@@ -132,7 +132,8 @@ with DAG(
 #             's3a://data-proc-public/jobs/sources/data/country-codes.csv.zip',
 #         ],
         args=[
-            f'{save_parameters}',
+           'Arg1',
+            'Arg2',
         ],
 #         jar_file_uris=[
 #             's3a://data-proc-public/jobs/sources/java/dataproc-examples-1.0.jar',
