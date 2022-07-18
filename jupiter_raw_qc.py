@@ -46,6 +46,8 @@ STATUS_PROCESS='PROCESS'
 
 DAYS_TO_KEEP_OLD_FILES = 2
 
+PYSPARK_ARGS = []
+
 def separator_convert_hex_to_string(sep):
     sep_map = {'0x01':'\x01'}
     return sep_map.get(sep, sep)
@@ -103,7 +105,10 @@ def save_parameters(parameters:dict):
     conn = hdfs_hook.get_conn()
     conn.upload(parameters_file_path,temp_file_path,overwrite=True)
     
-    return {"MaintenancePathPrefix":parameters["MaintenancePathPrefix"],"ProcessDate":parameters["ProcessDate"]}
+    args = {"MaintenancePathPrefix":parameters["MaintenancePathPrefix"],"ProcessDate":parameters["ProcessDate
+    PYSAPRK_ARGS.append(args)                                                                                          
+                                                                                            
+    return args
 
 
 with DAG(
@@ -131,9 +136,7 @@ with DAG(
 #         archive_uris=[
 #             's3a://data-proc-public/jobs/sources/data/country-codes.csv.zip',
 #         ],
-        args=[
-           '{"MaintenancePathPrefix": "/JUPITER/RAW/#MAINTENANCE/2022-07-18_manual__2022-07-18T06%3A44%3A54.099584%2B00%3A00_", "ProcessDate": "2022-07-18"}',
-        ],
+        args=PYSPARK_ARGS,
 #         jar_file_uris=[
 #             's3a://data-proc-public/jobs/sources/java/dataproc-examples-1.0.jar',
 #             's3a://data-proc-public/jobs/sources/java/icu4j-61.1.jar',
