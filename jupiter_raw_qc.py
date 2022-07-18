@@ -106,7 +106,7 @@ def save_parameters(parameters:dict):
     conn.upload(parameters_file_path,temp_file_path,overwrite=True)
     
     args = {"MaintenancePathPrefix":parameters["MaintenancePathPrefix"],"ProcessDate":parameters["ProcessDate"]}
-    PYSAPRK_ARGS.append(args)                                                                                          
+    PYSAPRK_ARGS.append(json.dumps(args))                                                                                          
                                                                                             
     return args
 
