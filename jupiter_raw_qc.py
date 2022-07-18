@@ -105,7 +105,7 @@ def save_parameters(parameters:dict):
     conn = hdfs_hook.get_conn()
     conn.upload(parameters_file_path,temp_file_path,overwrite=True)
     
-    args = {"MaintenancePathPrefix":parameters["MaintenancePathPrefix"],"ProcessDate":parameters["ProcessDate
+    args = {"MaintenancePathPrefix":parameters["MaintenancePathPrefix"],"ProcessDate":parameters["ProcessDate"]}
     PYSAPRK_ARGS.append(args)                                                                                          
                                                                                             
     return args
