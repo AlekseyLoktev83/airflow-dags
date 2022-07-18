@@ -132,8 +132,7 @@ with DAG(
 #             's3a://data-proc-public/jobs/sources/data/country-codes.csv.zip',
 #         ],
         args=[
-           'Arg1',
-            'Arg2',
+           "{'MaintenancePathPrefix': '/JUPITER/RAW/#MAINTENANCE/2022-07-18_manual__2022-07-18T06%3A44%3A54.099584%2B00%3A00_', 'ProcessDate': '2022-07-18'}",
         ],
 #         jar_file_uris=[
 #             's3a://data-proc-public/jobs/sources/java/dataproc-examples-1.0.jar',
