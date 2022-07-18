@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING, Dict, Iterable, Optional, Sequence, Union
 
 from airflow.models import BaseOperator
 from airflow.providers.yandex.hooks.yandexcloud_dataproc import DataprocHook
+import json
 
 if TYPE_CHECKING:
     from airflow.utils.context import Context
@@ -65,7 +66,7 @@ class DataprocCreatePysparkJobOperator(BaseOperator):
 
     def execute(self, context: 'Context') -> None:
         cluster_id = self.cluster_id or context['task_instance'].xcom_pull(key='cluster_id')
-        args = self.cluster_id or context['task_instance'].xcom_pull(key='args')
+        args = self.args or json.loads(context['task_instance'].xcom_pull(key='args'))
        
         yandex_conn_id = self.connection_id or context['task_instance'].xcom_pull(
             key='yandexcloud_connection_id'
