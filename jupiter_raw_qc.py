@@ -107,7 +107,7 @@ def save_parameters(parameters:dict):
     args = [{"MaintenancePathPrefix":parameters["MaintenancePathPrefix"],"ProcessDate":parameters["ProcessDate"]}]
                                                                             
                                                                                             
-    return json.dumps(args)
+    return args
 
 
 with DAG(
