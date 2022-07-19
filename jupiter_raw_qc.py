@@ -6,8 +6,8 @@ from airflow.decorators import dag, task
 from airflow.utils.trigger_rule import TriggerRule
 from airflow.providers.odbc.hooks.odbc import OdbcHook
 from airflow.providers.apache.hdfs.hooks.webhdfs import WebHDFSHook
-# from airflow.providers.yandex.operators.yandexcloud_dataproc import  DataprocCreatePysparkJobOperator, HelloOperator
-from cloud_scripts.custom_dataproc import  DataprocCreatePysparkJobOperator, HelloOperator
+# from airflow.providers.yandex.operators.yandexcloud_dataproc import  DataprocCreatePysparkJobOperator
+from cloud_scripts.custom_dataproc import  DataprocCreatePysparkJobOperator
 from airflow.models import Variable
 from airflow.operators.bash import BashOperator
 from airflow.operators.dummy import DummyOperator
@@ -122,7 +122,6 @@ with DAG(
 # Get dag parameters from vault    
     parameters = get_parameters()
     save_params = save_parameters(parameters)
-#     pyspark_job_qc = HelloOperator(task_id="task_id_1", dag=dag, name=save_params)
     pyspark_job_qc = DataprocCreatePysparkJobOperator(
         task_id='create_pyspark_job',
         cluster_id='c9qc9m3jccl8v7vigq10',
