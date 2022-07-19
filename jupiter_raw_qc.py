@@ -133,9 +133,9 @@ with DAG(
         file_uris=[
             's3a://data-proc-public/jobs/sources/data/config.json',
         ],
-#         archive_uris=[
-#             's3a://data-proc-public/jobs/sources/data/country-codes.csv.zip',
-#         ],
+        archive_uris=[
+            's3a://jupiter-app-test-storage/src/dataproc/pyspark_conda_env.tar.gz#environment',
+        ],
         args=save_params,
 #         jar_file_uris=[
 #             's3a://data-proc-public/jobs/sources/java/dataproc-examples-1.0.jar',
