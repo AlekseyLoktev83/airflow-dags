@@ -7,6 +7,19 @@ import json
 if TYPE_CHECKING:
     from airflow.utils.context import Context
 
+class HelloOperator(BaseOperator):
+
+    template_fields: Sequence[str] = ("name",)
+
+    def __init__(self, name: str, **kwargs) -> None:
+        super().__init__(**kwargs)
+        self.name = name
+
+    def execute(self, context):
+        message = f"Hello from {self.name}"
+        print(message)
+        return message    
+
 class DataprocCreatePysparkJobOperator(BaseOperator):
     """Runs Pyspark job in Data Proc cluster.
 
