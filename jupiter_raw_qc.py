@@ -121,34 +121,34 @@ with DAG(
 # Get dag parameters from vault    
     parameters = get_parameters()
     save_params = save_parameters(parameters)
-    pyspark_job_qc = HelloOperator(task_id="task_id_1", dag=dag, name=save_params)
-#     pyspark_job_qc = DataprocCreatePysparkJobOperator(
-#         task_id='create_pyspark_job',
-#         cluster_id='c9qc9m3jccl8v7vigq10',
-# #        main_python_file_uri='hdfs:///user/hive/warehouse/src/JUPITER_ROLLING_VOLUMES_HDFS_FDM.py',
-#         main_python_file_uri='s3a://jupiter-app-test-storage/src/dataproc/JUPITER/MAIN.py',
-#         python_file_uris=[
-#             's3a://jupiter-app-test-storage/src/dataproc/SHARED/EXTRACT_SETTING.py',
+#     pyspark_job_qc = HelloOperator(task_id="task_id_1", dag=dag, name=save_params)
+    pyspark_job_qc = DataprocCreatePysparkJobOperator(
+        task_id='create_pyspark_job',
+        cluster_id='c9qc9m3jccl8v7vigq10',
+#        main_python_file_uri='hdfs:///user/hive/warehouse/src/JUPITER_ROLLING_VOLUMES_HDFS_FDM.py',
+        main_python_file_uri='s3a://jupiter-app-test-storage/src/dataproc/JUPITER/MAIN.py',
+        python_file_uris=[
+            's3a://jupiter-app-test-storage/src/dataproc/SHARED/EXTRACT_SETTING.py',
+        ],
+        file_uris=[
+            's3a://data-proc-public/jobs/sources/data/config.json',
+        ],
+#         archive_uris=[
+#             's3a://data-proc-public/jobs/sources/data/country-codes.csv.zip',
 #         ],
-#         file_uris=[
-#             's3a://data-proc-public/jobs/sources/data/config.json',
+        args=save_params,
+#         jar_file_uris=[
+#             's3a://data-proc-public/jobs/sources/java/dataproc-examples-1.0.jar',
+#             's3a://data-proc-public/jobs/sources/java/icu4j-61.1.jar',
+#             's3a://data-proc-public/jobs/sources/java/commons-lang-2.6.jar',
 #         ],
-# #         archive_uris=[
-# #             's3a://data-proc-public/jobs/sources/data/country-codes.csv.zip',
-# #         ],
-#         args='{{save_params}}',
-# #         jar_file_uris=[
-# #             's3a://data-proc-public/jobs/sources/java/dataproc-examples-1.0.jar',
-# #             's3a://data-proc-public/jobs/sources/java/icu4j-61.1.jar',
-# #             's3a://data-proc-public/jobs/sources/java/commons-lang-2.6.jar',
-# #         ],
-#         properties={
-#             'spark.submit.deployMode': 'cluster',
-#         },
-#         packages=['org.slf4j:slf4j-simple:1.7.30'],
-#         repositories=['https://repo1.maven.org/maven2'],
-#         exclude_packages=['com.amazonaws:amazon-kinesis-client'],
-#     )
+        properties={
+            'spark.submit.deployMode': 'cluster',
+        },
+        packages=['org.slf4j:slf4j-simple:1.7.30'],
+        repositories=['https://repo1.maven.org/maven2'],
+        exclude_packages=['com.amazonaws:amazon-kinesis-client'],
+    )
     
 #     save_params >> pyspark_job_qc
 
