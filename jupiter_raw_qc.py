@@ -120,8 +120,8 @@ with DAG(
 ) as dag:
 # Get dag parameters from vault    
     parameters = get_parameters()
-#     save_params = save_parameters(parameters)
-    pyspark_job_qc = HelloOperator(task_id="task_id_1", dag=dag, name="{{ save_parameters(parameters) }}")
+    save_params = save_parameters(parameters)
+    pyspark_job_qc = HelloOperator(task_id="task_id_1", dag=dag, name=save_params)
 #     pyspark_job_qc = DataprocCreatePysparkJobOperator(
 #         task_id='create_pyspark_job',
 #         cluster_id='c9qc9m3jccl8v7vigq10',
