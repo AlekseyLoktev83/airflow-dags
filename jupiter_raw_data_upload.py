@@ -116,13 +116,15 @@ def generate_upload_script(prev_task,src_dir,src_file,upload_path,bcp_parameters
     conn.download(src_path, tmp_path)
     
     entities_df = mssql_scripts.generate_table_select_query(current_upload_date,last_upload_date,tmp_path)
+    entities_json = json.loads(entities_df.to_json(orient="records"))
+    
     tmp_dst_path=f"/tmp/{EXTRACT_ENTITIES_AUTO_FILE}"
     dst_path=f"{src_dir}{EXTRACT_ENTITIES_AUTO_FILE}"
-    entities_df.to_csv(tmp_dst_path, index=False, sep=CSV_SEPARATOR, quoting=csv.QUOTE_NONNUMERIC)
     
+    del entities_df['Extraction']
+    entities_df.to_csv(tmp_dst_path, index=False, sep=CSV_SEPARATOR)
     conn.upload(dst_path,tmp_dst_path)
     
-    entities_json = json.loads(entities_df.to_json(orient="records"))
     return entities_json
     
 
