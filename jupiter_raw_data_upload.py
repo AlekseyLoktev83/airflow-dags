@@ -36,6 +36,7 @@ BCP_SEPARATOR = '0x01'
 
 MONITORING_DETAIL_DIR_PREFIX = 'MONITORING_DETAIL.CSV'
 EXTRACT_ENTITIES_AUTO_FILE = 'EXTRACT_ENTITIES_AUTO.csv'
+RAW_SCHEMA_FILE = 'RAW_SCHEMA.csv'
 MONITORING_FILE = 'MONITORING.csv'
 
 STATUS_FAILURE='FAILURE'
@@ -109,13 +110,17 @@ def generate_upload_script(prev_task,src_dir,src_file,upload_path,bcp_parameters
     tmp_path = f"/tmp/{src_file}"
     print(src_path)
     
-    hdfs_hook = WebHDFSHook()
+    hdfs_hook = WebHDFSHook(HDFS_CONNECTION_NAME)
     conn = hdfs_hook.get_conn()
     conn.download(src_path, tmp_path)
     
-    entities = mssql_scripts.generate_table_select_query(current_upload_date,last_upload_date,tmp_path)
-  
-    return entities
+    entities_df = mssql_scripts.generate_table_select_query(current_upload_date,last_upload_date,tmp_path)
+    tmp_dst_path=f"/tmp/{EXTRACT_ENTITIES_AUTO_FILE}"
+    dst_path=f"{src_dir}{EXTRACT_ENTITIES_AUTO_FILE}"
+    conn.upload(dst_path,tmp_dst_path)
+    
+    entities_json = json.loads(entities_df.to_json(orient="records"))
+    return entities_json
     
 
 @task    
@@ -250,13 +255,13 @@ with DAG(
 #     Generate schema extraction query
     schema_query = generate_schema_query(parameters)
 #     Extract db schema and save result to hdfs
-    extract_schema = copy_data_db_to_hdfs(schema_query,parameters["MaintenancePathPrefix"],EXTRACT_ENTITIES_AUTO_FILE)
+    extract_schema = copy_data_db_to_hdfs(schema_query,parameters["MaintenancePathPrefix"],RAW_SCHEMA_FILE)
     start_mon=start_monitoring(extract_schema,dst_dir=parameters["MaintenancePathPrefix"],system_name=parameters["SystemName"])
 #    Create entities list and start monitoring for them
-    start_mon_detail = start_monitoring_detail.partial(dst_dir=parameters["MaintenancePathPrefix"],upload_path=parameters["UploadPath"]).expand(input = generate_upload_script(start_mon,parameters["MaintenancePathPrefix"],EXTRACT_ENTITIES_AUTO_FILE,parameters["UploadPath"],parameters["BcpParameters"],parameters["CurrentUploadDate"],parameters["LastUploadDate"]))
+    start_mon_detail = start_monitoring_detail.partial(dst_dir=parameters["MaintenancePathPrefix"],upload_path=parameters["UploadPath"]).expand(input = generate_upload_script(start_mon,parameters["MaintenancePathPrefix"],RAW_SCHEMA_FILE,parameters["UploadPath"],parameters["BcpParameters"],parameters["CurrentUploadDate"],parameters["LastUploadDate"]))
 # Upload entities from sql to hdfs in parallel
     upload_tables=BashOperator.partial(task_id="upload_tables", do_xcom_push=True).expand(
-       bash_command= generate_bcp_script.partial(src_dir=parameters["MaintenancePathPrefix"],src_file=EXTRACT_ENTITIES_AUTO_FILE,upload_path=parameters["UploadPath"],bcp_parameters=parameters["BcpParameters"]).expand(entity=start_mon_detail),
+       bash_command= generate_bcp_script.partial(src_dir=parameters["MaintenancePathPrefix"],src_file=RAW_SCHEMA_FILE,upload_path=parameters["UploadPath"],bcp_parameters=parameters["BcpParameters"]).expand(entity=start_mon_detail),
     )
 #     Check entities upload results and update monitoring files
     end_mon_detail = end_monitoring_detail.partial(dst_dir=parameters["MaintenancePathPrefix"]).expand(input=XComArg(upload_tables))
