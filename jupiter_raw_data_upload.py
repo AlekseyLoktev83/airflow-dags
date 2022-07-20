@@ -43,6 +43,7 @@ STATUS_COMPLETE='COMPLETE'
 STATUS_PROCESS='PROCESS'
 
 DAYS_TO_KEEP_OLD_FILES = 2
+CSV_SEPARATOR = '\u0001'
 
 def separator_convert_hex_to_string(sep):
     sep_map = {'0x01':'\x01'}
@@ -97,7 +98,7 @@ def copy_data_db_to_hdfs(query,dst_dir,dst_file):
     conn = hdfs_hook.get_conn()
 
     df =  odbc_hook.get_pandas_df(query)
-    df.to_csv(f'/tmp/{dst_file}', index=False)
+    df.to_csv(f'/tmp/{dst_file}', index=False, sep=CSV_SEPARATOR)
     conn.upload(dst_path,f'/tmp/{dst_file}')
     
     return True
