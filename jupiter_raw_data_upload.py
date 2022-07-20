@@ -25,6 +25,7 @@ import json
 import pandas as pd
 import glob
 import os
+import csv
 
 
 MSSQL_CONNECTION_NAME = 'odbc_default'
@@ -117,7 +118,7 @@ def generate_upload_script(prev_task,src_dir,src_file,upload_path,bcp_parameters
     entities_df = mssql_scripts.generate_table_select_query(current_upload_date,last_upload_date,tmp_path)
     tmp_dst_path=f"/tmp/{EXTRACT_ENTITIES_AUTO_FILE}"
     dst_path=f"{src_dir}{EXTRACT_ENTITIES_AUTO_FILE}"
-    entities_df.to_csv(tmp_dst_path, index=False, sep=CSV_SEPARATOR)
+    entities_df.to_csv(tmp_dst_path, index=False, sep=CSV_SEPARATOR, quoting=csv.QUOTE_NONNUMERIC)
     
     conn.upload(dst_path,tmp_dst_path)
     
