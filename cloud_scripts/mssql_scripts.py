@@ -7,6 +7,7 @@ import json
 PARAM_DELIMETER = ";"
 METHOD_FULL = "FULL"
 METHOD_DELTA = "DELTA"
+CSV_SEPARATOR = '\u0001'
 
 
 def generate_db_schema_query(environment=None, upload_date=None, black_list=None, white_list=None):
@@ -43,7 +44,7 @@ def generate_db_schema_query(environment=None, upload_date=None, black_list=None
 
 
 def generate_table_select_query(current_upload_date, last_upload_date, actual_schema_file):
-    df = pd.read_csv(actual_schema_file, keep_default_na=False)
+    df = pd.read_csv(actual_schema_file, keep_default_na=False,sep=CSV_SEPARATOR)
     rows = df.to_dict('records')
     grouped_rows = {i: list(j) for (i, j) in groupby(
         rows, lambda x: (x["Schema"], x["TableName"]))}
