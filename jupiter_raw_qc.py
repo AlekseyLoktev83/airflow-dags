@@ -143,7 +143,7 @@ with DAG(
 #             's3a://data-proc-public/jobs/sources/java/commons-lang-2.6.jar',
 #         ],
         properties={
-            'spark.submit.deployMode': 'cluster','conda:python-hdfs':'2.7.0'
+            'spark.submit.deployMode': 'cluster'
         },
         packages=['org.slf4j:slf4j-simple:1.7.30'],
         repositories=['https://repo1.maven.org/maven2'],
