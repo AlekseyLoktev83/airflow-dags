@@ -133,9 +133,9 @@ with DAG(
         file_uris=[
             's3a://data-proc-public/jobs/sources/data/config.json',
         ],
-        archive_uris=[
-            's3a://jupiter-app-test-storage/src/dataproc/pyspark_conda_env.tar.gz#environment',
-        ],
+#         archive_uris=[
+#             's3a://jupiter-app-test-storage/src/dataproc/pyspark_conda_env.tar.gz#environment',
+#         ],
         args=save_params,
 #         jar_file_uris=[
 #             's3a://data-proc-public/jobs/sources/java/dataproc-examples-1.0.jar',
@@ -143,7 +143,7 @@ with DAG(
 #             's3a://data-proc-public/jobs/sources/java/commons-lang-2.6.jar',
 #         ],
         properties={
-            'spark.submit.deployMode': 'cluster','spark.yarn.appMasterEnv.PYSPARK_PYTHON': './environment/bin/python'
+            'spark.submit.deployMode': 'cluster','conda:python-hdfs':'2.7.0'
         },
         packages=['org.slf4j:slf4j-simple:1.7.30'],
         repositories=['https://repo1.maven.org/maven2'],
