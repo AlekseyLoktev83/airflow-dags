@@ -124,7 +124,7 @@ with DAG(
     parameters = get_parameters()
     save_params = save_parameters(parameters)
     pyspark_job_qc = DataprocCreatePysparkJobOperator(
-        task_id='jupiter_raw_qc_pyspark',
+        task_id='pyspark_raw_qc',
         cluster_id='c9qc9m3jccl8v7vigq10',
         main_python_file_uri='s3a://jupiter-app-test-storage/src/dataproc/JUPITER/JUPITER_RAW_QC.py',
         python_file_uris=[
