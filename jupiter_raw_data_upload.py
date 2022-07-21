@@ -55,11 +55,17 @@ def separator_convert_hex_to_string(sep):
 def get_parameters(**kwargs):
     ti = kwargs['ti']
     ds = kwargs['ds']
+    dag_run = kwargs['dag_run']
+    parent_process_date = dag_run.conf.get('parent_process_date')
+    process_date = parent_process_date if parent_process_date else ds
     execution_date = kwargs['execution_date'].strftime("%Y/%m/%d")
-    run_id = urllib.parse.quote_plus(kwargs['run_id'])
+    parent_run_id = dag_run.conf.get('parent_run_id')
+    run_id = parent_run_id if parent_run_id else urllib.parse.quote_plus(kwargs['run_id'])
     upload_date = kwargs['logical_date'].strftime("%Y-%m-%d %H:%M:%S")
 
     raw_path = Variable.get("RawPath")
+    process_path = Variable.get("ProcessPath")
+    output_path = Variable.get("OutputPath")
     white_list = Variable.get("WhiteList",default_var=None)
     black_list = Variable.get("BlackList",default_var=None)
     upload_path = f'{raw_path}/{execution_date}/'
@@ -70,15 +76,18 @@ def get_parameters(**kwargs):
     bcp_parameters = '-S {} -d {} -U {} -P {}'.format(db_conn.host, db_conn.schema, db_conn.login, db_conn.password)
 
     parameters = {"RawPath": raw_path,
+                  "ProcessPath": process_path,
+                  "OutputPath": output_path,
                   "WhiteList": white_list,
                   "BlackList": black_list,
-                  "MaintenancePathPrefix":"{}{}{}_{}_".format(raw_path,"/#MAINTENANCE/",ds,run_id),
+                  "MaintenancePathPrefix":"{}{}{}_{}_".format(raw_path,"/#MAINTENANCE/",process_date,run_id),
                   "BcpParameters": bcp_parameters,
                   "UploadPath": upload_path,
                   "RunId":run_id,
                   "SystemName":system_name,
                   "LastUploadDate":last_upload_date,
                   "CurrentUploadDate":upload_date,
+                  "ProcessDate":process_date,
                   "MaintenancePath":"{}{}".format(raw_path,"/#MAINTENANCE/"),
                   }
     print(parameters)
