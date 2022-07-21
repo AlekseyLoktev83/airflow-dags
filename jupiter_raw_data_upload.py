@@ -148,11 +148,11 @@ def generate_bcp_script(src_dir,src_file,upload_path,bcp_parameters,entity):
     return  script
 
 @task
-def start_monitoring(prev_task,dst_dir,system_name,run_id):
+def start_monitoring(prev_task,dst_dir,system_name,runid):
     monitoring_file_path=f'{dst_dir}{MONITORING_FILE}'
 
     temp_file_path =f'/tmp/{MONITORING_FILE}'
-    df = pd.DataFrame([{'PipelineRunId':run_id,
+    df = pd.DataFrame([{'PipelineRunId':runid,
                         'SystemName':system_name,
                         'StartDate':pendulum.now(),
                         'EndDate':None,
@@ -167,14 +167,14 @@ def start_monitoring(prev_task,dst_dir,system_name,run_id):
     return True
 
 @task
-def start_monitoring_detail(dst_dir,upload_path,run_id,input):
+def start_monitoring_detail(dst_dir,upload_path,runid,input):
     schema = input["Schema"]
     entity_name = input["EntityName"]
     method = input["Method"]
     monitoring_file_path=f'{dst_dir}{MONITORING_DETAIL_DIR_PREFIX}/{schema}_{entity_name}.csv'
 
     temp_file_path =f'/tmp/{schema}_{entity_name}.csv'
-    df = pd.DataFrame([{'PipelineRunId':run_id,
+    df = pd.DataFrame([{'PipelineRunId':runid,
                         'Schema':schema,
                         'EntityName':entity_name,
                         'TargetPath':f'{upload_path}{schema}/{entity_name}/{method}/{entity_name}.csv',
@@ -270,9 +270,9 @@ with DAG(
     schema_query = generate_schema_query(parameters)
 #     Extract db schema and save result to hdfs
     extract_schema = copy_data_db_to_hdfs(schema_query,parameters["MaintenancePathPrefix"],RAW_SCHEMA_FILE)
-    start_mon=start_monitoring(extract_schema,dst_dir=parameters["MaintenancePathPrefix"],system_name=parameters["SystemName"],run_id=parameters["RunId"])
+    start_mon=start_monitoring(extract_schema,dst_dir=parameters["MaintenancePathPrefix"],system_name=parameters["SystemName"],runid=parameters["RunId"])
 #    Create entities list and start monitoring for them
-    start_mon_detail = start_monitoring_detail.partial(dst_dir=parameters["MaintenancePathPrefix"],upload_path=parameters["UploadPath"],run_id=parameters["RunId"]).expand(input = generate_upload_script(start_mon,parameters["MaintenancePathPrefix"],RAW_SCHEMA_FILE,parameters["UploadPath"],parameters["BcpParameters"],parameters["CurrentUploadDate"],parameters["LastUploadDate"]))
+    start_mon_detail = start_monitoring_detail.partial(dst_dir=parameters["MaintenancePathPrefix"],upload_path=parameters["UploadPath"],runid=parameters["RunId"]).expand(input = generate_upload_script(start_mon,parameters["MaintenancePathPrefix"],RAW_SCHEMA_FILE,parameters["UploadPath"],parameters["BcpParameters"],parameters["CurrentUploadDate"],parameters["LastUploadDate"]))
 # Upload entities from sql to hdfs in parallel
     upload_tables=BashOperator.partial(task_id="upload_tables", do_xcom_push=True).expand(
        bash_command= generate_bcp_script.partial(src_dir=parameters["MaintenancePathPrefix"],src_file=RAW_SCHEMA_FILE,upload_path=parameters["UploadPath"],bcp_parameters=parameters["BcpParameters"]).expand(entity=start_mon_detail),
