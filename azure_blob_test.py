@@ -13,7 +13,7 @@ with DAG(
     schedule_interval="@once",
     start_date=datetime(2021, 1, 1),
     catchup=False,
-    default_args={"container_name": "russiapetcarejupiter", "blob_name": "InterfaceTest"},
+#     default_args={"container_name": "russiapetcarejupiter", "blob_name": "InterfaceTest"},
 ) as dag:
-    upload = LocalFilesystemToWasbOperator(task_id="upload_file", file_path=PATH_TO_UPLOAD_FILE)
+    upload = LocalFilesystemToWasbOperator(task_id="upload_file", container_name="russiapetcarejupiter", blob_name="InterfaceTest",file_path=PATH_TO_UPLOAD_FILE)
 
