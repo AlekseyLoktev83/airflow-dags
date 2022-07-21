@@ -12,7 +12,7 @@ with DAG(
     tags=["jupiter", "dev"],
 ) as dag:
    
-     trigger_dag_raw_upload = TriggerDagRunOperator(
+    trigger_dag_raw_upload = TriggerDagRunOperator(
         task_id="trigger_raw_data_upload",
         trigger_dag_id="jupiter_raw_data_upload",  
         conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}"},
