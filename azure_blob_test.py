@@ -5,7 +5,7 @@ from airflow.models import DAG
 from airflow.providers.microsoft.azure.operators.wasb_delete_blob import WasbDeleteBlobOperator
 from airflow.providers.microsoft.azure.transfers.local_to_wasb import LocalFilesystemToWasbOperator
 
-PATH_TO_UPLOAD_FILE = 'example-text.txt'
+PATH_TO_UPLOAD_FILE = '/etc/hosts'
 DAG_ID = "azure_blob_test"
 
 with DAG(
