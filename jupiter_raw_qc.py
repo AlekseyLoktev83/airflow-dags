@@ -56,7 +56,8 @@ def get_parameters(**kwargs):
     ti = kwargs['ti']
     ds = kwargs['ds']
     dag_run = kwargs['dag_run']
-    process_date = ds
+    parent_process_date = dag_run.conf.get('parent_process_date')
+    process_date = parent_process_date if parent_process_date else ds
     execution_date = kwargs['execution_date'].strftime("%Y/%m/%d")
     parent_run_id = dag_run.conf.get('parent_run_id')
     run_id = parent_run_id if parent_run_id else urllib.parse.quote_plus(kwargs['run_id'])
