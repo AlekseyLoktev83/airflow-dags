@@ -80,7 +80,7 @@ def get_parameters(**kwargs):
                   "OutputPath": output_path,
                   "WhiteList": white_list,
                   "BlackList": black_list,
-                  "MaintenancePathPrefix":"{}{}{}_{}_".format(raw_path,"/#MAINTENANCE/",ds,run_id),
+                  "MaintenancePathPrefix":"{}{}{}_{}_".format(raw_path,"/#MAINTENANCE/",process_date,run_id),
                   "BcpParameters": bcp_parameters,
                   "UploadPath": upload_path,
                   "RunId":run_id,
