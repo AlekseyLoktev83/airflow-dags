@@ -42,5 +42,6 @@ with DAG(
     catchup=False,
     tags=["jupiter", "dev"],
     render_template_as_native_obj=True,
+    concurrency=32,
 ) as dag:
   process_item.expand(item=gen_input_list())
