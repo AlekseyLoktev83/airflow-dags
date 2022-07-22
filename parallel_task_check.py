@@ -29,7 +29,7 @@ import csv
 
 @task
 def gen_input_list():
-  return list(range(20))
+  return list(range(50))
 
 @task
 def process_item(item):
