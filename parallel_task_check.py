@@ -27,11 +27,11 @@ import glob
 import os
 import csv
 
-@Task
+@task
 def gen_input_list():
   return [1,2,3]
 
-@Task
+@task
 def process_item(item):
   print(f'item={item}')
 
