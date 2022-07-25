@@ -281,7 +281,7 @@ with DAG(
        bash_command= generate_bcp_script(upload_path=parameters["UploadPath"],bcp_parameters=parameters["BcpParameters"],entities=start_mon_detail),
     )
 #     Check entities upload results and update monitoring files
-    end_mon_detail = end_monitoring_detail(dst_dir=parameters["MaintenancePathPrefix"],entities=upload_tables.output)
+    end_mon_detail = end_monitoring_detail(dst_dir=parameters["MaintenancePathPrefix"],entities=upload_tables)
     upload_result = get_upload_result(dst_dir=parameters["MaintenancePathPrefix"],input=end_mon_detail)
     
     branch_task = BranchPythonOperator(
