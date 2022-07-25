@@ -143,7 +143,7 @@ def generate_bcp_script(src_dir,src_file,upload_path,bcp_parameters,entity):
     tmp_path = f"/tmp/{src_file}"
     print(src_path)
         
-    script = 'cp -r /tmp/data/src/. ~/ && chmod +x ~/exec_query.sh && ~/exec_query.sh "{}" {}{}/{}/{}/{}.csv "{}" {} {} "{}" '.format(entity["Extraction"].replace("\'\'","\'\\'").replace("\n"," "),upload_path,entity["Schema"],entity["EntityName"],entity["Method"],entity["EntityName"],bcp_parameters,BCP_SEPARATOR,entity["Schema"],entity["Columns"].replace(",",separator_convert_hex_to_string(BCP_SEPARATOR)))
+    script = 'cp -r /tmp/data/src/. ~/ && chmod +x ~/exec_query_local.sh && ~/exec_query_local.sh "{}" {}{}/{}/{}/{}.csv "{}" {} {} "{}" '.format(entity["Extraction"].replace("\'\'","\'\\'").replace("\n"," "),upload_path,entity["Schema"],entity["EntityName"],entity["Method"],entity["EntityName"],bcp_parameters,BCP_SEPARATOR,entity["Schema"],entity["Columns"].replace(",",separator_convert_hex_to_string(BCP_SEPARATOR)))
 
     return  script
 
