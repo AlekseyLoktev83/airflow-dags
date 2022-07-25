@@ -138,14 +138,13 @@ def generate_upload_script(prev_task,src_dir,src_file,upload_path,bcp_parameters
     
 
 @task    
-def generate_bcp_script(src_dir,src_file,upload_path,bcp_parameters,entity):
-    src_path = f"{src_dir}{src_file}"
-    tmp_path = f"/tmp/{src_file}"
-    print(src_path)
+def generate_bcp_script(upload_path,bcp_parameters,entities):
+    scripts = []
+    for entity in entities:     
+     script = 'cp -r /tmp/data/src/. ~/ && chmod +x ~/exec_query.sh && ~/exec_query.sh "{}" {}{}/{}/{}/{}.csv "{}" {} {} "{}" '.format(entity["Extraction"].replace("\'\'","\'\\'").replace("\n"," "),upload_path,entity["Schema"],entity["EntityName"],entity["Method"],entity["EntityName"],bcp_parameters,BCP_SEPARATOR,entity["Schema"],entity["Columns"].replace(",",separator_convert_hex_to_string(BCP_SEPARATOR)))
+     scripts.append(script)
         
-    script = 'cp -r /tmp/data/src/. ~/ && chmod +x ~/exec_query.sh && ~/exec_query.sh "{}" {}{}/{}/{}/{}.csv "{}" {} {} "{}" '.format(entity["Extraction"].replace("\'\'","\'\\'").replace("\n"," "),upload_path,entity["Schema"],entity["EntityName"],entity["Method"],entity["EntityName"],bcp_parameters,BCP_SEPARATOR,entity["Schema"],entity["Columns"].replace(",",separator_convert_hex_to_string(BCP_SEPARATOR)))
-
-    return  script
+    return  scripts
 
 @task
 def start_monitoring(prev_task,dst_dir,system_name,runid):
@@ -276,7 +275,7 @@ with DAG(
     start_mon_detail = start_monitoring_detail(dst_dir=parameters["MaintenancePathPrefix"],upload_path=parameters["UploadPath"],runid=parameters["RunId"],entities = generate_upload_script(start_mon,parameters["MaintenancePathPrefix"],RAW_SCHEMA_FILE,parameters["UploadPath"],parameters["BcpParameters"],parameters["CurrentUploadDate"],parameters["LastUploadDate"]))
 # Upload entities from sql to hdfs in parallel
     upload_tables=BashOperator.partial(task_id="upload_tables", do_xcom_push=True).expand(
-       bash_command= generate_bcp_script.partial(src_dir=parameters["MaintenancePathPrefix"],src_file=RAW_SCHEMA_FILE,upload_path=parameters["UploadPath"],bcp_parameters=parameters["BcpParameters"]).expand(entity=start_mon_detail),
+       bash_command= generate_bcp_script.partial(upload_path=parameters["UploadPath"],bcp_parameters=parameters["BcpParameters"],entities=start_mon_detail),
     )
 #     Check entities upload results and update monitoring files
     end_mon_detail = end_monitoring_detail.partial(dst_dir=parameters["MaintenancePathPrefix"]).expand(input=XComArg(upload_tables))
