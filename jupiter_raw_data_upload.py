@@ -193,27 +193,29 @@ def start_monitoring_detail(dst_dir,upload_path,runid,entities):
     return entities
 
 @task
-def end_monitoring_detail(dst_dir,input):
-    prev_tast_output = json.loads(input)
-    
-    schema = prev_tast_output["Schema"]
-    entity_name = prev_tast_output["EntityName"]
-    prev_task_result = prev_tast_output["Result"]
-    
-    temp_file_path =f'/tmp/{schema}_{entity_name}.csv'
-    monitoring_file_path=f'{dst_dir}{MONITORING_DETAIL_DIR_PREFIX}/{schema}_{entity_name}.csv'
-    
+def end_monitoring_detail(dst_dir,entities):
     hdfs_hook = WebHDFSHook(HDFS_CONNECTION_NAME)
     conn = hdfs_hook.get_conn()
-    conn.download(monitoring_file_path,temp_file_path)
+    prev_tast_output = json.loads(entities)
     
-    df = pd.read_csv(temp_file_path, keep_default_na=False,sep=CSV_SEPARATOR)
-    df['Status'] = STATUS_COMPLETE if prev_task_result else STATUS_FAILURE
-    df['Duration'] =  prev_tast_output["Duration"]
+    for ent int prev_tast_output:
+   
+     schema = ent["Schema"]
+     entity_name = ent["EntityName"]
+     prev_task_result = ent["Result"]
     
-    df.to_csv(temp_file_path, index=False,sep=CSV_SEPARATOR)
-    conn.upload(monitoring_file_path,temp_file_path,overwrite=True)
+     temp_file_path =f'/tmp/{schema}_{entity_name}.csv'
+     monitoring_file_path=f'{dst_dir}{MONITORING_DETAIL_DIR_PREFIX}/{schema}_{entity_name}.csv'
     
+     conn.download(monitoring_file_path,temp_file_path)
+    
+     df = pd.read_csv(temp_file_path, keep_default_na=False,sep=CSV_SEPARATOR)
+     df['Status'] = STATUS_COMPLETE if prev_task_result else STATUS_FAILURE
+     df['Duration'] =  prev_tast_output["Duration"]
+    
+     df.to_csv(temp_file_path, index=False,sep=CSV_SEPARATOR)
+     conn.upload(monitoring_file_path,temp_file_path,overwrite=True)
+            
     return prev_tast_output
 
    
@@ -278,7 +280,7 @@ with DAG(
        bash_command= generate_bcp_script.partial(upload_path=parameters["UploadPath"],bcp_parameters=parameters["BcpParameters"],entities=start_mon_detail),
     )
 #     Check entities upload results and update monitoring files
-    end_mon_detail = end_monitoring_detail.partial(dst_dir=parameters["MaintenancePathPrefix"]).expand(input=XComArg(upload_tables))
+    end_mon_detail = end_monitoring_detail(dst_dir=parameters["MaintenancePathPrefix"],entities=XComArg(upload_tables))
     upload_result = get_upload_result(dst_dir=parameters["MaintenancePathPrefix"],input=end_mon_detail)
     
     branch_task = BranchPythonOperator(
