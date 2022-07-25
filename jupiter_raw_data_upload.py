@@ -196,14 +196,14 @@ def start_monitoring_detail(dst_dir,upload_path,runid,entities):
 def end_monitoring_detail(dst_dir,entities):
     hdfs_hook = WebHDFSHook(HDFS_CONNECTION_NAME)
     conn = hdfs_hook.get_conn()
-    print(list(entities))
-    prev_tast_output = json.loads(list(entities))
     
-    for ent in prev_tast_output:
-   
-     schema = ent["Schema"]
-     entity_name = ent["EntityName"]
-     prev_task_result = ent["Result"]
+    result = []
+    for ent in list(entities):
+     
+     prev_tast_output = json.loads(ent) 
+     schema = prev_tast_output["Schema"]
+     entity_name = prev_tast_output["EntityName"]
+     prev_task_result = prev_tast_output["Result"]
     
      temp_file_path =f'/tmp/{schema}_{entity_name}.csv'
      monitoring_file_path=f'{dst_dir}{MONITORING_DETAIL_DIR_PREFIX}/{schema}_{entity_name}.csv'
@@ -216,13 +216,14 @@ def end_monitoring_detail(dst_dir,entities):
     
      df.to_csv(temp_file_path, index=False,sep=CSV_SEPARATOR)
      conn.upload(monitoring_file_path,temp_file_path,overwrite=True)
+     result.append(prev_tast_output)
             
-    return prev_tast_output
+    return result
 
    
 @task(trigger_rule=TriggerRule.ALL_DONE)
 def get_upload_result(dst_dir,input):
-    monintoring_details = list(input)
+    monintoring_details = input
     print(monintoring_details)
     return not any(d['Result'] == False for d in monintoring_details)
      
