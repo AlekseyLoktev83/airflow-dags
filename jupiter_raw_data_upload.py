@@ -171,7 +171,7 @@ def start_monitoring_detail(dst_dir,upload_path,runid,entities):
     hdfs_hook = WebHDFSHook(HDFS_CONNECTION_NAME)
     conn = hdfs_hook.get_conn()
     
-    for ent in entities
+    for ent in entities:
      schema = ent["Schema"]
      entity_name = ent["EntityName"]
      method = ent["Method"]
