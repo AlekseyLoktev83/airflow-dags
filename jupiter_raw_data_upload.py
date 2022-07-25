@@ -198,7 +198,7 @@ def end_monitoring_detail(dst_dir,entities):
     conn = hdfs_hook.get_conn()
     prev_tast_output = json.loads(entities)
     
-    for ent int prev_tast_output:
+    for ent in prev_tast_output:
    
      schema = ent["Schema"]
      entity_name = ent["EntityName"]
