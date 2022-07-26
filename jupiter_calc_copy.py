@@ -28,7 +28,7 @@ import os
 import csv
 
 
-MSSQL_CONNECTION_NAME = 'odbc_default'
+MSSQL_CONNECTION_NAME = 'odbc_jupiter'
 HDFS_CONNECTION_NAME = 'webhdfs_default'
 VAULT_CONNECTION_NAME = 'vault_default'
 AVAILABILITY_ZONE_ID = 'ru-central1-b'
