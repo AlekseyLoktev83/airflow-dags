@@ -9,7 +9,6 @@ with DAG(
     start_date=pendulum.datetime(2021, 1, 1, tz="UTC"),
     catchup=False,
     schedule_interval=None,
-    schedule_interval=None,
     tags=["mip", "dev"],
 ) as dag:
    
