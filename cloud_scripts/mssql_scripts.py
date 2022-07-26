@@ -43,7 +43,7 @@ def generate_db_schema_query(environment=None, upload_date=None, black_list=None
     return script
 
 
-def generate_table_select_query(current_upload_date, last_upload_date, actual_schema_file):
+def generate_table_select_query(current_upload_date, last_upload_date, actual_schema_file, delta_tables = []):
     df = pd.read_csv(actual_schema_file, keep_default_na=False,sep=CSV_SEPARATOR)
     rows = df.to_dict('records')
     grouped_rows = {i: list(j) for (i, j) in groupby(
@@ -86,7 +86,7 @@ def generate_table_select_query(current_upload_date, last_upload_date, actual_sc
 
 
         method = METHOD_FULL
-        if table[1] in []:
+        if table[1] in delta_tables:
             method = METHOD_DELTA
 
             script = "SELECT {fields} , (SELECT count(*) FROM {schema}.[{table_name}] WHERE LastModifiedDate BETWEEN CONVERT(nvarchar(20),'{last_modified_date}', 120) AND CONVERT(nvarchar(20),'{current_upload_date}', 120)) [#QCCount] FROM {schema}.[{table_name}] t WHERE t.LastModifiedDate BETWEEN CONVERT(nvarchar(20),'{last_modified_date}', 120) AND CONVERT(nvarchar(20),'{current_upload_date}', 120)".format(
