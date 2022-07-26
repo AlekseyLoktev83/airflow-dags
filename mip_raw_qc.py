@@ -113,11 +113,11 @@ def save_parameters(parameters:dict):
 
 
 with DAG(
-    dag_id='jupiter_raw_qc',
+    dag_id='mip_raw_qc',
     schedule_interval=None,
     start_date=pendulum.datetime(2021, 1, 1, tz="UTC"),
     catchup=False,
-    tags=["jupiter", "dev"],
+    tags=["mip", "dev"],
     render_template_as_native_obj=True,
 ) as dag:
 # Get dag parameters from vault    
