@@ -69,7 +69,7 @@ def get_parameters(**kwargs):
     raw_path = Variable.get("RawPath")
     process_path = Variable.get("ProcessPath")
     output_path = Variable.get("OutputPath")
-    white_list = Variable.get("WhiteList", default_var=None)
+    white_list = Variable.get("PromoCalculationEntites", default_var=None)
     black_list = Variable.get("BlackList", default_var=None)
     upload_path = f'{raw_path}/{execution_date}/'
     system_name = Variable.get("SystemName")
