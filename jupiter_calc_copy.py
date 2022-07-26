@@ -280,11 +280,11 @@ def update_last_upload_date(last_upload_date):
 
 
 with DAG(
-    dag_id='mip_raw_data_upload',
+    dag_id='jupiter_calc_copy',
     schedule_interval=None,
     start_date=pendulum.datetime(2021, 1, 1, tz="UTC"),
     catchup=False,
-    tags=["mip", "dev"],
+    tags=["jupiter", "dev"],
     render_template_as_native_obj=True,
 ) as dag:
     # Get dag parameters from vault
