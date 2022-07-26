@@ -15,9 +15,9 @@ dag = DAG(
 )
 
 def sample_select():
-    odbc_hook = OdbcHook() 
+    odbc_hook = OdbcHook("odbc_jupiter") 
 #     rec = odbc_hook.get_records("SELECT * from Country;")
-    df =  odbc_hook.get_pandas_df("SELECT * from Country;")
+    df =  odbc_hook.get_pandas_df("SELECT * from Jupiter.Promo;")
     print(df.head(3).to_markdown())
 #     print(rec)
 #     cnxn = odbc_hook.get_conn()
