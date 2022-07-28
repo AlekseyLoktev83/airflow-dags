@@ -40,6 +40,11 @@ def separator_convert_hex_to_string(sep):
     sep_map = {'0x01':'\x01'}
     return sep_map.get(sep, sep)
 
+def handle_datetimeoffset(dto_value):
+    tup = struct.unpack("<6hI2h", dto_value)  # e.g., (2017, 3, 16, 10, 35, 18, 0, -6, 0)
+    tweaked = [tup[i] // 100 if i == 6 else tup[i] for i in range(len(tup))]
+    return "{:04d}-{:02d}-{:02d} {:02d}:{:02d}:{:02d}.{:07d} {:+03d}:{:02d}".format(*tweaked)
+
 @task(multiple_outputs=True)
 def get_parameters(**kwargs):
     ti = kwargs['ti']
@@ -89,6 +94,7 @@ def get_parameters(**kwargs):
 def get_unprocessed_baseline_files(parameters:dict):
     odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
     schema = parameters["Schema"]
+    odbc_hook.add_output_converter(-155, handle_datetimeoffset)
     result = odbc_hook.get_records(sql=f"""exec [{schema}].[GetUnprocessedBaselineFiles]""")
     print(result)
 
