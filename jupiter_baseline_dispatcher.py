@@ -144,7 +144,7 @@ with DAG(
     
     api_trigger_dependent_dag = SimpleHttpOperator.partial(
         task_id="api_trigger_dependent_dag",
-        http_conn_id='airflow-api',
+        http_conn_id='default_http',
         endpoint='/api/v1/dags/trigger_jupiter_process_baseline/dagRuns',
         method='POST',
         headers={'Content-Type': 'application/json'},).expand(
