@@ -104,7 +104,7 @@ def generate_table_select_query(current_upload_date, last_upload_date, actual_sc
 
 def get_records(odbc_hook, sql, parameters=None, output_converters=[]):
     """
-        Executes the sql and returns a set of records.
+        Executes the sql and returns a list of dicts.
 
         :param sql: the sql statement to be executed (str) or a list of
             sql statements to execute
@@ -119,6 +119,11 @@ def get_records(odbc_hook, sql, parameters=None, output_converters=[]):
                 cur.execute(sql, parameters)
             else:
                 cur.execute(sql)
-            return cur.fetchall()
+            columns = [column[0] for column in cur.description]
+            
+            results = []
+            for row in cur.fetchall():
+             results.append(dict(zip(columns, row)))
+            return results
         
 
