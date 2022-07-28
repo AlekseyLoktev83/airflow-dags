@@ -3,6 +3,7 @@ import pandas as pd
 from itertools import groupby
 from io import StringIO
 import json
+from contextlib import closing
 
 PARAM_DELIMETER = ";"
 METHOD_FULL = "FULL"
