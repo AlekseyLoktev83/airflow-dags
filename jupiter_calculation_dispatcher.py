@@ -15,7 +15,7 @@ with DAG(
     trigger_dag_raw_upload = TriggerDagRunOperator(
         task_id="trigger_jupiter_calc_copy",
         trigger_dag_id="jupiter_calc_copy",  
-        conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}"},
+        conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":"{{dag_run.conf.get('schema')}}"},
         wait_for_completion = True,
     )
     
