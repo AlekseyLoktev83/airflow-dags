@@ -27,6 +27,7 @@ import glob
 import os
 
 import struct
+from contextlib import closing
 
 
 MSSQL_CONNECTION_NAME = 'odbc_jupiter'
