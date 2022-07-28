@@ -7,7 +7,7 @@ from airflow.operators.bash import BashOperator
 SCHEMA = "Jupiter"
 
 with DAG(
-    dag_id="jupiter_calculation_dispatcher",
+    dag_id="jupiter_main_dispatcher",
     start_date=pendulum.datetime(2021, 1, 1, tz="UTC"),
     catchup=False,
     schedule_interval=None,
