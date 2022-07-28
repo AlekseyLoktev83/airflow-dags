@@ -98,7 +98,7 @@ def get_unprocessed_baseline_files(parameters:dict):
     odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
     schema = parameters["Schema"]
     converters = [(-155, handle_datetimeoffset)]
-    result = mssql_scripts.get_records(odbc_hook,sql=f"""exec [{schema}].[GetUnprocessedBaselineFiles]""",converters=converters)
+    result = mssql_scripts.get_records(odbc_hook,sql=f"""exec [{schema}].[GetUnprocessedBaselineFiles]""",output_converters=converters)
     
 #     with closing(odbc_hook.get_conn()) as conn:
 #      conn.add_output_converter(-155, handle_datetimeoffset)   
