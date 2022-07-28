@@ -40,6 +40,14 @@ BCP_SEPARATOR = '0x01'
 CSV_SEPARATOR = '\u0001'
 
 
+date = '{{ execution_date }}'
+request_body = {
+  "execution_date": date
+}
+json_body = json.dumps(request_body)
+
+
+
 def separator_convert_hex_to_string(sep):
     sep_map = {'0x01':'\x01'}
     return sep_map.get(sep, sep)
@@ -132,6 +140,15 @@ with DAG(
 # Get dag parameters from vault    
     parameters = get_parameters()
     unprocessed_baseline_files = get_unprocessed_baseline_files(parameters)
+    
+    api_trigger_dependent_dag = SimpleHttpOperator.partial(
+        task_id="api_trigger_dependent_dag",
+        http_conn_id='airflow-api',
+        endpoint='/api/v1/dags/trigger_jupiter_process_baseline/dagRuns',
+        method='POST',
+        headers={'Content-Type': 'application/json'},).expand(
+        data=[json_body,json_body],
+    )
     
 #     trigger_jupiter_process_baseline = TriggerDagRunOperator.partial(task_id="trigger_jupiter_process_baseline",
 #                                                                     wait_for_completion = True,
