@@ -89,7 +89,7 @@ def get_parameters(**kwargs):
 def get_unprocessed_baseline_files(parameters:dict):
     odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
     schema = parameters["Schema"]
-    result = odbc_hook.run(sql=f"""exec [{schema}].[GetUnprocessedBaselineFiles]""")
+    result = odbc_hook.get_records(sql=f"""exec [{schema}].[GetUnprocessedBaselineFiles]""")
     print(result)
 
     return result
