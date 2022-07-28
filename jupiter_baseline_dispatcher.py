@@ -97,14 +97,14 @@ def get_parameters(**kwargs):
 def get_unprocessed_baseline_files(parameters:dict):
     odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
     schema = parameters["Schema"]
-#     odbc_hook.get_conn().add_output_converter(-155, handle_datetimeoffset)
-#     result = odbc_hook.get_records(sql=f"""exec [{schema}].[GetUnprocessedBaselineFiles]""")
+    odbc_hook.connection.add_output_converter(-155, handle_datetimeoffset)
+    result = odbc_hook.get_records(sql=f"""exec [{schema}].[GetUnprocessedBaselineFiles]""")
     
-    with closing(odbc_hook.get_conn()) as conn:
-     conn.add_output_converter(-155, handle_datetimeoffset)   
-     with closing(conn.cursor()) as cur:
-       cur.execute(f"""exec [{schema}].[GetUnprocessedBaselineFiles]""")
-       result=cur.fetchall()
+#     with closing(odbc_hook.get_conn()) as conn:
+#      conn.add_output_converter(-155, handle_datetimeoffset)   
+#      with closing(conn.cursor()) as cur:
+#        cur.execute(f"""exec [{schema}].[GetUnprocessedBaselineFiles]""")
+#        result=cur.fetchall()
 
     print(result)
 
