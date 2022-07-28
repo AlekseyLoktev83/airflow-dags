@@ -60,6 +60,8 @@ def get_parameters(**kwargs):
     execution_date = kwargs['execution_date'].strftime("%Y/%m/%d")
     parent_run_id = dag_run.conf.get('parent_run_id')
     run_id = urllib.parse.quote_plus(parent_run_id) if parent_run_id else urllib.parse.quote_plus(kwargs['run_id'])
+    
+    schema = dag_run.conf.get('schema')
     upload_date = kwargs['logical_date'].strftime("%Y-%m-%d %H:%M:%S")
 
     raw_path = Variable.get("RawPath")
@@ -88,6 +90,7 @@ def get_parameters(**kwargs):
                   "CurrentUploadDate":upload_date,
                   "ProcessDate":process_date,
                   "MaintenancePath":"{}{}".format(raw_path,"/#MAINTENANCE/"),
+                  "Schema":schema,
                   }
     print(parameters)
     return parameters
