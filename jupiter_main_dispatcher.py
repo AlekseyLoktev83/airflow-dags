@@ -9,9 +9,10 @@ SCHEMA = "Jupiter"
 
 with DAG(
     dag_id="jupiter_main_dispatcher",
-    start_date=pendulum.datetime(2021, 1, 1, tz="UTC"),
+    start_date=pendulum.datetime(2022, 7, 28, tz="UTC"),
     catchup=False,
-    schedule_interval=None,
+#     schedule_interval=None,
+    schedule_interval='*/5 * * * *'
     tags=["jupiter", "dev"],
 ) as dag:
     trigger_jupiter_start_night_processing = TriggerDagRunOperator(
