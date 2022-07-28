@@ -136,7 +136,7 @@ with DAG(
     trigger_jupiter_process_baseline = TriggerDagRunOperator.partial(task_id="trigger_jupiter_process_baseline",
                                                                     trigger_dag_id="jupiter_process_baseline",
                                                                     wait_for_completion = True,
-                                                                    ).expand(trigger_dag_id=["jupiter_process_baseline",jupiter_process_baseline"],
+                                                                    ).expand(trigger_dag_id=["jupiter_process_baseline","jupiter_process_baseline"],
 #          conf=unprocessed_baseline_files,
     )
 #     create_wait_handler = create_night_processing_wait_handler(parameters)
