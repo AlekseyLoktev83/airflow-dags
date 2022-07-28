@@ -103,7 +103,7 @@ def set_night_processing_progress_flag_up(parameters:dict):
 @task
 def create_night_processing_wait_handler(parameters:dict):
     odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
-    result = odbc_hook.run(sql="""exec [Jupiter].[CreateNightProcessingWaitHandler]""",parameters=parameters["RunId"])
+    result = odbc_hook.run(sql="""exec [Jupiter].[CreateNightProcessingWaitHandler] ? """,parameters=parameters["RunId"])
     print(result)
 
     return result
