@@ -27,7 +27,7 @@ import glob
 import os
 
 
-MSSQL_CONNECTION_NAME = 'odbc_default'
+MSSQL_CONNECTION_NAME = 'odbc_jupiter'
 HDFS_CONNECTION_NAME = 'webhdfs_default'
 VAULT_CONNECTION_NAME = 'vault_default'
 AVAILABILITY_ZONE_ID = 'ru-central1-b'
@@ -92,23 +92,13 @@ def get_parameters(**kwargs):
     print(parameters)
     return parameters
 
-@task(task_id='save_parameters')
-def save_parameters(parameters:dict):
-    parameters_file_path=f'{parameters["MaintenancePathPrefix"]}{PARAMETERS_FILE}'
+@task
+def set_night_processing_progress_flag_up(parameters:dict):
+    odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
+    result = odbc_hook.run(sql="""exec [Jupiter].[SetNightProcessingProgressUp]""")
+    print(result)
 
-    temp_file_path =f'/tmp/{PARAMETERS_FILE}'
-    df = pd.DataFrame(parameters.items(),columns=['Key', 'Value'])
-    df.to_csv(temp_file_path, index=False, sep=CSV_SEPARATOR)
-    
-    hdfs_hook = WebHDFSHook(HDFS_CONNECTION_NAME)
-    conn = hdfs_hook.get_conn()
-    conn.upload(parameters_file_path,temp_file_path,overwrite=True)
-    
-    
-    args = json.dumps({"MaintenancePathPrefix":parameters["MaintenancePathPrefix"],"ProcessDate":parameters["ProcessDate"]})
-                                                                            
-                                                                                            
-    return [args]
+    return True
 
 
 with DAG(
@@ -121,5 +111,5 @@ with DAG(
 ) as dag:
 # Get dag parameters from vault    
     parameters = get_parameters()
-    save_params = save_parameters(parameters)
+    set_night_processing_progress_flag_up(parameters)
     
