@@ -98,7 +98,15 @@ def set_night_processing_progress_flag_up(parameters:dict):
     result = odbc_hook.run(sql="""exec [Jupiter].[SetNightProcessingProgressUp]""")
     print(result)
 
-    return True
+    return result
+
+@task
+def create_night_processing_wait_handler(parameters:dict):
+    odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
+    result = odbc_hook.run(sql="""exec [Jupiter].[CreateNightProcessingWaitHandler]""",parameters=parameters["RunId"])
+    print(result)
+
+    return result
 
 
 with DAG(
@@ -111,5 +119,7 @@ with DAG(
 ) as dag:
 # Get dag parameters from vault    
     parameters = get_parameters()
-    set_night_processing_progress_flag_up(parameters)
+    flag_up = set_night_processing_progress_flag_up(parameters)
+    create_wait_handler = create_night_processing_wait_handler(parameters)
+    flag_up >> create_wait_handler
     
