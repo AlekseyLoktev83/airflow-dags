@@ -3,6 +3,7 @@ import pendulum
 from airflow import DAG
 from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from airflow.operators.bash import BashOperator
+from airflow.utils.trigger_rule import TriggerRule
 
 SCHEMA = "Jupiter"
 
