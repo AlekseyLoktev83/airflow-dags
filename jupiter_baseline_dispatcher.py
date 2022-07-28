@@ -102,10 +102,7 @@ def get_unprocessed_baseline_files(parameters:dict):
     with closing(odbc_hook.get_conn()) as conn:
      conn.add_output_converter(-155, handle_datetimeoffset)   
      with closing(conn.cursor()) as cur:
-       if parameters is not None:
-         cur.execute(f"""exec [{schema}].[GetUnprocessedBaselineFiles]""")
-       else:
-         cur.execute(sql)
+       cur.execute(f"""exec [{schema}].[GetUnprocessedBaselineFiles]""")
        result=cur.fetchall()
 
     print(result)
