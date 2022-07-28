@@ -113,7 +113,7 @@ def get_records(odbc_hook, sql, parameters=None, output_converters=[]):
     """
     with closing(odbc_hook.get_conn()) as conn:
         for conv in output_converters:
-            conn.add_output_converter(conv(0), conv(1))   
+            conn.add_output_converter(conv[0], conv[1])   
         with closing(conn.cursor()) as cur:
             if parameters is not None:
                 cur.execute(sql, parameters)
