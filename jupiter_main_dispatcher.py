@@ -57,4 +57,5 @@ with DAG(
         trigger_rule=TriggerRule.ONE_FAILED
     )    
 #     trigger_rule=TriggerRule.ALL_DONE
-    trigger_jupiter_start_night_processing >> trigger_jupiter_calculation_dispatcher >> [trigger_jupiter_end_night_processing >> trigger_jupiter_move_logs_to_blob >> trigger_jupiter_move_promo_to_archive,trigger_jupiter_error_processing ]
+    success_chain = trigger_jupiter_end_night_processing >> trigger_jupiter_move_logs_to_blob >> trigger_jupiter_move_promo_to_archive
+    trigger_jupiter_start_night_processing >> trigger_jupiter_calculation_dispatcher >> [success_chain,trigger_jupiter_error_processing ]
