@@ -13,7 +13,7 @@ with DAG(
     schedule_interval=None,
     tags=["jupiter", "dev"],
 ) as dag:
-      trigger_jupiter_start_night_processing = TriggerDagRunOperator(
+    trigger_jupiter_start_night_processing = TriggerDagRunOperator(
         task_id="trigger_jupiter_start_night_processing",
         trigger_dag_id="jupiter_start_night_processing",  
         conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":SCHEMA},
