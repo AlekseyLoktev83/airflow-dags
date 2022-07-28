@@ -109,7 +109,7 @@ def create_night_processing_wait_handler(parameters:dict):
     odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
 #     parameters=parameters["RunId"]
     
-    result = odbc_hook.run(sql=f"""exec [{schema}].[CreateNightProcessingWaitHandler] ? """)
+    result = odbc_hook.run(sql=f"""exec [{schema}].[CreateNightProcessingWaitHandler]""")
     print(result)
 
     return result
