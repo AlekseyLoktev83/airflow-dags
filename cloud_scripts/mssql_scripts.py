@@ -101,4 +101,23 @@ def generate_table_select_query(current_upload_date, last_upload_date, actual_sc
     result_df = pd.DataFrame(result)
     return result_df
 
+def get_records(odbc_hook, sql, parameters=None, output_converters=[]):
+        """
+        Executes the sql and returns a set of records.
+
+        :param sql: the sql statement to be executed (str) or a list of
+            sql statements to execute
+        :param parameters: The parameters to render the SQL query with.
+        :param output_converters: List of connection output converters
+        """
+    with closing(odbc_hook.get_conn()) as conn:
+        for conv in output_converters:
+            conn.add_output_converter(conv(0), conv(1))   
+        with closing(conn.cursor()) as cur:
+            if parameters is not None:
+                cur.execute(sql, parameters)
+            else:
+                cur.execute(sql)
+            return cur.fetchall()
+        
 
