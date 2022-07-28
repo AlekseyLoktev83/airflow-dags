@@ -109,7 +109,7 @@ def get_unprocessed_baseline_files(parameters:dict):
 
     print(result)
 
-    return result
+    return None
 
 @task
 def create_night_processing_wait_handler(parameters:dict):
@@ -135,7 +135,7 @@ with DAG(
     trigger_jupiter_process_baseline = TriggerDagRunOperator.partial(
         task_id="trigger_jupiter_process_baseline",
         trigger_dag_id="jupiter_process_baseline", 
-#         wait_for_completion = True,
+        wait_for_completion = True,
     ).expand(conf=unprocessed_baseline_files)
 #     create_wait_handler = create_night_processing_wait_handler(parameters)
 #     flag_up >> create_wait_handler
