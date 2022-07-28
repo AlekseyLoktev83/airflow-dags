@@ -35,16 +35,6 @@ S3_BUCKET_NAME_FOR_JOB_LOGS = 'jupiter-app-test-storage'
 BCP_SEPARATOR = '0x01'
 CSV_SEPARATOR = '\u0001'
 
-MONITORING_DETAIL_DIR_PREFIX = 'MONITORING_DETAIL.CSV'
-EXTRACT_ENTITIES_AUTO_FILE = 'EXTRACT_ENTITIES_AUTO.csv'
-MONITORING_FILE = 'MONITORING.csv'
-PARAMETERS_FILE = 'PARAMETERS.csv'
-
-STATUS_FAILURE='FAILURE'
-STATUS_COMPLETE='COMPLETE'
-STATUS_PROCESS='PROCESS'
-
-DAYS_TO_KEEP_OLD_FILES = 2
 
 def separator_convert_hex_to_string(sep):
     sep_map = {'0x01':'\x01'}
@@ -96,10 +86,10 @@ def get_parameters(**kwargs):
     return parameters
 
 @task
-def set_night_processing_progress_flag_up(parameters:dict):
+def get_unprocessed_baseline_files(parameters:dict):
     odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
     schema = parameters["Schema"]
-    result = odbc_hook.run(sql=f"""exec [{schema}].[SetNightProcessingProgressUp]""")
+    result = odbc_hook.run(sql=f"""exec [{schema}].[GetUnprocessedBaselineFiles]""")
     print(result)
 
     return result
@@ -124,6 +114,6 @@ with DAG(
 ) as dag:
 # Get dag parameters from vault    
     parameters = get_parameters()
-    flag_up = set_night_processing_progress_flag_up(parameters)
-    create_wait_handler = create_night_processing_wait_handler(parameters)
-    flag_up >> create_wait_handler
+    unprocessed_baseline_files = get_unprocessed_baseline_files(parameters)
+#     create_wait_handler = create_night_processing_wait_handler(parameters)
+#     flag_up >> create_wait_handler
