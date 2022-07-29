@@ -139,7 +139,7 @@ def generate_baseline_upload_script(parameters:dict):
     entity_json = json.loads(entities_df.to_json(orient="records"))[0]
     
     script = 'cp -r /tmp/data/src/. ~/ && chmod +x ~/exec_query.sh && ~/exec_query.sh "{}" {}{}/{}/{}/{}.csv "{}" {} {} "{}" '.format(entity_json["Extraction"].replace("\'\'", "\'\\'").replace(
-            "\n", " "), upload_path, entity_json["Schema"], entity_json["EntityName"], entity_json["Method"], entity_json["EntityName"], bcp_parameters, BCP_SEPARATOR, entity_json["Schema"], entity_json["Columns"].replace(",", separator_convert_hex_to_string(BCP_SEPARATOR)))
+            "\n", " "), parameters["UploadPath"], entity_json["Schema"], entity_json["EntityName"], entity_json["Method"], entity_json["EntityName"], parameters["BcpParameters"], BCP_SEPARATOR, entity_json["Schema"], entity_json["Columns"].replace(",", separator_convert_hex_to_string(BCP_SEPARATOR)))
 
     return script  
 
@@ -154,6 +154,11 @@ with DAG(
 # Get dag parameters from vault    
     parameters = get_parameters()
     baseline_upload_script = generate_baseline_upload_script(parameters)
+    copy_baseline_from_source = BashOperator(task_id="copy_baseline_from_source",
+                                 do_xcom_push=True,
+                                 bash_command=baseline_upload_script,
+                                )
+    
 #     unprocessed_baseline_files = get_unprocessed_baseline_files(parameters)
     
    
