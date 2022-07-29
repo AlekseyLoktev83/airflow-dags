@@ -125,21 +125,23 @@ def create_night_processing_wait_handler(parameters:dict):
     return result
 
 @task
-def generate_upload_script(parameters:dict):
+def generate_baseline_upload_script(parameters:dict):
     query = mssql_scripts.generate_db_schema_query(white_list=f'{parameters["Schema"]}.BaseLine', black_list=parameters['BlackList'])
     odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
     
     db_schema_df = odbc_hook.get_pandas_df(query)
-#     print(db_schema_df.to_markdown())
     db_schema_buf = StringIO()
     db_schema_df.to_csv(db_schema_buf, index=False, sep=CSV_SEPARATOR)
     db_schema_text = db_schema_buf.getvalue()
       
     entities_df = mssql_scripts.generate_table_select_query(
         parameters["CurrentUploadDate"], parameters["LastUploadDate"], StringIO(db_schema_text))
-    entities_json = json.loads(entities_df.to_json(orient="records"))
+    entity_json = json.loads(entities_df.to_json(orient="records"))[0]
+    
+    script = 'cp -r /tmp/data/src/. ~/ && chmod +x ~/exec_query.sh && ~/exec_query.sh "{}" {}{}/{}/{}/{}.csv "{}" {} {} "{}" '.format(entity_json["Extraction"].replace("\'\'", "\'\\'").replace(
+            "\n", " "), upload_path, entity_json["Schema"], entity_json["EntityName"], entity_json["Method"], entity_json["EntityName"], bcp_parameters, BCP_SEPARATOR, entity_json["Schema"], entity_json["Columns"].replace(",", separator_convert_hex_to_string(BCP_SEPARATOR)))
 
-    return entities_json  
+    return script  
 
 with DAG(
     dag_id='jupiter_process_baseline',
@@ -151,7 +153,7 @@ with DAG(
 ) as dag:
 # Get dag parameters from vault    
     parameters = get_parameters()
-    upload_script = generate_upload_script(parameters)
+    baseline_upload_script = generate_baseline_upload_script(parameters)
 #     unprocessed_baseline_files = get_unprocessed_baseline_files(parameters)
     
    
