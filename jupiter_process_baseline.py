@@ -130,9 +130,10 @@ def generate_upload_script(parameters:dict):
     odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
     
     db_schema_df = odbc_hook.get_pandas_df(query)
-    print(db_schema_df.to_markdown())
+#     print(db_schema_df.to_markdown())
     db_schema_buf = StringIO()
     db_schema_df.to_csv(db_schema_buf, index=False, sep=CSV_SEPARATOR)
+    print(db_schema_buf.getvalue())
       
     entities_df = mssql_scripts.generate_table_select_query(
         parameters["CurrentUploadDate"], parameters["LastUploadDate"], db_schema_buf)
