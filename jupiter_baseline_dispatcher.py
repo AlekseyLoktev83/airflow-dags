@@ -11,7 +11,8 @@ from airflow.models import Variable
 from airflow.operators.bash import BashOperator
 from airflow.operators.dummy import DummyOperator
 from airflow.operators.python import PythonOperator, BranchPythonOperator
-from airflow.operators.trigger_dagrun import TriggerDagRunOperator
+# from airflow.operators.trigger_dagrun import TriggerDagRunOperator
+from cloud_scripts.trigger_dagrun import TriggerDagRunOperator
 from airflow.utils.task_group import TaskGroup
 from airflow.hooks.base_hook import BaseHook
 from airflow.providers.hashicorp.hooks.vault import VaultHook
@@ -142,20 +143,19 @@ with DAG(
     parameters = get_parameters()
     unprocessed_baseline_files = get_unprocessed_baseline_files(parameters)
     
-    api_trigger_dependent_dag = SimpleHttpOperator.partial(
-        task_id="api_trigger_dependent_dag",
-        http_conn_id='default_http',
-        endpoint='/api/v1/dags/jupiter_raw_qc2/dagRuns',
-        method='POST',
-        headers={'Content-Type': 'application/json'},).expand(
-        data=[json_body,json_body],
-    )
-    
-#     trigger_jupiter_process_baseline = TriggerDagRunOperator.partial(task_id="trigger_jupiter_process_baseline",
-#                                                                     wait_for_completion = True,
-#                                                                      trigger_dag_id="jupiter_process_baseline",
-#                                                                     ).expand(trigger_dag_id=["jupiter_process_baseline","jupiter_process_baseline"],
-#          conf=unprocessed_baseline_files,
+#     api_trigger_dependent_dag = SimpleHttpOperator.partial(
+#         task_id="api_trigger_dependent_dag",
+#         http_conn_id='default_http',
+#         endpoint='/api/v1/dags/jupiter_raw_qc2/dagRuns',
+#         method='POST',
+#         headers={'Content-Type': 'application/json'},).expand(
+#         data=[json_body,json_body],
 #     )
+    
+    trigger_jupiter_process_baseline = TriggerDagRunOperator.partial(task_id="trigger_jupiter_process_baseline",
+                                                                    wait_for_completion = True,
+                                                                     trigger_dag_id="jupiter_process_baseline",
+                                                                    ).expand(conf=unprocessed_baseline_files,
+    )
 #     create_wait_handler = create_night_processing_wait_handler(parameters)
 #     flag_up >> create_wait_handler
