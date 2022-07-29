@@ -157,7 +157,7 @@ with DAG(
     
     clear_old_baseline = BashOperator(
         task_id='clear_old_baseline',
-        bash_command='hadoop dfs -rm -r {{get_parameters["UploadPath"]}}/{{get_parameters["Schema"]}}/{{get_parameters["EntityName"]}}',
+        bash_command='hadoop dfs -rm -r {{ti.xcom_pull(task_ids="get_parameters",key="UploadPath")}}/{{ti.xcom_pull(task_ids="get_parameters",key="Schema")}}/{{ti.xcom_pull(task_ids="get_parameters",key="EntityName")}}',
           )
     
     copy_baseline_from_source = BashOperator(task_id="copy_baseline_from_source",
