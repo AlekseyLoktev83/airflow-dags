@@ -134,7 +134,7 @@ with DAG(
     trigger_jupiter_baseline_calculation = TriggerDagRunOperator(
         task_id="trigger_jupiter_baseline_calculation",
         trigger_dag_id="jupiter_baseline_calculation",  
-        conf='{{create_child_dag_config(parameters)}}',
+        conf='{{ti.xcom_pull(task_ids="create_child_dag_config")}}',
         wait_for_completion = True,
         trigger_rule=TriggerRule.ALL_DONE
     )  
