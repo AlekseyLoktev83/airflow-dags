@@ -100,9 +100,7 @@ def get_parameters(**kwargs):
 def get_need_recalculation_baseline(parameters:dict):
     odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
     schema = parameters["Schema"]
-    converters = [(-155, handle_datetimeoffset)]
-    result = odbc_hook.get_first(f"""SELECT COUNT([Id]) AS Quantity FROM [{schema}].[BaseLine] WHERE [NeedProcessing] = 1""")
-    print(odbc_hook.get_cursor().description)
+    result = mssql_scripts.get_first(odbc_hook,f"""SELECT COUNT([Id]) AS Quantity FROM [{schema}].[BaseLine] WHERE [NeedProcessing] = 1""")
     return result
 
 with DAG(
