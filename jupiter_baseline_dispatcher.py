@@ -134,7 +134,7 @@ with DAG(
     trigger_jupiter_baseline_calculation = TriggerDagRunOperator(
         task_id="trigger_jupiter_baseline_calculation",
         trigger_dag_id="jupiter_baseline_calculation",  
-        conf=dict(child_dag_config),
+        conf='{{json.loads(child_dag_config)}}'',
         wait_for_completion = True,
         trigger_rule=TriggerRule.ALL_DONE
     )  
