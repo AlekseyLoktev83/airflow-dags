@@ -124,6 +124,20 @@ def create_night_processing_wait_handler(parameters:dict):
 
     return result
 
+@task
+def generate_upload_script(parameters:dict):
+    query = mssql_scripts.generate_db_schema_query(white_list=[f'{parameters["Schema"]}.BaseLine'], black_list=parameters['BlackList'])
+    odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
+    
+    db_schema_df = odbc_hook.get_pandas_df(query)
+    db_schema_buf = StringIO()
+    db_schema_df.to_csv(db_schema_buf, index=False, sep=CSV_SEPARATOR)
+      
+    entities_df = mssql_scripts.generate_table_select_query(
+        parameters["CurrentUploadDate"], parameters["LastUploadDate"], db_schema_buf)
+    entities_json = json.loads(entities_df.to_json(orient="records"))
+
+    return entities_json  
 
 with DAG(
     dag_id='jupiter_process_baseline',
@@ -135,6 +149,7 @@ with DAG(
 ) as dag:
 # Get dag parameters from vault    
     parameters = get_parameters()
+    upload_script = generate_upload_script(parameters)
 #     unprocessed_baseline_files = get_unprocessed_baseline_files(parameters)
     
    
