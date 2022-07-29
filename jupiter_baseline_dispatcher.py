@@ -130,9 +130,9 @@ with DAG(
         task_id="trigger_jupiter_baseline_calculation",
         trigger_dag_id="jupiter_baseline_calculation",  
         conf={
-            'parent_run_id':'{{ti.xcom_pull(task_ids="get_parameters",key=ParentRunId")}}',
-            'parent_process_date':'{{ti.xcom_pull(task_ids="get_parameters",key=ProcessDate")}}',
-            'schema':'{{ti.xcom_pull(task_ids="get_parameters",key=Schema")}}'
+            'parent_run_id':'{{ti.xcom_pull(task_ids="get_parameters",key="ParentRunId")}}',
+            'parent_process_date':'{{ti.xcom_pull(task_ids="get_parameters",key="ProcessDate")}}',
+            'schema':'{{ti.xcom_pull(task_ids="get_parameters",key="Schema")}}'
         },
         wait_for_completion = True,
         trigger_rule=TriggerRule.ALL_DONE
