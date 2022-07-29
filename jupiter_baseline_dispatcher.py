@@ -110,16 +110,7 @@ def get_unprocessed_baseline_files(parameters:dict):
     schema = parameters["Schema"]
     converters = [(-155, handle_datetimeoffset)]
     result = mssql_scripts.get_records(odbc_hook,sql=f"""exec [{schema}].[GetUnprocessedBaselineFiles]""",output_converters=converters)
-    
-#     with closing(odbc_hook.get_conn()) as conn:
-#      conn.add_output_converter(-155, handle_datetimeoffset)   
-#      with closing(conn.cursor()) as cur:
-#        cur.execute(f"""exec [{schema}].[GetUnprocessedBaselineFiles]""")
-#        result=cur.fetchall()
-
-    print(result)
-
-    return None
+    return result
 
 @task
 def create_night_processing_wait_handler(parameters:dict):
@@ -155,7 +146,7 @@ with DAG(
     trigger_jupiter_process_baseline = TriggerDagRunOperator.partial(task_id="trigger_jupiter_process_baseline",
                                                                     wait_for_completion = True,
                                                                      trigger_dag_id="jupiter_process_baseline",
-                                                                    ).expand(conf=["A","B"],
+                                                                    ).expand(conf=unprocessed_baseline_files,
     )
 #     create_wait_handler = create_night_processing_wait_handler(parameters)
 #     flag_up >> create_wait_handler
