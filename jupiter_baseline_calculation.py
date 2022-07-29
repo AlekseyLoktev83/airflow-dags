@@ -97,16 +97,12 @@ def get_parameters(**kwargs):
     return parameters
 
 @task
-def get_unprocessed_baseline_files(parameters:dict):
+def get_need_recalculation_baseline(parameters:dict):
     odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
     schema = parameters["Schema"]
     converters = [(-155, handle_datetimeoffset)]
-    result = mssql_scripts.get_records(odbc_hook,sql=f"""exec [{schema}].[GetUnprocessedBaselineFiles]""",output_converters=converters)
-    
-    conf={"parent_run_id":parameters["ParentRunId"],"parent_process_date":parameters["ProcessDate"],"schema":parameters["Schema"]}
-    for item in result:
-     item.update(conf)
-    
+    result = odbc_hook.get_first(f"""SELECT COUNT([Id]) AS Quantity FROM [{schema}].[BaseLine] WHERE [NeedProcessing] = 1""")
+    print(odbc_hook.get_cursor().description)
     return result
 
 with DAG(
@@ -119,7 +115,7 @@ with DAG(
 ) as dag:
 # Get dag parameters from vault    
     parameters = get_parameters()
-#     unprocessed_baseline_files = get_unprocessed_baseline_files(parameters)
+#     need_recalculation_baseline = get_need_recalculation_baseline(parameters)
     
 #     trigger_jupiter_process_baseline = TriggerDagRunOperator.partial(task_id="trigger_jupiter_process_baseline",
 #                                                                     wait_for_completion = True,
