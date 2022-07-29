@@ -10,7 +10,7 @@ from cloud_scripts.custom_dataproc import  DataprocCreatePysparkJobOperator
 from airflow.models import Variable
 from airflow.operators.bash import BashOperator
 from airflow.operators.dummy import DummyOperator
-from airflow.operators.python import PythonOperator, BranchPythonOperator
+from airflow.operators.python import PythonOperator, BranchPythonOperator, ShortCircuitOperator
 # from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from cloud_scripts.trigger_dagrun import TriggerDagRunOperator
 from airflow.utils.task_group import TaskGroup
@@ -116,12 +116,15 @@ with DAG(
 ) as dag:
 # Get dag parameters from vault    
     parameters = get_parameters()
+    
     need_recalculation_baseline = get_need_recalculation_baseline(parameters)
-    check_siso_baseline_calculation = BranchPythonOperator(
+    
+    check_siso_baseline_calculation = ShortCircuitOperator(
         task_id='check_siso_baseline_calculation',
         python_callable=_check_siso_baseline_calculation,
         op_kwargs={'input': need_recalculation_baseline},
     )
+    
     dummy_follow = DummyOperator(
             task_id='dummy_follow',
         )
