@@ -128,13 +128,13 @@ def get_records(odbc_hook, sql, parameters=None, output_converters=[]):
         
 def get_first(odbc_hook, sql, parameters=None):
     """
-        Executes the sql and returns the first resulting row.
+        Executes the sql and returns the first resulting row as dict.
 
         :param sql: the sql statement to be executed (str) or a list of
             sql statements to execute
         :param parameters: The parameters to render the SQL query with.
     """
-    with closing(self.get_conn()) as conn:
+    with closing(odbc_hook.get_conn()) as conn:
         with closing(conn.cursor()) as cur:
             if parameters is not None:
               cur.execute(sql, parameters)
