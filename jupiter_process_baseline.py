@@ -126,7 +126,7 @@ def create_night_processing_wait_handler(parameters:dict):
 
 @task
 def generate_upload_script(parameters:dict):
-    query = mssql_scripts.generate_db_schema_query(white_list=[f'{parameters["Schema"]}.BaseLine'], black_list=parameters['BlackList'])
+    query = mssql_scripts.generate_db_schema_query(white_list=f'{parameters["Schema"]}.BaseLine', black_list=parameters['BlackList'])
     odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
     
     db_schema_df = odbc_hook.get_pandas_df(query)
