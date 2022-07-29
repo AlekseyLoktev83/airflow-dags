@@ -135,6 +135,11 @@ def generate_baseline_upload_script(parameters:dict):
 
     return script  
 
+@task
+def create_child_dag_config(parameters:dict):
+    conf={"parent_run_id":parameters["ParentRunId"],"parent_process_date":parameters["ProcessDate"],"schema":parameters["Schema"]}
+    return conf
+
 with DAG(
     dag_id='jupiter_process_baseline',
     schedule_interval=None,
@@ -145,6 +150,7 @@ with DAG(
 ) as dag:
 # Get dag parameters from vault    
     parameters = get_parameters()
+    child_dag_config = create_child_dag_config(parameters)
     baseline_upload_script = generate_baseline_upload_script(parameters)
     
     clear_old_baseline = BashOperator(
@@ -160,7 +166,20 @@ with DAG(
 #     TODO: replace to sftp file download
     copy_baseline_to_hdfs=DummyOperator(task_id='copy_baseline_to_hdfs)
     
-    baseline_upload_script >> clear_old_baseline >> [copy_baseline_to_hdfs, copy_baseline_from_source]
+    trigger_jupiter_input_baseline_processing = TriggerDagRunOperator(
+        task_id="trigger_jupiter_input_baseline_processing",
+        trigger_dag_id="jupiter_input_baseline_processing",  
+        conf='{{ti.xcom_pull(task_ids="create_child_dag_config")}}',
+        wait_for_completion = True,
+    )                                      
+    
+    trigger_jupiter_update_baseline = TriggerDagRunOperator(
+        task_id="trigger_jupiter_update_baseline",
+        trigger_dag_id="jupiter_update_baseline",  
+        conf='{{ti.xcom_pull(task_ids="create_child_dag_config")}}',
+        wait_for_completion = True,
+    )      
+    child_dag_config >> baseline_upload_script >> clear_old_baseline >> [copy_baseline_to_hdfs, copy_baseline_from_source] >> trigger_jupiter_input_baseline_processing >> trigger_jupiter_update_baseline
     
 #     unprocessed_baseline_files = get_unprocessed_baseline_files(parameters)
     
