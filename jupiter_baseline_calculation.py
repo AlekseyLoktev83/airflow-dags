@@ -115,7 +115,7 @@ with DAG(
 ) as dag:
 # Get dag parameters from vault    
     parameters = get_parameters()
-#     need_recalculation_baseline = get_need_recalculation_baseline(parameters)
+    need_recalculation_baseline = get_need_recalculation_baseline(parameters)
     
 #     trigger_jupiter_process_baseline = TriggerDagRunOperator.partial(task_id="trigger_jupiter_process_baseline",
 #                                                                     wait_for_completion = True,
