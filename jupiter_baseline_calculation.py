@@ -104,7 +104,21 @@ def get_need_recalculation_baseline(parameters:dict):
     return result
 
 def _check_siso_baseline_calculation(**kwargs):
-    return kwargs['input']['Quantity'] > 0 
+    return kwargs['input']['Quantity'] > 0
+
+@task
+def si_baseline_calculation(parameters:dict):
+    odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
+    schema = parameters["Schema"]
+    result = odbc_hook.run(f"""exec [{schema}].[SI_Calculation]""")
+    return result
+
+@task
+def so_baseline_calculation(parameters:dict):
+    odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
+    schema = parameters["Schema"]
+    result = odbc_hook.run(f"""exec [{schema}].[SO_Calculation]""")
+    return result
 
 with DAG(
     dag_id='jupiter_baseline_calculation',
@@ -125,28 +139,10 @@ with DAG(
         op_kwargs={'input': need_recalculation_baseline},
     )
     
-    dummy_follow = DummyOperator(
-            task_id='dummy_follow',
-        )
+    si_baseline = si_baseline_calculation(parameters)    
+    so_baseline = so_baseline_calculation(parameters)  
     
-    check_siso_baseline_calculation >> dummy_follow
+    check_siso_baseline_calculation >> si_baseline >> so_baseline
 
     
-#     trigger_jupiter_process_baseline = TriggerDagRunOperator.partial(task_id="trigger_jupiter_process_baseline",
-#                                                                     wait_for_completion = True,
-#                                                                      trigger_dag_id="jupiter_process_baseline",
-#                                                                     ).expand(conf=unprocessed_baseline_files)
-    
-#     trigger_jupiter_baseline_calculation = TriggerDagRunOperator(
-#         task_id="trigger_jupiter_baseline_calculation",
-#         trigger_dag_id="jupiter_baseline_calculation",  
-#         conf={
-#             'parent_run_id':'{{ti.xcom_pull(task_ids="get_parameters",key="ParentRunId")}}',
-#             'parent_process_date':'{{ti.xcom_pull(task_ids="get_parameters",key="ProcessDate")}}',
-#             'schema':'{{ti.xcom_pull(task_ids="get_parameters",key="Schema")}}'
-#         },
-#         wait_for_completion = True,
-#         trigger_rule=TriggerRule.ALL_DONE
-#     )  
 
-#     trigger_jupiter_process_baseline >> trigger_jupiter_baseline_calculation
