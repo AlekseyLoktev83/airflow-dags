@@ -157,8 +157,10 @@ with DAG(
                                  do_xcom_push=True,
                                  bash_command=baseline_upload_script,
                                 )
+#     TODO: replace to sftp file download
+    copy_baseline_to_hdfs=DummyOperator(task_id='copy_baseline_to_hdfs)
     
-    baseline_upload_script >> clear_old_baseline >> copy_baseline_from_source
+    baseline_upload_script >> clear_old_baseline >> [copy_baseline_to_hdfs, copy_baseline_from_source]
     
 #     unprocessed_baseline_files = get_unprocessed_baseline_files(parameters)
     
