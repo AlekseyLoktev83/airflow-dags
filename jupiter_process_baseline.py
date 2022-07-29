@@ -108,10 +108,10 @@ def get_unprocessed_baseline_files(parameters:dict):
     return result
 
 @task
-def create_night_processing_wait_handler(parameters:dict):
+def complete_filebuffer_status_sp(parameters:dict):
     odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
     schema = parameters["Schema"]
-    result = odbc_hook.run(sql=f"""exec [{schema}].[CreateNightProcessingWaitHandler]""")
+    result = odbc_hook.run(sql=f"""exec [{schema}].[UpdateFileBufferStatus] ? ? ? """, parameters=[])
     print(result)
 
     return result
@@ -181,11 +181,4 @@ with DAG(
     )      
     child_dag_config >> baseline_upload_script >> clear_old_baseline >> [copy_baseline_to_hdfs, copy_baseline_from_source] >> trigger_jupiter_input_baseline_processing >> trigger_jupiter_update_baseline
     
-#     unprocessed_baseline_files = get_unprocessed_baseline_files(parameters)
-    
-   
-#     trigger_jupiter_process_baseline = TriggerDagRunOperator.partial(task_id="trigger_jupiter_process_baseline",
-#                                                                     wait_for_completion = True,
-#                                                                      trigger_dag_id="jupiter_process_baseline",
-#                                                                     ).expand(conf=["A","B"],
-#     )
+
