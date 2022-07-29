@@ -154,10 +154,18 @@ with DAG(
 # Get dag parameters from vault    
     parameters = get_parameters()
     baseline_upload_script = generate_baseline_upload_script(parameters)
+    
+    clear_old_baseline = BashOperator(
+        task_id='clear_old_baseline',
+        bash_command='hadoop dfs -rm -r {{parameters["UploadPath"]}}/{{parameters["Schema"]}}/{{parameters["EntityName"]}}',
+          )
+    
     copy_baseline_from_source = BashOperator(task_id="copy_baseline_from_source",
                                  do_xcom_push=True,
                                  bash_command=baseline_upload_script,
                                 )
+    
+    clear_old_baseline >> copy_baseline_from_source
     
 #     unprocessed_baseline_files = get_unprocessed_baseline_files(parameters)
     
