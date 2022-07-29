@@ -93,7 +93,7 @@ def get_parameters(**kwargs):
                   "Schema":schema,
                   "ParentRunId":parent_run_id,
                   }
-    print(parameters)
+
     return parameters
 
 @task
@@ -102,6 +102,9 @@ def get_need_recalculation_baseline(parameters:dict):
     schema = parameters["Schema"]
     result = mssql_scripts.get_first(odbc_hook,f"""SELECT COUNT([Id]) AS Quantity FROM [{schema}].[BaseLine] WHERE [NeedProcessing] = 1""")
     return result
+
+def _check_siso_baseline_calculation(**kwargs):
+    return ['dummy_follow'] if kwargs['input']['Quantity'] > 0 
 
 with DAG(
     dag_id='jupiter_baseline_calculation',
@@ -114,6 +117,17 @@ with DAG(
 # Get dag parameters from vault    
     parameters = get_parameters()
     need_recalculation_baseline = get_need_recalculation_baseline(parameters)
+    check_siso_baseline_calculation = BranchPythonOperator(
+        task_id='check_siso_baseline_calculation',
+        python_callable=_check_siso_baseline_calculation,
+        op_kwargs={'input': need_recalculation_baseline},
+    )
+    dummy_follow = DummyOperator(
+            task_id='dummy_follow',
+        )
+    
+    check_siso_baseline_calculation >> dummy_follow
+
     
 #     trigger_jupiter_process_baseline = TriggerDagRunOperator.partial(task_id="trigger_jupiter_process_baseline",
 #                                                                     wait_for_completion = True,
