@@ -16,7 +16,6 @@ from cloud_scripts.trigger_dagrun import TriggerDagRunOperator
 from airflow.utils.task_group import TaskGroup
 from airflow.hooks.base_hook import BaseHook
 from airflow.providers.hashicorp.hooks.vault import VaultHook
-from airflow.providers.http.operators.http import SimpleHttpOperator
 
 import uuid
 from io import StringIO
@@ -41,15 +40,6 @@ S3_BUCKET_NAME_FOR_JOB_LOGS = 'jupiter-app-test-storage'
 BCP_SEPARATOR = '0x01'
 CSV_SEPARATOR = '\u0001'
 
-
-date = '{{ execution_date }}'
-request_body = {
-  "execution_date": date
-}
-json_body = json.dumps(request_body)
-
-
-
 def separator_convert_hex_to_string(sep):
     sep_map = {'0x01':'\x01'}
     return sep_map.get(sep, sep)
@@ -67,8 +57,9 @@ def get_parameters(**kwargs):
     parent_process_date = dag_run.conf.get('parent_process_date')
     process_date = parent_process_date if parent_process_date else ds
     execution_date = kwargs['execution_date'].strftime("%Y/%m/%d")
-    parent_run_id = dag_run.conf.get('parent_run_id')
-    run_id = urllib.parse.quote_plus(parent_run_id) if parent_run_id else urllib.parse.quote_plus(kwargs['run_id'])
+    
+    parent_run_id = dag_run.conf.get('parent_run_id') if dag_run.conf.get('parent_run_id') else kwargs['run_id']
+    run_id = urllib.parse.quote_plus(parent_run_id)
     
     schema = dag_run.conf.get('schema')
     upload_date = kwargs['logical_date'].strftime("%Y-%m-%d %H:%M:%S")
@@ -100,6 +91,7 @@ def get_parameters(**kwargs):
                   "ProcessDate":process_date,
                   "MaintenancePath":"{}{}".format(raw_path,"/#MAINTENANCE/"),
                   "Schema":schema,
+                  "ParentRunId":parent_run_id,
                   }
     print(parameters)
     return parameters
@@ -110,17 +102,12 @@ def get_unprocessed_baseline_files(parameters:dict):
     schema = parameters["Schema"]
     converters = [(-155, handle_datetimeoffset)]
     result = mssql_scripts.get_records(odbc_hook,sql=f"""exec [{schema}].[GetUnprocessedBaselineFiles]""",output_converters=converters)
+    
+    conf={"parent_run_id":parameters["ParentRunId"],"parent_process_date":parameters["ProcessDate"],"schema":parameters["Schema"]},
+    for item in resultt:
+    item.update(conf)
+    
     return result
-
-@task
-def create_night_processing_wait_handler(parameters:dict):
-    odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
-    schema = parameters["Schema"]
-    result = odbc_hook.run(sql=f"""exec [{schema}].[CreateNightProcessingWaitHandler]""")
-    print(result)
-
-    return result
-
 
 with DAG(
     dag_id='jupiter_baseline_dispatcher',
@@ -134,19 +121,9 @@ with DAG(
     parameters = get_parameters()
     unprocessed_baseline_files = get_unprocessed_baseline_files(parameters)
     
-#     api_trigger_dependent_dag = SimpleHttpOperator.partial(
-#         task_id="api_trigger_dependent_dag",
-#         http_conn_id='default_http',
-#         endpoint='/api/v1/dags/jupiter_raw_qc2/dagRuns',
-#         method='POST',
-#         headers={'Content-Type': 'application/json'},).expand(
-#         data=[json_body,json_body],
-#     )
-    
     trigger_jupiter_process_baseline = TriggerDagRunOperator.partial(task_id="trigger_jupiter_process_baseline",
                                                                     wait_for_completion = True,
                                                                      trigger_dag_id="jupiter_process_baseline",
                                                                     ).expand(conf=unprocessed_baseline_files,
     )
-#     create_wait_handler = create_night_processing_wait_handler(parameters)
-#     flag_up >> create_wait_handler
+
