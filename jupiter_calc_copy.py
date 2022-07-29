@@ -138,7 +138,7 @@ def generate_upload_script(prev_task, src_dir, src_file, upload_path, bcp_parame
     tmp_dst_path = f"/tmp/{EXTRACT_ENTITIES_AUTO_FILE}"
     dst_path = f"{src_dir}{EXTRACT_ENTITIES_AUTO_FILE}"
 
-#     del entities_df['Extraction']
+    del entities_df['Extraction']
     entities_df.to_csv(tmp_dst_path, index=False, sep=CSV_SEPARATOR)
     conn.upload(dst_path, tmp_dst_path)
 
