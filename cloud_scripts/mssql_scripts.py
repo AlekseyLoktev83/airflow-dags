@@ -126,4 +126,21 @@ def get_records(odbc_hook, sql, parameters=None, output_converters=[]):
              results.append(dict(zip(columns, row)))
             return results
         
+def get_first(odbc_hook, sql, parameters=None):
+    """
+        Executes the sql and returns the first resulting row.
 
+        :param sql: the sql statement to be executed (str) or a list of
+            sql statements to execute
+        :param parameters: The parameters to render the SQL query with.
+    """
+    with closing(self.get_conn()) as conn:
+        with closing(conn.cursor()) as cur:
+            if parameters is not None:
+              cur.execute(sql, parameters)
+            else:
+              cur.execute(sql)
+            
+            columns = [column[0] for column in cur.description]
+            row = cur.fetchone()
+            return dict(zip(columns, row))
