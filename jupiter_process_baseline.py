@@ -165,7 +165,7 @@ with DAG(
                                  bash_command=baseline_upload_script,
                                 )
     
-    clear_old_baseline >> copy_baseline_from_source
+    baseline_upload_script >> clear_old_baseline >> copy_baseline_from_source
     
 #     unprocessed_baseline_files = get_unprocessed_baseline_files(parameters)
     
