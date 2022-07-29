@@ -104,8 +104,8 @@ def get_unprocessed_baseline_files(parameters:dict):
     result = mssql_scripts.get_records(odbc_hook,sql=f"""exec [{schema}].[GetUnprocessedBaselineFiles]""",output_converters=converters)
     
     conf={"parent_run_id":parameters["ParentRunId"],"parent_process_date":parameters["ProcessDate"],"schema":parameters["Schema"]},
-    for item in resultt:
-    item.update(conf)
+    for item in result:
+     item.update(conf)
     
     return result
 
