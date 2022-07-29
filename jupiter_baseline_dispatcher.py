@@ -97,15 +97,19 @@ def get_parameters(**kwargs):
     return parameters
 
 @task
-def get_unprocessed_baseline_files(parameters:dict):
+def create_child_dag_config(parameters:dict):
+    conf={"parent_run_id":parameters["ParentRunId"],"parent_process_date":parameters["ProcessDate"],"schema":parameters["Schema"]}
+    return conf
+
+@task
+def get_unprocessed_baseline_files(parameters:dict, config:dict):
     odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
     schema = parameters["Schema"]
     converters = [(-155, handle_datetimeoffset)]
     result = mssql_scripts.get_records(odbc_hook,sql=f"""exec [{schema}].[GetUnprocessedBaselineFiles]""",output_converters=converters)
     
-    conf={"parent_run_id":parameters["ParentRunId"],"parent_process_date":parameters["ProcessDate"],"schema":parameters["Schema"]}
     for item in result:
-     item.update(conf)
+     item.update(config)
     
     return result
 
@@ -119,7 +123,8 @@ with DAG(
 ) as dag:
 # Get dag parameters from vault    
     parameters = get_parameters()
-    unprocessed_baseline_files = get_unprocessed_baseline_files(parameters)
+    child_dag_config = create_child_dag_config(parameters):
+    unprocessed_baseline_files = get_unprocessed_baseline_files(parameters,child_dag_config)
     
     trigger_jupiter_process_baseline = TriggerDagRunOperator.partial(task_id="trigger_jupiter_process_baseline",
                                                                     wait_for_completion = True,
@@ -129,11 +134,7 @@ with DAG(
     trigger_jupiter_baseline_calculation = TriggerDagRunOperator(
         task_id="trigger_jupiter_baseline_calculation",
         trigger_dag_id="jupiter_baseline_calculation",  
-        conf={
-            'parent_run_id':'run_iddddddddddddddddddddd',
-            'parent_process_date':'{{ti.xcom_pull(task_ids="get_parameters",key="ProcessDate")}}',
-            'schema':'{{ti.xcom_pull(task_ids="get_parameters",key="Schema")}}'
-        },
+        conf=child_dag_config,
         wait_for_completion = True,
         trigger_rule=TriggerRule.ALL_DONE
     )  
