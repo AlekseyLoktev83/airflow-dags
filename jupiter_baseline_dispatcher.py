@@ -123,7 +123,7 @@ with DAG(
 ) as dag:
 # Get dag parameters from vault    
     parameters = get_parameters()
-    child_dag_config = create_child_dag_config(parameters):
+    child_dag_config = create_child_dag_config(parameters)
     unprocessed_baseline_files = get_unprocessed_baseline_files(parameters,child_dag_config)
     
     trigger_jupiter_process_baseline = TriggerDagRunOperator.partial(task_id="trigger_jupiter_process_baseline",
