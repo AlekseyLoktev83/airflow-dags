@@ -133,10 +133,10 @@ def generate_upload_script(parameters:dict):
 #     print(db_schema_df.to_markdown())
     db_schema_buf = StringIO()
     db_schema_df.to_csv(db_schema_buf, index=False, sep=CSV_SEPARATOR)
-    print(db_schema_buf.getvalue())
+    db_schema_text = db_schema_buf.getvalue()
       
     entities_df = mssql_scripts.generate_table_select_query(
-        parameters["CurrentUploadDate"], parameters["LastUploadDate"], db_schema_buf)
+        parameters["CurrentUploadDate"], parameters["LastUploadDate"], StringIO(db_schema_text))
     entities_json = json.loads(entities_df.to_json(orient="records"))
 
     return entities_json  
