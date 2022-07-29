@@ -104,7 +104,7 @@ def get_need_recalculation_baseline(parameters:dict):
     return result
 
 def _check_siso_baseline_calculation(**kwargs):
-    return ['dummy_follow'] if kwargs['input']['Quantity'] > 0 else None
+    return kwargs['input']['Quantity'] > 0 
 
 with DAG(
     dag_id='jupiter_baseline_calculation',
