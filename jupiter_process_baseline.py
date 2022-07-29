@@ -41,15 +41,7 @@ S3_BUCKET_NAME_FOR_JOB_LOGS = 'jupiter-app-test-storage'
 BCP_SEPARATOR = '0x01'
 CSV_SEPARATOR = '\u0001'
 TAGS=["jupiter", "baseline", "dev"]
-
-
-date = '{{ execution_date }}'
-request_body = {
-  "execution_date": date
-}
-json_body = json.dumps(request_body)
-
-
+BASELINE_ENTITY_NAME='BaseLine'
 
 def separator_convert_hex_to_string(sep):
     sep_map = {'0x01':'\x01'}
@@ -126,7 +118,7 @@ def create_night_processing_wait_handler(parameters:dict):
 
 @task
 def generate_baseline_upload_script(parameters:dict):
-    query = mssql_scripts.generate_db_schema_query(white_list=f'{parameters["Schema"]}.BaseLine', black_list=parameters['BlackList'])
+    query = mssql_scripts.generate_db_schema_query(white_list=f'{parameters["Schema"]}.{BASELINE_ENTITY_NAME}', black_list=parameters['BlackList'])
     odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
     
     db_schema_df = odbc_hook.get_pandas_df(query)
@@ -157,7 +149,8 @@ with DAG(
     
     clear_old_baseline = BashOperator(
         task_id='clear_old_baseline',
-        bash_command='hadoop dfs -rm -r {{ti.xcom_pull(task_ids="get_parameters",key="UploadPath")}}/{{ti.xcom_pull(task_ids="get_parameters",key="Schema")}}/{{ti.xcom_pull(task_ids="get_parameters",key="EntityName")}}',
+        bash_command='hadoop dfs -rm -r {{ti.xcom_pull(task_ids="get_parameters",key="UploadPath")}}{{ti.xcom_pull(task_ids="get_parameters",key="Schema")}}/{{params.EntityName}} ',
+        params={'EntityName': BASELINE_ENTITY_NAME},
           )
     
     copy_baseline_from_source = BashOperator(task_id="copy_baseline_from_source",
