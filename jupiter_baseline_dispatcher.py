@@ -126,12 +126,12 @@ with DAG(
                                                                      trigger_dag_id="jupiter_process_baseline",
                                                                     ).expand(conf=unprocessed_baseline_files)
     
-#     trigger_jupiter_baseline_calculation = TriggerDagRunOperator(
-#         task_id="trigger_jupiter_baseline_calculation",
-#         trigger_dag_id="jupiter_baseline_calculation",  
-#         conf={"parent_run_id":"{{parameters["ParentRunId"]}}","parent_process_date":"{{parameters["ProcessDate"]}}","schema":"{{parameters["Schema"]}}"},
-#         wait_for_completion = True,
-#         trigger_rule=TriggerRule.ALL_DONE
-#     )  
+    trigger_jupiter_baseline_calculation = TriggerDagRunOperator(
+        task_id="trigger_jupiter_baseline_calculation",
+        trigger_dag_id="jupiter_baseline_calculation",  
+        conf={"parent_run_id":"{{parameters["ParentRunId"]}}","parent_process_date":"{{parameters["ProcessDate"]}}","schema":"{{parameters["Schema"]}}"},
+        wait_for_completion = True,
+        trigger_rule=TriggerRule.ALL_DONE
+    )  
 
-#     trigger_jupiter_process_baseline >> trigger_jupiter_baseline_calculation
+    trigger_jupiter_process_baseline >> trigger_jupiter_baseline_calculation
