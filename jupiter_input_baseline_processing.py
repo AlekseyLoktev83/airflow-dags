@@ -42,6 +42,7 @@ BCP_SEPARATOR = '0x01'
 CSV_SEPARATOR = '\u0001'
 TAGS=["jupiter", "baseline", "dev"]
 BASELINE_ENTITY_NAME='BaseLine'
+PARAMETERS_FILE = 'PARAMETERS.csv'
 
 def separator_convert_hex_to_string(sep):
     sep_map = {'0x01':'\x01'}
