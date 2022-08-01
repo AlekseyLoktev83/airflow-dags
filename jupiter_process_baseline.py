@@ -149,7 +149,7 @@ def generate_baseline_upload_script(parameters:dict):
 
 @task
 def create_child_dag_config(parameters:dict):
-    conf={"parent_run_id":parameters["ParentRunId"],"parent_process_date":parameters["ProcessDate"],"schema":parameters["Schema"]}
+    conf={"parent_run_id":parameters["ParentRunId"],"parent_process_date":parameters["ProcessDate"],"schema":parameters["Schema"],"FileName":parameters["FileName"]}
     return conf
 
 with DAG(
