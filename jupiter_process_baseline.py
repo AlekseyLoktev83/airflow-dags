@@ -66,6 +66,7 @@ def get_parameters(**kwargs):
     schema = dag_run.conf.get('schema')
     upload_date = kwargs['logical_date'].strftime("%Y-%m-%d %H:%M:%S")
     file_name = dag_run.conf.get('FileName')
+    create_date = dag_run.conf.get('CreateDate')
 
     raw_path = Variable.get("RawPath")
     process_path = Variable.get("ProcessPath")
@@ -95,6 +96,7 @@ def get_parameters(**kwargs):
                   "MaintenancePath":"{}{}".format(raw_path,"/#MAINTENANCE/"),
                   "Schema":schema,
                   "FileName":file_name,
+                  "CreateDate":create_date,
                   }
     print(parameters)
     return parameters
@@ -111,7 +113,7 @@ def get_unprocessed_baseline_files(parameters:dict):
 def complete_filebuffer_status_sp(parameters:dict):
     odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
     schema = parameters["Schema"]
-    result = odbc_hook.run(sql=f"""exec [{schema}].[UpdateFileBufferStatus] ? ? ? """, parameters=[])
+    result = odbc_hook.run(sql=f"""exec [{schema}].[UpdateFileBufferStatus] ? ? ? """, parameters=[parameters["CreateDate"],"BASELINE_APOLLO",1])
     print(result)
 
     return result
