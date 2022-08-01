@@ -95,6 +95,7 @@ def get_parameters(**kwargs):
                   "ProcessDate":process_date,
                   "MaintenancePath":"{}{}".format(raw_path,"/#MAINTENANCE/"),
                   "Schema":schema,
+                  "ParentRunId":parent_run_id,
                   "FileName":file_name,
                   "CreateDate":create_date,
                   }
