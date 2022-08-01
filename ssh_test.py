@@ -12,6 +12,6 @@ with DAG(
     start_date=pendulum.datetime(2021, 1, 1, tz="UTC"),
     catchup=False,
 ) as dag:
-  SSHOperator(
+  ssh_task=SSHOperator(
     task_id='list_ssh',ssh_conn_id='jupiter_dev_ssh',command='ls . ')
 
