@@ -97,10 +97,23 @@ def get_parameters(**kwargs):
     print(parameters)
     return parameters
 
-@task
-def create_child_dag_config(parameters:dict):
-    conf={"parent_run_id":parameters["ParentRunId"],"parent_process_date":parameters["ProcessDate"],"schema":parameters["Schema"]}
-    return conf
+@task(task_id='save_parameters')
+def save_parameters(parameters:dict):
+    parameters_file_path=f'{parameters["MaintenancePathPrefix"]}{PARAMETERS_FILE}'
+
+    temp_file_path =f'/tmp/{PARAMETERS_FILE}'
+    df = pd.DataFrame(parameters.items(),columns=['Key', 'Value'])
+    df.to_csv(temp_file_path, index=False, sep=CSV_SEPARATOR)
+    
+    hdfs_hook = WebHDFSHook(HDFS_CONNECTION_NAME)
+    conn = hdfs_hook.get_conn()
+    conn.upload(parameters_file_path,temp_file_path,overwrite=True)
+    
+    
+    args = json.dumps({"MaintenancePathPrefix":parameters["MaintenancePathPrefix"],"ProcessDate":parameters["ProcessDate"]})
+                                                                            
+                                                                                            
+    return [args]
 
 with DAG(
     dag_id='jupiter_input_baseline_processing',
@@ -112,3 +125,24 @@ with DAG(
 ) as dag:
 # Get dag parameters from vault    
     parameters = get_parameters()
+    save_params = save_parameters(parameters)
+    
+    pyspark_job_qc = DataprocCreatePysparkJobOperator(
+        task_id='input_baseline_processing',
+        cluster_id='c9qc9m3jccl8v7vigq10',
+        main_python_file_uri='s3a://jupiter-app-test-storage/src/dataproc/JUPITER/JUPITER_RAW_QC.py',
+        python_file_uris=[
+            's3a://jupiter-app-test-storage/src/dataproc/SHARED/EXTRACT_SETTING.py',
+            's3a://jupiter-app-test-storage/src/dataproc/SHARED/QUALITYCHECK_HELPER.py',
+        ],
+        file_uris=[
+            's3a://data-proc-public/jobs/sources/data/config.json',
+        ],
+        args=save_params,
+        properties={
+            'spark.submit.deployMode': 'cluster'
+        },
+        packages=['org.slf4j:slf4j-simple:1.7.30'],
+        repositories=['https://repo1.maven.org/maven2'],
+        exclude_packages=['com.amazonaws:amazon-kinesis-client'],
+    )
