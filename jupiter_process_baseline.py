@@ -123,7 +123,7 @@ def complete_filebuffer_status_sp(parameters:dict):
 def error_filebuffer_status_sp(parameters:dict):
     odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
     schema = parameters["Schema"]
-    result = odbc_hook.run(sql=f"""exec [{schema}].[UpdateFileBufferStatus] @Success = ? ,@InterfaceName = ?,  @CreateDate = ? """, parameters=[parameters["CreateDate"],"BASELINE_APOLLO",0])
+    result = odbc_hook.run(sql=f"""exec [{schema}].[UpdateFileBufferStatus] @Success = ? ,@InterfaceName = ?,  @CreateDate = ? """, parameters=(0,"BASELINE_APOLLO", parameters["CreateDate"]))
     print(result)
 
     return result
