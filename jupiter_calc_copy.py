@@ -71,7 +71,7 @@ def get_parameters(**kwargs):
     output_path = Variable.get("OutputPath")
     white_list = Variable.get("PromoCalculationEntites", default_var=None)
     black_list = Variable.get("BlackList", default_var=None)
-    upload_path = f'{raw_path}/{execution_date}/'
+    upload_path = f'{raw_path}/SOURCES/JUPITER/'
     system_name = Variable.get("SystemName")
     last_upload_date = Variable.get("LastUploadDate")
 
@@ -149,8 +149,8 @@ def generate_upload_script(prev_task, src_dir, src_file, upload_path, bcp_parame
 def generate_bcp_script(upload_path, bcp_parameters, entities):
     scripts = []
     for entity in entities:
-        script = 'cp -r /tmp/data/src/. ~/ && chmod +x ~/exec_query.sh && ~/exec_query.sh "{}" {}{}/{}/{}/{}.csv "{}" {} {} "{}" '.format(entity["Extraction"].replace("\'\'", "\'\\'").replace(
-            "\n", " "), upload_path, entity["Schema"], entity["EntityName"], entity["Method"], entity["EntityName"], bcp_parameters, BCP_SEPARATOR, entity["Schema"], entity["Columns"].replace(",", separator_convert_hex_to_string(BCP_SEPARATOR)))
+        script = 'cp -r /tmp/data/src/. ~/ && chmod +x ~/exec_query.sh && ~/exec_query.sh "{}" {}{}/{}.csv "{}" {} {} "{}" '.format(entity["Extraction"].replace("\'\'", "\'\\'").replace(
+            "\n", " "), upload_path, entity["EntityName"], entity["EntityName"], bcp_parameters, BCP_SEPARATOR, entity["Schema"], entity["Columns"].replace(",", separator_convert_hex_to_string(BCP_SEPARATOR)))
         scripts.append(script)
 
     return scripts
@@ -191,7 +191,7 @@ def start_monitoring_detail(dst_dir, upload_path, runid, entities):
         df = pd.DataFrame([{'PipelineRunId': runid,
                            'Schema': schema,
                             'EntityName': entity_name,
-                            'TargetPath': f'{upload_path}{schema}/{entity_name}/{method}/{entity_name}.csv',
+                            'TargetPath': f'{upload_path}/{entity_name}/{entity_name}.csv',
                             'TargetFormat': 'CSV',
                             'StartDate': pendulum.now(),
                             'Duration': 0,
