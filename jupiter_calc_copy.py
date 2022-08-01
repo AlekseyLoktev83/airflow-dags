@@ -191,7 +191,7 @@ def start_monitoring_detail(dst_dir, upload_path, runid, entities):
         df = pd.DataFrame([{'PipelineRunId': runid,
                            'Schema': schema,
                             'EntityName': entity_name,
-                            'TargetPath': f'{upload_path}/{entity_name}/{entity_name}.csv',
+                            'TargetPath': f'{upload_path}{entity_name}/{entity_name}.csv',
                             'TargetFormat': 'CSV',
                             'StartDate': pendulum.now(),
                             'Duration': 0,
