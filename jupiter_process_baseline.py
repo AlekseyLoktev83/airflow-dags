@@ -109,11 +109,20 @@ def get_unprocessed_baseline_files(parameters:dict):
     result = mssql_scripts.get_records(odbc_hook,sql=f"""exec [{schema}].[GetUnprocessedBaselineFiles]""",output_converters=converters)
     return result
 
-@task
+@task(trigger_rule=TriggerRule.ALL_SUCCESS)
 def complete_filebuffer_status_sp(parameters:dict):
     odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
     schema = parameters["Schema"]
     result = odbc_hook.run(sql=f"""exec [{schema}].[UpdateFileBufferStatus] ? ? ? """, parameters=[parameters["CreateDate"],"BASELINE_APOLLO",1])
+    print(result)
+
+    return result
+
+@task(trigger_rule=TriggerRule.ALL_FAILED)
+def error_filebuffer_status_sp(parameters:dict):
+    odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
+    schema = parameters["Schema"]
+    result = odbc_hook.run(sql=f"""exec [{schema}].[UpdateFileBufferStatus] ? ? ? """, parameters=[parameters["CreateDate"],"BASELINE_APOLLO",0])
     print(result)
 
     return result
@@ -180,7 +189,11 @@ with DAG(
         trigger_dag_id="jupiter_update_baseline",  
         conf='{{ti.xcom_pull(task_ids="create_child_dag_config")}}',
         wait_for_completion = True,
-    )      
-    child_dag_config >> baseline_upload_script >> clear_old_baseline >> [copy_baseline_to_hdfs, copy_baseline_from_source] >> trigger_jupiter_input_baseline_processing >> trigger_jupiter_update_baseline
+    )
+    
+    complete_filebuffer_status = complete_filebuffer_status_sp(parameters)
+    error_filebuffer_status = error_filebuffer_status_sp(parameters)
+    
+    child_dag_config >> baseline_upload_script >> clear_old_baseline >> [copy_baseline_to_hdfs, copy_baseline_from_source] >> trigger_jupiter_input_baseline_processing >> trigger_jupiter_update_baseline >> [complete_filebuffer_status,error_filebuffer_status]
     
 
