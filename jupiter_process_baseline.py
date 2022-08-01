@@ -114,7 +114,7 @@ def get_unprocessed_baseline_files(parameters:dict):
 def complete_filebuffer_status_sp(parameters:dict):
     odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
     schema = parameters["Schema"]
-    result = odbc_hook.run(sql=f"""exec [{schema}].[UpdateFileBufferStatus] ? ? ? """, parameters=[parameters["CreateDate"],"BASELINE_APOLLO",1])
+    result = odbc_hook.run(sql=f"""exec [{schema}].[UpdateFileBufferStatus] ? ? ? """, parameters=(parameters["CreateDate"],"BASELINE_APOLLO",1))
     print(result)
 
     return result
