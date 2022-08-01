@@ -119,7 +119,7 @@ def complete_filebuffer_status_sp(parameters:dict):
 
     return result
 
-@task(trigger_rule=TriggerRule.ALL_FAILED)
+@task(trigger_rule=TriggerRule.ONE_FAILED)
 def error_filebuffer_status_sp(parameters:dict):
     odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
     schema = parameters["Schema"]
