@@ -18,7 +18,6 @@ with DAG(
    sftp_get = SFTPOperator(task_id='sftp_get',
                            ssh_conn_id='ssh_jupiter',
                            operation=SFTPOperation.GET,
-                           ssh_conn_id="ssh_default",
                            local_filepath="/tmp/YA_DATAMART4.csv",
                            remote_filepath="/home/smartadmin/YA_DATAMART4.csv",
                            create_intermediate_dirs=True,
