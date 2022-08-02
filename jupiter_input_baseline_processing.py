@@ -111,7 +111,7 @@ def save_parameters(parameters:dict):
     conn.upload(parameters_file_path,temp_file_path,overwrite=True)
     
     
-    args = json.dumps({"MaintenancePathPrefix":parameters["MaintenancePathPrefix"],"ProcessDate":parameters["ProcessDate"]})
+    args = json.dumps({"MaintenancePathPrefix":parameters["MaintenancePathPrefix"],"ProcessDate":parameters["ProcessDate"],"FileName":parameters["FileName"]})
                                                                             
                                                                                             
     return [args]
@@ -131,10 +131,10 @@ with DAG(
     pyspark_job_qc = DataprocCreatePysparkJobOperator(
         task_id='input_baseline_processing',
         cluster_id='c9qc9m3jccl8v7vigq10',
-        main_python_file_uri='s3a://jupiter-app-test-storage/src/dataproc/JUPITER/JUPITER_RAW_QC.py',
+        main_python_file_uri='hdfs://SRC/JUPITER/PROMO_PARAMETERS_CALCULATION/INPUT_BASELINE_PROCESSING.py',
         python_file_uris=[
-            's3a://jupiter-app-test-storage/src/dataproc/SHARED/EXTRACT_SETTING.py',
-            's3a://jupiter-app-test-storage/src/dataproc/SHARED/QUALITYCHECK_HELPER.py',
+            'hdfs://SRC/SHARED/EXTRACT_SETTING.py',
+            'hdfs://SRC/SHARED/QUALITYCHECK_HELPER.py',
         ],
         file_uris=[
             's3a://data-proc-public/jobs/sources/data/config.json',
