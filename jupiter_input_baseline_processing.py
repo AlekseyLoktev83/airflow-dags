@@ -131,10 +131,10 @@ with DAG(
     pyspark_job_qc = DataprocCreatePysparkJobOperator(
         task_id='input_baseline_processing',
         cluster_id='c9qc9m3jccl8v7vigq10',
-        main_python_file_uri='hdfs://SRC/JUPITER/PROMO_PARAMETERS_CALCULATION/INPUT_BASELINE_PROCESSING.py',
+        main_python_file_uri='hdfs:///SRC/JUPITER/PROMO_PARAMETERS_CALCULATION/INPUT_BASELINE_PROCESSING.py',
         python_file_uris=[
-            'hdfs://SRC/SHARED/EXTRACT_SETTING.py',
-            'hdfs://SRC/SHARED/QUALITYCHECK_HELPER.py',
+            'hdfs:///SRC/SHARED/EXTRACT_SETTING.py',
+            'hdfs:///SRC/SHARED/QUALITYCHECK_HELPER.py',
         ],
         file_uris=[
             's3a://data-proc-public/jobs/sources/data/config.json',
