@@ -16,5 +16,5 @@ with DAG(
 ) as dag:
     bcp_import = BashOperator(
         task_id='bcp_import',
-        bash_command="/bcp_import_src/bcp_import ",
+        bash_command="cp -r /tmp/data/src/. ~/ && chmod +x ~/bcp_import_test.sh && ~/bcp_import_test.sh ",
         )
