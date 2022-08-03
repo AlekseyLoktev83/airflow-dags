@@ -102,6 +102,15 @@ def create_child_dag_config(parameters:dict):
     conf={"parent_run_id":parameters["ParentRunId"],"parent_process_date":parameters["ProcessDate"],"schema":parameters["Schema"]}
     return conf
 
+@task
+def disable_baseline(parameters:dict):
+    odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
+    schema = parameters["Schema"]
+    result = odbc_hook.run(sql=f"""exec [{schema}].[DisableBaseLine]""")
+    print(result)
+
+    return result
+
 with DAG(
     dag_id='jupiter_update_baseline',
     schedule_interval=None,
@@ -112,3 +121,9 @@ with DAG(
 ) as dag:
 # Get dag parameters from vault    
     parameters = get_parameters()
+    dis_baseline = disable_baseline(parameters)
+    upload_baseline = BashOperator(task_id="upload_baseline",
+                                 do_xcom_push=True,
+                                 bash_command='echo TODO ',
+                                )
+    dis_baseline >>  upload_baseline
