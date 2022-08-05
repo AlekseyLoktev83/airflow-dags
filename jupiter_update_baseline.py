@@ -130,7 +130,7 @@ with DAG(
     dis_baseline = disable_baseline(parameters)
     upload_baseline = BashOperator(task_id="upload_baseline",
                                  do_xcom_push=True,
-                                 bash_command='cp -r /tmp/data/src/. ~/ && chmod +x ~/bcp_import.sh && ~/bcp_import.sh {{parameters["BaseLineOutputPath"]}}{{OUT_DIR}} \"{{parameters["Schema"]}}.TEMP_BASELINE\" "1" ',
+                                 bash_command='cp -r /tmp/data/src/. ~/ && chmod +x ~/bcp_import.sh && ~/bcp_import.sh {{parameters["BaseLineOutputPath"]}}{{params.OUT_DIR}} \"{{parameters["Schema"]}}.TEMP_BASELINE\" "1" ',
                                  params={'OUT_DIR':BASELINE_OUTPUT_DIR},  
                                 )
     dis_baseline >>  upload_baseline
