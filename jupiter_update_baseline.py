@@ -42,6 +42,8 @@ BCP_SEPARATOR = '0x01'
 CSV_SEPARATOR = '\u0001'
 TAGS=["jupiter", "baseline", "dev"]
 BASELINE_ENTITY_NAME='BaseLine'
+BASELINE_OUTPUT_DIR='BaseLine.CSV/*.csv'
+NEW_BASELINE_OUTPUT_DIR='NewBaseLine.CSV/*.csv'
 
 def separator_convert_hex_to_string(sep):
     sep_map = {'0x01':'\x01'}
@@ -75,6 +77,8 @@ def get_parameters(**kwargs):
     db_conn = BaseHook.get_connection(MSSQL_CONNECTION_NAME)
     bcp_parameters = '-S {} -d {} -U {} -P {}'.format(db_conn.host, db_conn.schema, db_conn.login, db_conn.password)
     bcp_import_parameters = f' -d -s \"DRIVER=ODBC Driver 18 for SQL Server;SERVER={db_conn.host};DATABASE={db_conn.schema};UID={db_conn.login};PWD={db_conn.password};Encrypt=no;\"'
+    baseline_output_path=f'{output_path}/BASELINE/{process_date.strftime("%Y/%m/%d")/}'
+    
     parameters = {"RawPath": raw_path,
                   "ProcessPath": process_path,
                   "OutputPath": output_path,
@@ -94,6 +98,7 @@ def get_parameters(**kwargs):
                   "FileName":file_name,
                   "CreateDate":create_date,
                   "BcpImportParameters":bcp_import_parameters,
+                  "BaseLineOutputPath":baseline_output_path,
                   }
     print(parameters)
     return parameters
@@ -125,6 +130,7 @@ with DAG(
     dis_baseline = disable_baseline(parameters)
     upload_baseline = BashOperator(task_id="upload_baseline",
                                  do_xcom_push=True,
-                                 bash_command='echo TODO ',
+                                 bash_command='cp -r /tmp/data/src/. ~/ && chmod +x ~/bcp_import.sh && ~/bcp_import.sh {{parameters["BaseLineOutputPath"]}}{{OUT_DIR}} \"{{parameters["Schema"]}}.TEMP_BASELINE\" "1" ',
+                                 params={'OUT_DIR':BASELINE_OUTPUT_DIR},  
                                 )
     dis_baseline >>  upload_baseline
