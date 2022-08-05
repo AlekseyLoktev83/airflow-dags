@@ -78,7 +78,7 @@ def get_parameters(**kwargs):
     bcp_parameters = '-S {} -d {} -U {} -P {}'.format(db_conn.host, db_conn.schema, db_conn.login, db_conn.password)
     bcp_import_parameters = f' -d -s \"DRIVER=ODBC Driver 18 for SQL Server;SERVER={db_conn.host};DATABASE={db_conn.schema};UID={db_conn.login};PWD={db_conn.password};Encrypt=no;\"'
     process_date_dir=process_date.strftime("%Y/%m/%d")
-    baseline_output_path=f'{output_path}/BASELINE/{process_date_dir}/}'
+    baseline_output_path=f'{output_path}/BASELINE/{process_date_dir}/'
     
     parameters = {"RawPath": raw_path,
                   "ProcessPath": process_path,
