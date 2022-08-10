@@ -174,11 +174,11 @@ def copy_sftp_to_hdfs(parameters:dict):
      sftp_client = ssh_client.open_sftp()
      local_folder = os.path.dirname(tmp_path)
      Path(local_folder).mkdir(parents=True, exist_ok=True)
-     sftp_client.get(sftp_path, tmp_path, overwrite=True)
+     sftp_client.get(sftp_path, tmp_path)
     
     
     conn = hdfs_hook.get_conn()
-    conn.upload(dst_path, tmp_path)
+    conn.upload(dst_path, tmp_path, overwrite=True)
 
     return True
 
