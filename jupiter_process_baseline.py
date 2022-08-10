@@ -146,9 +146,9 @@ def generate_baseline_upload_script(parameters:dict):
     entities_df = mssql_scripts.generate_table_select_query(
         parameters["CurrentUploadDate"], parameters["LastUploadDate"], StringIO(db_schema_text))
     entity_json = json.loads(entities_df.to_json(orient="records"))[0]
-    
-    script = 'cp -r /tmp/data/src/. ~/ && chmod +x ~/exec_query.sh && ~/exec_query.sh "{}" {}{}/{}/{}/{}.csv "{}" {} {} "{}" '.format(entity_json["Extraction"].replace("\'\'", "\'\\'").replace(
-            "\n", " "), parameters["UploadPath"], entity_json["Schema"], entity_json["EntityName"], entity_json["Method"], entity_json["EntityName"], parameters["BcpParameters"], BCP_SEPARATOR, entity_json["Schema"], entity_json["Columns"].replace(",", separator_convert_hex_to_string(BCP_SEPARATOR)))
+
+    script = 'cp -r /tmp/data/src/. ~/ && chmod +x ~/exec_query.sh && ~/exec_query.sh "{}" {}{}/{}.csv "{}" {} {} "{}" '.format(entity_json["Extraction"].replace("\'\'", "\'\\'").replace(
+            "\n", " "), parameters["UploadPath"], entity_json["EntityName"], entity_json["EntityName"], parameters["BcpParameters"], BCP_SEPARATOR, entity_json["Schema"], entity_json["Columns"].replace(",", separator_convert_hex_to_string(BCP_SEPARATOR)))
 
     return script  
 
@@ -197,7 +197,7 @@ with DAG(
     
     clear_old_baseline = BashOperator(
         task_id='clear_old_baseline',
-        bash_command='hadoop dfs -rm -r {{ti.xcom_pull(task_ids="get_parameters",key="UploadPath")}}{{ti.xcom_pull(task_ids="get_parameters",key="Schema")}}/{{params.EntityName}} ',
+        bash_command='hadoop dfs -rm -r {{ti.xcom_pull(task_ids="get_parameters",key="UploadPath")}}{{params.EntityName}} ',
         params={'EntityName': BASELINE_ENTITY_NAME},
           )
     
