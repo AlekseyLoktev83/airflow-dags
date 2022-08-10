@@ -9,6 +9,7 @@ from airflow.providers.sftp.operators.sftp import SFTPOperator,SFTPOperation
 from airflow.decorators import dag, task
 from airflow.providers.apache.hdfs.hooks.webhdfs import WebHDFSHook
 from airflow.providers.ssh.hooks.ssh import SSHHook
+from pathlib import Path
 
 HDFS_CONNECTION_NAME = 'webhdfs_default'
 SSH_CONNECTION_NAME = 'ssh_jupiter'
@@ -24,6 +25,7 @@ def copy_sftp_to_hdfs():
     
     with ssh_hook.get_conn() as ssh_client:
      sftp_client = ssh_client.open_sftp()
+     Path(local_folder).mkdir(parents=True, exist_ok=True)
      sftp_client.get(remote_filepath, local_filepath)
     
     
