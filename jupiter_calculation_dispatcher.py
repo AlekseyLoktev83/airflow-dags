@@ -4,12 +4,14 @@ from airflow import DAG
 from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from airflow.operators.bash import BashOperator
 
+TAGS=["jupiter", "dev"]
+
 with DAG(
     dag_id="jupiter_calculation_dispatcher",
     start_date=pendulum.datetime(2021, 1, 1, tz="UTC"),
     catchup=False,
     schedule_interval=None,
-    tags=["jupiter", "dev"],
+    tags=TAGS,
 ) as dag:
    
     trigger_jupiter_calc_copy = TriggerDagRunOperator(
