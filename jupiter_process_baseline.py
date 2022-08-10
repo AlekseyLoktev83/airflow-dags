@@ -16,6 +16,7 @@ from airflow.utils.task_group import TaskGroup
 from airflow.hooks.base_hook import BaseHook
 from airflow.providers.hashicorp.hooks.vault import VaultHook
 from airflow.providers.http.operators.http import SimpleHttpOperator
+from airflow.providers.ssh.hooks.ssh import SSHHook
 
 import uuid
 from io import StringIO
@@ -27,14 +28,15 @@ import json
 import pandas as pd
 import glob
 import os
-
 import struct
 from contextlib import closing
+from pathlib import Path
 
 
 MSSQL_CONNECTION_NAME = 'odbc_jupiter'
 HDFS_CONNECTION_NAME = 'webhdfs_default'
 VAULT_CONNECTION_NAME = 'vault_default'
+SSH_CONNECTION_NAME = 'ssh_jupiter'
 AVAILABILITY_ZONE_ID = 'ru-central1-b'
 S3_BUCKET_NAME_FOR_JOB_LOGS = 'jupiter-app-test-storage'
 BCP_SEPARATOR = '0x01'
@@ -75,6 +77,8 @@ def get_parameters(**kwargs):
     upload_path = f'{raw_path}/{execution_date}/'
     system_name = Variable.get("SystemName")
     last_upload_date = Variable.get("LastUploadDate")
+    baseline_sftp_path = Variable.get("BaselineSftpPath")
+    baseline_raw_path = f'{raw_path}/SOURCES/BASELINE/'
     
     db_conn = BaseHook.get_connection(MSSQL_CONNECTION_NAME)
     bcp_parameters = '-S {} -d {} -U {} -P {}'.format(db_conn.host, db_conn.schema, db_conn.login, db_conn.password)
@@ -97,6 +101,8 @@ def get_parameters(**kwargs):
                   "ParentRunId":parent_run_id,
                   "FileName":file_name,
                   "CreateDate":create_date,
+                  "BaselineSftpPath":baseline_sftp_path,
+                  "BaselineRawPath":baseline_raw_path,
                   }
     print(parameters)
     return parameters
@@ -151,6 +157,31 @@ def create_child_dag_config(parameters:dict):
     conf={"parent_run_id":parameters["ParentRunId"],"parent_process_date":parameters["ProcessDate"],"schema":parameters["Schema"],"FileName":parameters["FileName"]}
     return conf
 
+@task
+def copy_sftp_to_hdfs(parameters:dict):
+    file_name=parameters["FileName"]
+    baseline_sftp_path=parameters["BaselineSftpPath"]
+    baseline_raw_path=parameters["BaselineRawPath"]
+    
+    tmp_path=f'/tmp/{file_name}'
+    sftp_path=f'{baseline_sftp_path}{file_name}'
+    dst_path = f'{baseline_raw_path}{file_name}'
+    
+    ssh_hook=SSHHook(SSH_CONNECTION_NAME)
+    hdfs_hook = WebHDFSHook(HDFS_CONNECTION_NAME)
+    
+    with ssh_hook.get_conn() as ssh_client:
+     sftp_client = ssh_client.open_sftp()
+     local_folder = os.path.dirname(tmp_path)
+     Path(local_folder).mkdir(parents=True, exist_ok=True)
+     sftp_client.get(sftp_path, tmp_path, overwrite=True)
+    
+    
+    conn = hdfs_hook.get_conn()
+    conn.upload(dst_path, tmp_path)
+
+    return True
+
 with DAG(
     dag_id='jupiter_process_baseline',
     schedule_interval=None,
@@ -175,7 +206,7 @@ with DAG(
                                  bash_command=baseline_upload_script,
                                 )
 #     TODO: replace to sftp file download
-    copy_baseline_to_hdfs=DummyOperator(task_id='copy_baseline_to_hdfs')
+    copy_baseline_to_hdfs=copy_sftp_to_hdfs()
     
     trigger_jupiter_input_baseline_processing = TriggerDagRunOperator(
         task_id="trigger_jupiter_input_baseline_processing",
