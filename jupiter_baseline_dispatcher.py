@@ -39,6 +39,7 @@ AVAILABILITY_ZONE_ID = 'ru-central1-b'
 S3_BUCKET_NAME_FOR_JOB_LOGS = 'jupiter-app-test-storage'
 BCP_SEPARATOR = '0x01'
 CSV_SEPARATOR = '\u0001'
+TAGS=["jupiter", "baseline", "dev"]
 
 def separator_convert_hex_to_string(sep):
     sep_map = {'0x01':'\x01'}
@@ -118,7 +119,7 @@ with DAG(
     schedule_interval=None,
     start_date=pendulum.datetime(2021, 1, 1, tz="UTC"),
     catchup=False,
-    tags=["jupiter", "dev"],
+    tags=TAGS,
     render_template_as_native_obj=True,
 ) as dag:
 # Get dag parameters from vault    
