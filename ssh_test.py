@@ -17,8 +17,8 @@ SSH_CONNECTION_NAME = 'ssh_jupiter'
 
 @task
 def copy_sftp_to_hdfs():
-    local_filepath="/tmp/YA_DATAMART4.csv",
-    remote_filepath="/home/smartadmin/YA_DATAMART4.csv",
+    local_filepath="/tmp/YA_DATAMART4.csv"
+    remote_filepath="/home/smartadmin/YA_DATAMART4.csv"
     dst_path = '/JUPITER/RAW/SOURCES/BASELINE/YA_DATAMART4.csv'
     
     ssh_hook=SSHHook(SSH_CONNECTION_NAME)
