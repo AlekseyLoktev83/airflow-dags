@@ -74,7 +74,7 @@ def get_parameters(**kwargs):
     output_path = Variable.get("OutputPath")
     white_list = Variable.get("WhiteList",default_var=None)
     black_list = Variable.get("BlackList",default_var=None)
-    upload_path = f'{raw_path}/{execution_date}/'
+    upload_path = f'{raw_path}/SOURCES/JUPITER/'
     system_name = Variable.get("SystemName")
     last_upload_date = Variable.get("LastUploadDate")
     baseline_sftp_path = Variable.get("BaselineSftpPath")
