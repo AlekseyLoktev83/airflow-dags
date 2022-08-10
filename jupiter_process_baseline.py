@@ -205,8 +205,8 @@ with DAG(
                                  do_xcom_push=True,
                                  bash_command=baseline_upload_script,
                                 )
-#     TODO: replace to sftp file download
-    copy_baseline_to_hdfs=copy_sftp_to_hdfs()
+    
+    copy_baseline_to_hdfs=copy_sftp_to_hdfs(parameters)
     
     trigger_jupiter_input_baseline_processing = TriggerDagRunOperator(
         task_id="trigger_jupiter_input_baseline_processing",
