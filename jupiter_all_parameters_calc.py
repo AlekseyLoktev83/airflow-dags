@@ -134,8 +134,8 @@ with DAG(
         cluster_id='c9qc9m3jccl8v7vigq10',
         main_python_file_uri='hdfs:///SRC/JUPITER/PROMO_PARAMETERS_CALCULATION/PARAMETERS_CALCULATION.py	',
         python_file_uris=[
-            'hdfs:///SRC/SHARED/EXTRACT_SETTING.py',
-            'hdfs:///SRC/SHARED/SUPPORT_FUNCTIONS.py',
+            'hdfs:///SRC/JUPITER/PROMO_PARAMETERS_CALCULATION/PLAN_PARAMETERS_CALCULATION.py',
+            'hdfs:///SRC/JUPITER/PROMO_PARAMETERS_CALCULATION/ACTUAL_PARAMETERS_CALCULATION.py',
         ],
         file_uris=[
             's3a://data-proc-public/jobs/sources/data/config.json',
