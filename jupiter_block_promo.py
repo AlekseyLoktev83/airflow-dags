@@ -41,9 +41,8 @@ S3_BUCKET_NAME_FOR_JOB_LOGS = 'jupiter-app-test-storage'
 BCP_SEPARATOR = '0x01'
 CSV_SEPARATOR = '\u0001'
 TAGS=["jupiter", "promo", "dev"]
-BASELINE_ENTITY_NAME='BaseLine'
-BASELINE_OUTPUT_DIR='BaseLine.CSV/*.csv'
-NEW_BASELINE_OUTPUT_DIR='NewBaseLine.CSV/*.csv'
+
+BLOCKED_PROMO_OUTPUT_DIR='BlockedPromo.CSV/*.csv'
 
 def separator_convert_hex_to_string(sep):
     sep_map = {'0x01':'\x01'}
@@ -77,7 +76,7 @@ def get_parameters(**kwargs):
     db_conn = BaseHook.get_connection(MSSQL_CONNECTION_NAME)
     bcp_parameters = '-S {} -d {} -U {} -P {}'.format(db_conn.host, db_conn.schema, db_conn.login, db_conn.password)
     bcp_import_parameters = f'\"DRIVER=ODBC Driver 18 for SQL Server;SERVER={db_conn.host};DATABASE={db_conn.schema};UID={db_conn.login};PWD={db_conn.password};Encrypt=no;\"'
-    baseline_output_path=f'{output_path}/BASELINE/{execution_date}/'
+    blocked_promo_output_path=f'{process_path}/BlockedPromo/'
     
     parameters = {"RawPath": raw_path,
                   "ProcessPath": process_path,
@@ -98,7 +97,7 @@ def get_parameters(**kwargs):
                   "FileName":file_name,
                   "CreateDate":create_date,
                   "BcpImportParameters":bcp_import_parameters,
-                  "BaseLineOutputPath":baseline_output_path,
+                  "BlockedPromoOutputPath":blocked_promo_output_path,
                   }
     print(parameters)
     return parameters
@@ -139,8 +138,8 @@ with DAG(
     trunc_temp_blocked_promo = truncate_temp_blocked_promo(parameters)
     block_promo = BashOperator(task_id="block_promo",
                                  do_xcom_push=True,
-                                 bash_command='cp -r /tmp/data/src/. ~/ && chmod +x ~/bcp_import.sh && ~/bcp_import.sh {{ti.xcom_pull(task_ids="get_parameters",key="BaseLineOutputPath")}}{{params.OUT_DIR}} {{ti.xcom_pull(task_ids="get_parameters",key="BcpImportParameters")}} \"{{ti.xcom_pull(task_ids="get_parameters",key="Schema")}}.TEMP_BLOCKED_PROMO\" "1" ',
-                                 params={'OUT_DIR':BASELINE_OUTPUT_DIR},  
+                                 bash_command='cp -r /tmp/data/src/. ~/ && chmod +x ~/bcp_import.sh && ~/bcp_import.sh {{ti.xcom_pull(task_ids="get_parameters",key="BlockedPromoOutputPath")}}{{params.OUT_DIR}} {{ti.xcom_pull(task_ids="get_parameters",key="BcpImportParameters")}} \"{{ti.xcom_pull(task_ids="get_parameters",key="Schema")}}.TEMP_BLOCKED_PROMO\" "1" ',
+                                 params={'OUT_DIR':BLOCKED_PROMO_OUTPUT_DIR},  
                                 )
     up_blocked_promo_table=update_blocked_promo_table(parameters)
     
