@@ -11,8 +11,7 @@ from airflow.models import Variable
 from airflow.operators.bash import BashOperator
 from airflow.operators.dummy import DummyOperator
 from airflow.operators.python import PythonOperator, BranchPythonOperator
-# from airflow.operators.trigger_dagrun import TriggerDagRunOperator
-from cloud_scripts.trigger_dagrun import TriggerDagRunOperator
+from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from airflow.utils.task_group import TaskGroup
 from airflow.hooks.base_hook import BaseHook
 from airflow.providers.hashicorp.hooks.vault import VaultHook
@@ -116,6 +115,11 @@ def save_parameters(parameters:dict):
                                                                                             
     return [args]
 
+@task
+def create_child_dag_config(parameters:dict):
+    conf={"parent_run_id":parameters["ParentRunId"],"parent_process_date":parameters["ProcessDate"],"schema":parameters["Schema"]}
+    return conf
+
 with DAG(
     dag_id='jupiter_promo_filtering',
     schedule_interval=None,
@@ -147,3 +151,12 @@ with DAG(
         repositories=['https://repo1.maven.org/maven2'],
         exclude_packages=['com.amazonaws:amazon-kinesis-client'],
     )
+    
+    trigger_jupiter_block_promo = TriggerDagRunOperator(
+        task_id="trigger_jupiter_block_promo",
+        trigger_dag_id="jupiter_block_promo",  
+        conf='{{ti.xcom_pull(task_ids="create_child_dag_config")}}',
+        wait_for_completion = True,
+    )
+    
+    promo_filtering_for_recalculation >> trigger_jupiter_block_promo
