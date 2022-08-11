@@ -131,7 +131,7 @@ with DAG(
     promo_filtering_for_recalculation = DataprocCreatePysparkJobOperator(
         task_id='promo_filtering_for_recalculation',
         cluster_id='c9qc9m3jccl8v7vigq10',
-        main_python_file_uri='hdfs:///SRC/JUPITER/PROMO_PARAMETERS_CALCULATION/PROMO_FILTERING_FOR_RECALCULATION.py',
+        main_python_file_uri='hdfs:///SRC/JUPITER/PROMO_PARAMETERS_CALCULATION/SPARK_TEST.py',
         python_file_uris=[
             'hdfs:///SRC/SHARED/EXTRACT_SETTING.py',
             'hdfs:///SRC/SHARED/SUPPORT_FUNCTIONS.py',
