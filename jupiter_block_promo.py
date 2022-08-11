@@ -111,7 +111,7 @@ def create_child_dag_config(parameters:dict):
 def update_blocked_promo_table(parameters:dict):
     odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
     schema = parameters["Schema"]
-    result = odbc_hook.run(sql=f"""exec [{schema}].AddBlockedPromo]""")
+    result = odbc_hook.run(sql=f"""exec [{schema}].[AddBlockedPromo]""")
     print(result)
 
     return result
