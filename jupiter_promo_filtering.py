@@ -111,7 +111,7 @@ def save_parameters(parameters:dict):
     conn.upload(parameters_file_path,temp_file_path,overwrite=True)
     
     
-    args = json.dumps({"MaintenancePathPrefix":parameters["MaintenancePathPrefix"],"ProcessDate":parameters["ProcessDate"],"FileName":parameters["FileName"]})
+    args = json.dumps({"MaintenancePathPrefix":parameters["MaintenancePathPrefix"],"ProcessDate":parameters["ProcessDate"],"Schema":parameters["Schema"]})
                                                                             
                                                                                             
     return [args]
@@ -134,7 +134,7 @@ with DAG(
         main_python_file_uri='hdfs:///SRC/JUPITER/PROMO_PARAMETERS_CALCULATION/PROMO_FILTERING_FOR_RECALCULATION.py',
         python_file_uris=[
             'hdfs:///SRC/SHARED/EXTRACT_SETTING.py',
-            'hdfs:///SRC/SHARED/QUALITYCHECK_HELPER.py',
+            'hdfs:///SRC/SHARED/SUPPORT_FUNCTIONS.py',
         ],
         file_uris=[
             's3a://data-proc-public/jobs/sources/data/config.json',
