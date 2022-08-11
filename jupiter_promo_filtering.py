@@ -134,7 +134,7 @@ with DAG(
         main_python_file_uri='hdfs:///SRC/JUPITER/PROMO_PARAMETERS_CALCULATION/SPARK_TEST.py',
         python_file_uris=[
             'hdfs:///SRC/SHARED/EXTRACT_SETTING.py',
-            'hdfs:///SRC/SHARED/SUPPORT_FUNCTIONS.py',
+#             'hdfs:///SRC/SHARED/SUPPORT_FUNCTIONS.py',
         ],
         file_uris=[
             's3a://data-proc-public/jobs/sources/data/config.json',
