@@ -152,6 +152,7 @@ with DAG(
         exclude_packages=['com.amazonaws:amazon-kinesis-client'],
     )
     
+    child_dag_config = create_child_dag_config(parameters)
     
     trigger_jupiter_block_promo = TriggerDagRunOperator(
         task_id="trigger_jupiter_block_promo",
