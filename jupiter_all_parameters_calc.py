@@ -118,7 +118,7 @@ def save_parameters(parameters:dict):
 
 
 with DAG(
-    dag_id='jupiter_all_parametrs_calc',
+    dag_id='jupiter_all_parameters_calc',
     schedule_interval=None,
     start_date=pendulum.datetime(2021, 1, 1, tz="UTC"),
     catchup=False,
