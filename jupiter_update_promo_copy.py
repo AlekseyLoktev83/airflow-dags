@@ -120,7 +120,7 @@ def update_blocked_promo_table(parameters:dict):
 def truncate_table(parameters:dict, table_name):
     odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
     schema = parameters["Schema"]
-    result = odbc_hook.run(sql=f"""truncate table [{schema}].[{table_name}]""")
+    result = odbc_hook.run(sql=f"""truncate table {table_name}""")
     print(result)
 
     return table_name
