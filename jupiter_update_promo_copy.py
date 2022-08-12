@@ -117,13 +117,26 @@ def update_blocked_promo_table(parameters:dict):
     return result
 
 @task
-def truncate_temp_blocked_promo(parameters:dict):
+def truncate_table(parameters:dict, table_name):
     odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
     schema = parameters["Schema"]
-    result = odbc_hook.run(sql=f"""truncate table [{schema}].[TEMP_BLOCKED_PROMO]""")
+    result = odbc_hook.run(sql=f"""truncate table [{schema}].[{table_name}]""")
     print(result)
 
-    return result
+    return table_name
+
+@task
+def generate_table_list(parameters:dict):
+    schema = parameters["Schema"]
+    output_path=parameter['OutputPath']
+    tables = [{'SrcPath':f'{output_path}/Promo/Promo.parquet','TableName':'[{schema}].[TEMP_PROMO]'},
+              {'SrcPath':f'{output_path}/PromoProduct/PromoProduct.parquet','TableName':'[{schema}].[TEMP_PROMOPRODUCT]'},
+              {'SrcPath':f'{output_path}/PromoSupportPromo/PromoSupportPromo.parquet','TableName':'[{schema}].[TEMP_PROMOSUPPORTPROMO]'},
+              {'SrcPath':f'{output_path}/ServiceInfo/ServiceInfo.parquet','TableName':'[{schema}].[ServiceInfo]'},
+              {'SrcPath':f'{output_path}/ProductChangeIncident/NewProductChangeIncident.parquet','TableName':'[{schema}].[TEMP_PRODUCTCHANGEINCIDENTS]'},
+              {'SrcPath':f'{output_path}/ChangesIncident/ChangesIncident.parquet','TableName':'[{schema}].[ChangesIncident]'},
+             ]
+    return tables
 
 with DAG(
     dag_id='jupiter_update_promo_copy',
@@ -135,12 +148,13 @@ with DAG(
 ) as dag:
 # Get dag parameters from vault    
     parameters = get_parameters()
-    trunc_temp_blocked_promo = truncate_temp_blocked_promo(parameters)
-    block_promo = BashOperator(task_id="block_promo",
-                                 do_xcom_push=True,
-                                 bash_command='cp -r /tmp/data/src/. ~/ && chmod +x ~/bcp_import.sh && ~/bcp_import.sh {{ti.xcom_pull(task_ids="get_parameters",key="BlockedPromoOutputPath")}}{{params.OUT_DIR}} {{ti.xcom_pull(task_ids="get_parameters",key="BcpImportParameters")}} \"{{ti.xcom_pull(task_ids="get_parameters",key="Schema")}}.TEMP_BLOCKED_PROMO\" "1" ',
-                                 params={'OUT_DIR':BLOCKED_PROMO_OUTPUT_DIR},  
-                                )
-    up_blocked_promo_table=update_blocked_promo_table(parameters)
+    truncate_table.partial(parameters=parameters).expand(table_name=generate_table_list(parameters))
+
+#     block_promo = BashOperator(task_id="block_promo",
+#                                  do_xcom_push=True,
+#                                  bash_command='cp -r /tmp/data/src/. ~/ && chmod +x ~/bcp_import.sh && ~/bcp_import.sh {{ti.xcom_pull(task_ids="get_parameters",key="BlockedPromoOutputPath")}}{{params.OUT_DIR}} {{ti.xcom_pull(task_ids="get_parameters",key="BcpImportParameters")}} \"{{ti.xcom_pull(task_ids="get_parameters",key="Schema")}}.TEMP_BLOCKED_PROMO\" "1" ',
+#                                  params={'OUT_DIR':BLOCKED_PROMO_OUTPUT_DIR},  
+#                                 )
+#     up_blocked_promo_table=update_blocked_promo_table(parameters)
     
-    trunc_temp_blocked_promo >> block_promo >> up_blocked_promo_table
+#     trunc_temp_blocked_promo >> block_promo >> up_blocked_promo_table
