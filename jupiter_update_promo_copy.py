@@ -128,7 +128,7 @@ def truncate_table(parameters:dict, table_name):
 @task
 def generate_table_list(parameters:dict):
     schema = parameters["Schema"]
-    output_path=parameter['OutputPath']
+    output_path=parameters['OutputPath']
     tables = [{'SrcPath':f'{output_path}/Promo/Promo.parquet','TableName':'[{schema}].[TEMP_PROMO]'},
               {'SrcPath':f'{output_path}/PromoProduct/PromoProduct.parquet','TableName':'[{schema}].[TEMP_PROMOPRODUCT]'},
               {'SrcPath':f'{output_path}/PromoSupportPromo/PromoSupportPromo.parquet','TableName':'[{schema}].[TEMP_PROMOSUPPORTPROMO]'},
