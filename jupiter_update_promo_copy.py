@@ -129,12 +129,12 @@ def truncate_table(parameters:dict, table_name):
 def generate_table_list(parameters:dict):
     schema = parameters["Schema"]
     output_path=parameters['OutputPath']
-    tables = [{'SrcPath':f'{output_path}/Promo/Promo.parquet','TableName':'[{schema}].[TEMP_PROMO]'},
-              {'SrcPath':f'{output_path}/PromoProduct/PromoProduct.parquet','TableName':'[{schema}].[TEMP_PROMOPRODUCT]'},
-              {'SrcPath':f'{output_path}/PromoSupportPromo/PromoSupportPromo.parquet','TableName':'[{schema}].[TEMP_PROMOSUPPORTPROMO]'},
-              {'SrcPath':f'{output_path}/ServiceInfo/ServiceInfo.parquet','TableName':'[{schema}].[ServiceInfo]'},
-              {'SrcPath':f'{output_path}/ProductChangeIncident/NewProductChangeIncident.parquet','TableName':'[{schema}].[TEMP_PRODUCTCHANGEINCIDENTS]'},
-              {'SrcPath':f'{output_path}/ChangesIncident/ChangesIncident.parquet','TableName':'[{schema}].[ChangesIncident]'},
+    tables = [{'SrcPath':f'{output_path}/Promo/Promo.parquet','TableName':f'[{schema}].[TEMP_PROMO]'},
+              {'SrcPath':f'{output_path}/PromoProduct/PromoProduct.parquet','TableName':f'[{schema}].[TEMP_PROMOPRODUCT]'},
+              {'SrcPath':f'{output_path}/PromoSupportPromo/PromoSupportPromo.parquet','TableName':f'[{schema}].[TEMP_PROMOSUPPORTPROMO]'},
+              {'SrcPath':f'{output_path}/ServiceInfo/ServiceInfo.parquet','TableName':f'[{schema}].[ServiceInfo]'},
+              {'SrcPath':f'{output_path}/ProductChangeIncident/NewProductChangeIncident.parquet','TableName':f'[{schema}].[TEMP_PRODUCTCHANGEINCIDENTS]'},
+              {'SrcPath':f'{output_path}/ChangesIncident/ChangesIncident.parquet','TableName':f'[{schema}].[ChangesIncident]'},
              ]
     return tables
 
