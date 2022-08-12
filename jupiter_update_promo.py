@@ -101,6 +101,24 @@ def create_child_dag_config(parameters:dict):
     conf={"parent_run_id":parameters["ParentRunId"],"parent_process_date":parameters["ProcessDate"],"schema":parameters["Schema"]}
     return conf
 
+@task
+def update_parameters(parameters:dict):
+    odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
+    schema = parameters["Schema"]
+    result = odbc_hook.run(sql=f"""exec [{schema}].[UpdatePromo]""")
+    print(result)
+
+    return result
+
+@task
+def update_promoproductscorrection_table(parameters:dict):
+    odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
+    schema = parameters["Schema"]
+    result = odbc_hook.run(sql=f"""exec [{schema}].[UpdatePromoProductsCorrection]""")
+    print(result)
+
+    return result
+
 with DAG(
     dag_id='jupiter_update_promo',
     schedule_interval=None,
@@ -114,6 +132,9 @@ with DAG(
     
     child_dag_config = create_child_dag_config(parameters)
     
+    update_params = update_parameters(parameters)
+    update_promoproductscorrection = update_promoproductscorrection_table(parameters)
+    
     trigger_jupiter_update_promo_copy = TriggerDagRunOperator(
         task_id="trigger_jupiter_update_promo_copy",
         trigger_dag_id="jupiter_update_promo_copy",  
@@ -121,4 +142,4 @@ with DAG(
         wait_for_completion = True,
     )
     
-    child_dag_config >> trigger_jupiter_update_promo_copy
+    update_params >> update_promoproductscorrection >> child_dag_config >> trigger_jupiter_update_promo_copy
