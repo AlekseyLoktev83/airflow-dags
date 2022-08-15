@@ -127,15 +127,26 @@ def truncate_table(parameters:dict, entity):
     return entity
 
 @task
+def generate_bcp_import_script(parameters:dict, entity):
+    schema = parameters["Schema"]
+    table_name = entity['TableName']
+    src_path = entity['SrcPath']
+    bcp_import_parameters=parameters['BcpImportParameters']
+    script = f'cp -r /tmp/data/src/. ~/ && chmod +x ~/bcp_import.sh && ~/bcp_import.sh {src_path} {bcp_import_parameters} \"{table_name}\" "1" '
+    print(script)
+
+    return script
+
+@task
 def generate_entity_list(parameters:dict):
     schema = parameters["Schema"]
     output_path=parameters['OutputPath']
-    tables = [{'SrcPath':f'{output_path}/Promo/Promo.parquet','TableName':f'[{schema}].[TEMP_PROMO]'},
-              {'SrcPath':f'{output_path}/PromoProduct/PromoProduct.parquet','TableName':f'[{schema}].[TEMP_PROMOPRODUCT]'},
-              {'SrcPath':f'{output_path}/PromoSupportPromo/PromoSupportPromo.parquet','TableName':f'[{schema}].[TEMP_PROMOSUPPORTPROMO]'},
-              {'SrcPath':f'{output_path}/ServiceInfo/ServiceInfo.parquet','TableName':f'[{schema}].[ServiceInfo]'},
-              {'SrcPath':f'{output_path}/ProductChangeIncident/NewProductChangeIncident.parquet','TableName':f'[{schema}].[TEMP_PRODUCTCHANGEINCIDENTS]'},
-              {'SrcPath':f'{output_path}/ChangesIncident/ChangesIncident.parquet','TableName':f'[{schema}].[ChangesIncident]'},
+    tables = [{'SrcPath':f'{output_path}/Promo/Promo.CSV/*.csv','TableName':f'[{schema}].[TEMP_PROMO]'},
+              {'SrcPath':f'{output_path}/PromoProduct/PromoProduct.CSV/*.csv','TableName':f'[{schema}].[TEMP_PROMOPRODUCT]'},
+              {'SrcPath':f'{output_path}/PromoSupportPromo/PromoSupportPromo.CSV/*.csv','TableName':f'[{schema}].[TEMP_PROMOSUPPORTPROMO]'},
+              {'SrcPath':f'{output_path}/ServiceInfo/ServiceInfo.CSV/*.csv','TableName':f'[{schema}].[ServiceInfo]'},
+              {'SrcPath':f'{output_path}/ProductChangeIncident/NewProductChangeIncident.CSV/*.csv','TableName':f'[{schema}].[TEMP_PRODUCTCHANGEINCIDENTS]'},
+              {'SrcPath':f'{output_path}/ChangesIncident/ChangesIncident.CSV/*.csv','TableName':f'[{schema}].[ChangesIncident]'},
              ]
     return tables
 
@@ -149,13 +160,12 @@ with DAG(
 ) as dag:
 # Get dag parameters from vault    
     parameters = get_parameters()
-    truncate_table.partial(parameters=parameters).expand(entity=generate_entity_list(parameters))
+    trunc_tables = truncate_table.partial(parameters=parameters).expand(entity=generate_entity_list(parameters))
 
-#     block_promo = BashOperator(task_id="block_promo",
-#                                  do_xcom_push=True,
-#                                  bash_command='cp -r /tmp/data/src/. ~/ && chmod +x ~/bcp_import.sh && ~/bcp_import.sh {{ti.xcom_pull(task_ids="get_parameters",key="BlockedPromoOutputPath")}}{{params.OUT_DIR}} {{ti.xcom_pull(task_ids="get_parameters",key="BcpImportParameters")}} \"{{ti.xcom_pull(task_ids="get_parameters",key="Schema")}}.TEMP_BLOCKED_PROMO\" "1" ',
-#                                  params={'OUT_DIR':BLOCKED_PROMO_OUTPUT_DIR},  
-#                                 )
-#     up_blocked_promo_table=update_blocked_promo_table(parameters)
+    block_promo = BashOperator.partial(task_id="block_promo",
+                                       do_xcom_push=True,
+                                      ).expand(bash_command=generate_bcp_import_script.partial(parameters=parameters).expand(entity=trunc_tables),
+                                              )
+    up_blocked_promo_table=update_blocked_promo_table(parameters)
     
 #     trunc_temp_blocked_promo >> block_promo >> up_blocked_promo_table
