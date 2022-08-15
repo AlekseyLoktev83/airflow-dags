@@ -58,6 +58,9 @@ def get_parameters(**kwargs):
     parent_run_id = dag_run.conf.get('parent_run_id')
     run_id = urllib.parse.quote_plus(parent_run_id) if parent_run_id else urllib.parse.quote_plus(kwargs['run_id'])
     
+    parent_handler_id = dag_run.conf.get('parent_handler_id')
+    handler_id = parent_handler_id if parent_handler_id else str(uuid.uuid4())
+    
     schema = dag_run.conf.get('schema')
     upload_date = kwargs['logical_date'].strftime("%Y-%m-%d %H:%M:%S")
     file_name = dag_run.conf.get('FileName')
@@ -93,6 +96,7 @@ def get_parameters(**kwargs):
                   "ParentRunId":parent_run_id,
                   "FileName":file_name,
                   "CreateDate":create_date,
+                  "HandlerId":handler_id,
                   }
     print(parameters)
     return parameters
@@ -110,14 +114,14 @@ def save_parameters(parameters:dict):
     conn.upload(parameters_file_path,temp_file_path,overwrite=True)
     
     
-    args = json.dumps({"MaintenancePathPrefix":parameters["MaintenancePathPrefix"],"ProcessDate":parameters["ProcessDate"],"Schema":parameters["Schema"]})
+    args = json.dumps({"MaintenancePathPrefix":parameters["MaintenancePathPrefix"],"ProcessDate":parameters["ProcessDate"],"Schema":parameters["Schema"],"HandlerId":parameters["HandlerId"]})
                                                                             
                                                                                             
     return [args]
 
 @task
 def create_child_dag_config(parameters:dict):
-    conf={"parent_run_id":parameters["ParentRunId"],"parent_process_date":parameters["ProcessDate"],"schema":parameters["Schema"]}
+    conf={"parent_run_id":parameters["ParentRunId"],"parent_process_date":parameters["ProcessDate"],"schema":parameters["Schema"],"parent_handler_id":parameters["HandlerId"]}
     return conf
 
 with DAG(
