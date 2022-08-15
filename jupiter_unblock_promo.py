@@ -56,6 +56,7 @@ def get_parameters(**kwargs):
     execution_date = kwargs['execution_date'].strftime("%Y/%m/%d")
     parent_run_id = dag_run.conf.get('parent_run_id')
     run_id = urllib.parse.quote_plus(parent_run_id) if parent_run_id else urllib.parse.quote_plus(kwargs['run_id'])
+    handler_id = parent_handler_id if parent_handler_id else str(uuid.uuid4())
     
     schema = dag_run.conf.get('schema')
     upload_date = kwargs['logical_date'].strftime("%Y-%m-%d %H:%M:%S")
@@ -92,6 +93,7 @@ def get_parameters(**kwargs):
                   "ParentRunId":parent_run_id,
                   "FileName":file_name,
                   "CreateDate":create_date,
+                  "HandlerId":handler_id,
                   }
     print(parameters)
     return parameters
@@ -100,7 +102,7 @@ def get_parameters(**kwargs):
 def unblock_promo(parameters:dict):
     odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
     schema = parameters["Schema"]
-    handler_id=uuid.uuid4()
+    handler_id=parameters["HandlerId"]
     result = odbc_hook.run(sql=f"""exec [{schema}].[UnblockPromo] @HandlerId=? """,parameters=(str(handler_id)))
     print(result)
 
