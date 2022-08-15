@@ -117,16 +117,16 @@ def update_blocked_promo_table(parameters:dict):
     return result
 
 @task
-def truncate_table(parameters:dict, table_name):
+def truncate_table(parameters:dict, entity):
     odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
     schema = parameters["Schema"]
-    result = odbc_hook.run(sql=f"""truncate table {table_name}""")
+    result = odbc_hook.run(sql=f"""truncate table {entity['TableName']}""")
     print(result)
 
     return table_name
 
 @task
-def generate_table_list(parameters:dict):
+def generate_entity_list(parameters:dict):
     schema = parameters["Schema"]
     output_path=parameters['OutputPath']
     tables = [{'SrcPath':f'{output_path}/Promo/Promo.parquet','TableName':f'[{schema}].[TEMP_PROMO]'},
@@ -148,7 +148,7 @@ with DAG(
 ) as dag:
 # Get dag parameters from vault    
     parameters = get_parameters()
-    truncate_table.partial(parameters=parameters).expand(table_name=generate_table_list(parameters))
+    truncate_table.partial(parameters=parameters).expand(entity=generate_entity_list(parameters))
 
 #     block_promo = BashOperator(task_id="block_promo",
 #                                  do_xcom_push=True,
