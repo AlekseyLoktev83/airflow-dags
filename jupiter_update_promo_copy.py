@@ -162,7 +162,7 @@ with DAG(
     parameters = get_parameters()
     trunc_tables = truncate_table.partial(parameters=parameters).expand(entity=generate_entity_list(parameters))
 
-    block_promo = BashOperator.partial(task_id="import_table",
+    upload_tables = BashOperator.partial(task_id="import_table",
                                        do_xcom_push=True,
                                       ).expand(bash_command=generate_bcp_import_script.partial(parameters=parameters).expand(entity=trunc_tables),
                                               )
