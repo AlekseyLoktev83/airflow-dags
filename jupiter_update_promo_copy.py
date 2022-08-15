@@ -120,10 +120,11 @@ def update_blocked_promo_table(parameters:dict):
 def truncate_table(parameters:dict, entity):
     odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
     schema = parameters["Schema"]
-    result = odbc_hook.run(sql=f"""truncate table {entity['TableName']}""")
+    table_name = entity['TableName']
+    result = odbc_hook.run(sql=f"""truncate table {table_name}""")
     print(result)
 
-    return table_name
+    return entity
 
 @task
 def generate_entity_list(parameters:dict):
