@@ -56,6 +56,8 @@ def get_parameters(**kwargs):
     execution_date = kwargs['execution_date'].strftime("%Y/%m/%d")
     parent_run_id = dag_run.conf.get('parent_run_id')
     run_id = urllib.parse.quote_plus(parent_run_id) if parent_run_id else urllib.parse.quote_plus(kwargs['run_id'])
+    
+    parent_handler_id = dag_run.conf.get('parent_handler_id')
     handler_id = parent_handler_id if parent_handler_id else str(uuid.uuid4())
     
     schema = dag_run.conf.get('schema')
