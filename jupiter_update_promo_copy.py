@@ -162,10 +162,8 @@ with DAG(
     parameters = get_parameters()
     trunc_tables = truncate_table.partial(parameters=parameters).expand(entity=generate_entity_list(parameters))
 
-    block_promo = BashOperator.partial(task_id="block_promo",
+    block_promo = BashOperator.partial(task_id="import_table",
                                        do_xcom_push=True,
                                       ).expand(bash_command=generate_bcp_import_script.partial(parameters=parameters).expand(entity=trunc_tables),
                                               )
-    up_blocked_promo_table=update_blocked_promo_table(parameters)
-    
-#     trunc_temp_blocked_promo >> block_promo >> up_blocked_promo_table
+
