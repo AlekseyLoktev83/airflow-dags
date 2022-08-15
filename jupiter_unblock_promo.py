@@ -100,7 +100,8 @@ def get_parameters(**kwargs):
 def unblock_promo(parameters:dict):
     odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
     schema = parameters["Schema"]
-    result = odbc_hook.run(sql=f"""exec [{schema}].[UnblockPromo]""")
+    handler_id=uuid.uuid4()
+    result = odbc_hook.run(sql=f"""exec [{schema}].[UnblockPromo] @PipelineRunId=? """,parameters=(str(handler_id)))
     print(result)
 
     return result
