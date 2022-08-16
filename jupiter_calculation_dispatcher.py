@@ -22,26 +22,26 @@ with DAG(
     
     handler_id=generate_handler_id()
    
-#     trigger_jupiter_calc_copy = TriggerDagRunOperator(
-#         task_id="trigger_jupiter_calc_copy",
-#         trigger_dag_id="jupiter_calc_copy",  
-#         conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":"{{dag_run.conf.get('schema')}}"},
-#         wait_for_completion = True,
-#     )
+    trigger_jupiter_calc_copy = TriggerDagRunOperator(
+        task_id="trigger_jupiter_calc_copy",
+        trigger_dag_id="jupiter_calc_copy",  
+        conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":"{{dag_run.conf.get('schema')}}"},
+        wait_for_completion = True,
+    )
     
-#     trigger_jupiter_baseline_dispatcher = TriggerDagRunOperator(
-#         task_id="trigger_jupiter_baseline_dispatcher",
-#         trigger_dag_id="jjupiter_baseline_dispatcher",  
-#         conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":"{{dag_run.conf.get('schema')}}"},
-#         wait_for_completion = True,
-#     )
+    trigger_jupiter_baseline_dispatcher = TriggerDagRunOperator(
+        task_id="trigger_jupiter_baseline_dispatcher",
+        trigger_dag_id="jjupiter_baseline_dispatcher",  
+        conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":"{{dag_run.conf.get('schema')}}"},
+        wait_for_completion = True,
+    )
     
-#     trigger_jupiter_copy_after_baseline_update = TriggerDagRunOperator(
-#         task_id="trigger_jupiter_copy_after_baseline_update",
-#         trigger_dag_id="jupiter_calc_copy",  
-#         conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":"{{dag_run.conf.get('schema')}}"},
-#         wait_for_completion = True,
-#     )
+    trigger_jupiter_copy_after_baseline_update = TriggerDagRunOperator(
+        task_id="trigger_jupiter_copy_after_baseline_update",
+        trigger_dag_id="jupiter_calc_copy",  
+        conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":"{{dag_run.conf.get('schema')}}"},
+        wait_for_completion = True,
+    )
     
     trigger_jupiter_promo_filtering = TriggerDagRunOperator(
         task_id="trigger_jupiter_promo_filtering",
@@ -50,6 +50,5 @@ with DAG(
         wait_for_completion = True,
     )
     
-#     trigger_jupiter_calc_copy >> trigger_jupiter_baseline_dispatcher >> trigger_jupiter_copy_after_baseline_update >> handler_id >> trigger_jupiter_promo_filtering
+    handler_id >> trigger_jupiter_calc_copy >> trigger_jupiter_baseline_dispatcher >> trigger_jupiter_copy_after_baseline_update >> handler_id >> trigger_jupiter_promo_filtering
     
-    handler_id >> trigger_jupiter_promo_filtering
