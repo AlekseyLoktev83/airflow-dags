@@ -8,7 +8,7 @@ import uuid
 
 TAGS=["jupiter", "dev"]
 
-@task
+@task(task_id='generate_handler_id')
 def generate_handler_id():
     return str(uuid.uuid4())
 
