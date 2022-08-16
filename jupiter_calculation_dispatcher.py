@@ -46,7 +46,7 @@ with DAG(
     trigger_jupiter_promo_filtering = TriggerDagRunOperator(
         task_id="trigger_jupiter_promo_filtering",
         trigger_dag_id="jupiter_promo_filtering",  
-        conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":"{{dag_run.conf.get('schema')}}","parent_handler_id":"{{handler_id}}"},
+        conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":"{{dag_run.conf.get('schema')}}","parent_handler_id":"{{ti.xcom_pull(task_ids='generate_handler_id')}}"},
         wait_for_completion = True,
     )
     
