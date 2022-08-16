@@ -50,5 +50,5 @@ with DAG(
         wait_for_completion = True,
     )
     
-    handler_id >> trigger_jupiter_calc_copy >> trigger_jupiter_baseline_dispatcher >> trigger_jupiter_copy_after_baseline_update >> handler_id >> trigger_jupiter_promo_filtering
+    handler_id >> trigger_jupiter_calc_copy >> trigger_jupiter_baseline_dispatcher >> trigger_jupiter_copy_after_baseline_update >> trigger_jupiter_promo_filtering
     
