@@ -117,7 +117,7 @@ def promoproduct_difference_calculation(parameters:dict):
 
     return result
   
- @task
+@task
 def previous_day_incremental_calculation(parameters:dict):
     odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
     schema = parameters["Schema"]
