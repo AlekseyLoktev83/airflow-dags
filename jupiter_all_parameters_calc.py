@@ -42,6 +42,8 @@ CSV_SEPARATOR = '\u0001'
 TAGS=["jupiter", "promo", "dev"]
 BASELINE_ENTITY_NAME='BaseLine'
 PARAMETERS_FILE = 'PARAMETERS.csv'
+PROMOPRODUCT_PROCESS_DIR='/PromoProduct/NewPromoProduct.CSV/*.csv'
+
 
 def separator_convert_hex_to_string(sep):
     sep_map = {'0x01':'\x01'}
@@ -74,7 +76,7 @@ def get_parameters(**kwargs):
     
     db_conn = BaseHook.get_connection(MSSQL_CONNECTION_NAME)
     bcp_parameters = '-S {} -d {} -U {} -P {}'.format(db_conn.host, db_conn.schema, db_conn.login, db_conn.password)
-
+    
     parameters = {"RawPath": raw_path,
                   "ProcessPath": process_path,
                   "OutputPath": output_path,
@@ -97,6 +99,15 @@ def get_parameters(**kwargs):
     print(parameters)
     return parameters
 
+@task
+def truncate_temp_promoproduct(parameters:dict):
+    odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
+    schema = parameters["Schema"]
+    result = odbc_hook.run(sql=f"""truncate table [{schema}].[TEMP_PROMOPRODUCT]""")
+    print(result)
+
+    return result
+
 @task(task_id='save_parameters')
 def save_parameters(parameters:dict):
     parameters_file_path=f'{parameters["MaintenancePathPrefix"]}{PARAMETERS_FILE}'
@@ -115,7 +126,14 @@ def save_parameters(parameters:dict):
                                                                                             
     return [args]
 
+@task
+def update_promoproduct(parameters:dict):
+    odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
+    schema = parameters["Schema"]
+    result = odbc_hook.run(sql=f"""exec [{schema}].[AddNewPromoProduct]""")
+    print(result)
 
+    return result
 
 with DAG(
     dag_id='jupiter_all_parameters_calc',
@@ -156,3 +174,15 @@ with DAG(
         repositories=['https://repo1.maven.org/maven2'],
         exclude_packages=['com.amazonaws:amazon-kinesis-client'],
     )
+    
+    truncate_temp = truncate_temp_promoproduct(parameters)
+    
+    add_new_promoproduct = BashOperator(task_id="add_new_promoproduct",
+                                 do_xcom_push=True,
+                                 bash_command='cp -r /tmp/data/src/. ~/ && chmod +x ~/bcp_import.sh && ~/bcp_import.sh {{ti.xcom_pull(task_ids="get_parameters",key="ProcessPath")}}{{params.PROCESS_DIR}} {{ti.xcom_pull(task_ids="get_parameters",key="BcpImportParameters")}} \"{{ti.xcom_pull(task_ids="get_parameters",key="Schema")}}.TEMP_PROMOPRODUCT\" "1" ',
+                                 params={'PROCESS_DIR':PROMOPRODUCT_PROCESS_DIR},  
+                                )
+    
+    upd_promoproduct=update_promoproduct(parameters)
+    
+    parameters_calculation >> truncate_temp >> add_new_promoproduct >> upd_promoproduct
