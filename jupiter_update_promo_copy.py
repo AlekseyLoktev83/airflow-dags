@@ -142,7 +142,7 @@ def generate_entity_list(parameters:dict):
     schema = parameters["Schema"]
     output_path=parameters['OutputPath']
     tables = [
-#         {'SrcPath':f'{output_path}/Promo/Promo.CSV/*.csv','TableName':f'[{schema}].[TEMP_PROMO]'},
+#         {'SrcPath':f'{output_path}/Promo/Promo.CSV/*.csv','TableName':f'{schema}.TEMP_PROMO'},
 #               {'SrcPath':f'{output_path}/PromoProduct/PromoProduct.CSV/*.csv','TableName':f'{schema}.TEMP_PROMOPRODUCT'},
 #               {'SrcPath':f'{output_path}/PromoSupportPromo/PromoSupportPromo.CSV/*.csv','TableName':f'{schema}.TEMP_PROMOSUPPORTPROMO'},
 #               {'SrcPath':f'{output_path}/ServiceInfo/ServiceInfo.CSV/*.csv','TableName':f'{schema}.ServiceInfo'},
