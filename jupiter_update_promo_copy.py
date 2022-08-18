@@ -141,11 +141,12 @@ def generate_bcp_import_script(parameters:dict, entity):
 def generate_entity_list(parameters:dict):
     schema = parameters["Schema"]
     output_path=parameters['OutputPath']
-    tables = [{'SrcPath':f'{output_path}/Promo/Promo.CSV/*.csv','TableName':f'[{schema}].[TEMP_PROMO]'},
-              {'SrcPath':f'{output_path}/PromoProduct/PromoProduct.CSV/*.csv','TableName':f'[{schema}].[TEMP_PROMOPRODUCT]'},
-              {'SrcPath':f'{output_path}/PromoSupportPromo/PromoSupportPromo.CSV/*.csv','TableName':f'[{schema}].[TEMP_PROMOSUPPORTPROMO]'},
-              {'SrcPath':f'{output_path}/ServiceInfo/ServiceInfo.CSV/*.csv','TableName':f'[{schema}].[ServiceInfo]'},
-              {'SrcPath':f'{output_path}/ProductChangeIncident/NewProductChangeIncident.CSV/*.csv','TableName':f'[{schema}].[TEMP_PRODUCTCHANGEINCIDENTS]'},
+    tables = [
+#         {'SrcPath':f'{output_path}/Promo/Promo.CSV/*.csv','TableName':f'[{schema}].[TEMP_PROMO]'},
+#               {'SrcPath':f'{output_path}/PromoProduct/PromoProduct.CSV/*.csv','TableName':f'[{schema}].[TEMP_PROMOPRODUCT]'},
+#               {'SrcPath':f'{output_path}/PromoSupportPromo/PromoSupportPromo.CSV/*.csv','TableName':f'[{schema}].[TEMP_PROMOSUPPORTPROMO]'},
+#               {'SrcPath':f'{output_path}/ServiceInfo/ServiceInfo.CSV/*.csv','TableName':f'[{schema}].[ServiceInfo]'},
+#               {'SrcPath':f'{output_path}/ProductChangeIncident/NewProductChangeIncident.CSV/*.csv','TableName':f'[{schema}].[TEMP_PRODUCTCHANGEINCIDENTS]'},
               {'SrcPath':f'{output_path}/ChangesIncident/ChangesIncident.CSV/*.csv','TableName':f'[{schema}].[ChangesIncident]'},
              ]
     return tables
