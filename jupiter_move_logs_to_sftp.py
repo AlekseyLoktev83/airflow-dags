@@ -126,7 +126,7 @@ def copy_hdfs_to_sftp(parameters:dict):
      sftp_client = ssh_client.open_sftp()
      local_folder = os.path.dirname(tmp_path)
      Path(local_folder).mkdir(parents=True, exist_ok=True)
-     sftp_client.put(f'{tmp_path}*.csv',sftp_path)
+     sftp_client.put(f'{tmp_path}../*.csv',sftp_path)
     
     return True
 
