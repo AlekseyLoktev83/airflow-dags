@@ -31,7 +31,7 @@ with DAG(
     
     trigger_jupiter_baseline_dispatcher = TriggerDagRunOperator(
         task_id="trigger_jupiter_baseline_dispatcher",
-        trigger_dag_id="jjupiter_baseline_dispatcher",  
+        trigger_dag_id="jupiter_baseline_dispatcher",  
         conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":"{{dag_run.conf.get('schema')}}"},
         wait_for_completion = True,
     )
