@@ -98,11 +98,6 @@ def get_parameters(**kwargs):
     print(parameters)
     return parameters
 
-@task
-def create_child_dag_config(parameters:dict):
-    conf={"parent_run_id":parameters["ParentRunId"],"parent_process_date":parameters["ProcessDate"],"schema":parameters["Schema"]}
-    return conf
-
 def _is_rolling_day(**kwargs):
     return kwargs['rolling_day'] == pendulum.today().day_of_week
 with DAG(
@@ -121,35 +116,35 @@ with DAG(
     trigger_jupiter_orders_delivery_fdm = TriggerDagRunOperator(
         task_id="trigger_jupiter_orders_delivery_fdm",
         trigger_dag_id="jupiter_orders_delivery_fdm",  
-        conf='{{ti.xcom_pull(task_ids="create_child_dag_config")}}',
+        conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":"{{dag_run.conf.get('schema')}}"},
         wait_for_completion = True,
     )
     
     trigger_jupiter_rolling_volumes_fdm = TriggerDagRunOperator(
         task_id="trigger_jupiter_rolling_volumes_fdm",
         trigger_dag_id="jupiter_rolling_volumes_fdm",  
-        conf='{{ti.xcom_pull(task_ids="create_child_dag_config")}}',
+        conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":"{{dag_run.conf.get('schema')}}"},
         wait_for_completion = True,
     )
         
     trigger_jupiter_update_rolling = TriggerDagRunOperator(
         task_id="trigger_jupiter_update_rolling",
         trigger_dag_id="jupiter_update_rolling",  
-        conf='{{ti.xcom_pull(task_ids="create_child_dag_config")}}',
+        conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":"{{dag_run.conf.get('schema')}}"},
         wait_for_completion = True,
     )
     
     trigger_jupiter_rolling_success_notify = TriggerDagRunOperator(
         task_id="trigger_jupiter_rolling_success_notify",
         trigger_dag_id="jupiter_rolling_notify",  
-        conf='{{ti.xcom_pull(task_ids="create_child_dag_config")}}',
+        conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":"{{dag_run.conf.get('schema')}}","message":"Orders/delivery and rolling building has been completed successfully."},
         wait_for_completion = True,
     )
     
     trigger_jupiter_rolling_failure_notify = TriggerDagRunOperator(
         task_id="trigger_jupiter_rolling_failure_notify",
         trigger_dag_id="jupiter_rolling_notify",  
-        conf='{{ti.xcom_pull(task_ids="create_child_dag_config")}}',
+        conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":"{{dag_run.conf.get('schema')}}","message":"Orders/delivery and rolling building failed"},
         wait_for_completion = True,
         trigger_rule=TriggerRule.ONE_FAILED,
     )     
@@ -157,7 +152,7 @@ with DAG(
     trigger_jupiter_orders_failure_notify = TriggerDagRunOperator(
         task_id="trigger_jupiter_orders_failure_notify",
         trigger_dag_id="jupiter_rolling_notify",  
-        conf='{{ti.xcom_pull(task_ids="create_child_dag_config")}}',
+        conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":"{{dag_run.conf.get('schema')}}","message":"Orders/delivery building failed"},
         wait_for_completion = True,
         trigger_rule=TriggerRule.ONE_FAILED,
     )  
@@ -172,5 +167,5 @@ with DAG(
     
     
 
-    parameters >> child_dag_config >> trigger_jupiter_orders_delivery_fdm >> check_rollingday >> trigger_jupiter_rolling_volumes_fdm >> trigger_jupiter_update_rolling >> [trigger_jupiter_rolling_success_notify,trigger_jupiter_rolling_failure_notify]
-    parameters >> child_dag_config >> trigger_jupiter_orders_delivery_fdm >> trigger_jupiter_orders_failure_notify
+    parameters >> trigger_jupiter_orders_delivery_fdm >> check_rollingday >> trigger_jupiter_rolling_volumes_fdm >> trigger_jupiter_update_rolling >> [trigger_jupiter_rolling_success_notify,trigger_jupiter_rolling_failure_notify]
+    parameters >> trigger_jupiter_orders_delivery_fdm >> trigger_jupiter_orders_failure_notify
