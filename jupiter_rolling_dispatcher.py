@@ -111,8 +111,7 @@ with DAG(
 # Get dag parameters from vault    
     parameters = get_parameters()
     
-    child_dag_config = create_child_dag_config(parameters)
-    
+   
     trigger_jupiter_orders_delivery_fdm = TriggerDagRunOperator(
         task_id="trigger_jupiter_orders_delivery_fdm",
         trigger_dag_id="jupiter_orders_delivery_fdm",  
@@ -164,8 +163,7 @@ with DAG(
         op_kwargs={'rolling_day': parameters["RollingDay"]},
     )
     
-    
-    
+       
 
     parameters >> trigger_jupiter_orders_delivery_fdm >> check_rollingday >> trigger_jupiter_rolling_volumes_fdm >> trigger_jupiter_update_rolling >> [trigger_jupiter_rolling_success_notify,trigger_jupiter_rolling_failure_notify]
     parameters >> trigger_jupiter_orders_delivery_fdm >> trigger_jupiter_orders_failure_notify
