@@ -1,82 +1,126 @@
+import datetime
 import pendulum
 
-from airflow import DAG
-from airflow.operators.trigger_dagrun import TriggerDagRunOperator
-from airflow.operators.bash import BashOperator
+from airflow import DAG, XComArg
 from airflow.decorators import dag, task
+from airflow.utils.trigger_rule import TriggerRule
+from airflow.providers.odbc.hooks.odbc import OdbcHook
+from airflow.providers.apache.hdfs.hooks.webhdfs import WebHDFSHook
+from cloud_scripts.custom_dataproc import  DataprocCreatePysparkJobOperator
+from airflow.models import Variable
+from airflow.operators.bash import BashOperator
+from airflow.operators.dummy import DummyOperator
+from airflow.operators.python import PythonOperator, BranchPythonOperator
+from airflow.operators.trigger_dagrun import TriggerDagRunOperator
+from airflow.utils.task_group import TaskGroup
+from airflow.hooks.base_hook import BaseHook
+from airflow.providers.hashicorp.hooks.vault import VaultHook
+from airflow.providers.http.operators.http import SimpleHttpOperator
+
 import uuid
+from io import StringIO
+import urllib.parse
+import subprocess
 
-TAGS=["jupiter", "dev", "rolling"]
+import cloud_scripts.mssql_scripts as mssql_scripts
+import json
+import pandas as pd
+import glob
+import os
 
-@task(task_id='generate_handler_id')
-def generate_handler_id():
-    return str(uuid.uuid4())
+import struct
+from contextlib import closing
+
+
+MSSQL_CONNECTION_NAME = 'odbc_jupiter'
+HDFS_CONNECTION_NAME = 'webhdfs_default'
+VAULT_CONNECTION_NAME = 'vault_default'
+AVAILABILITY_ZONE_ID = 'ru-central1-b'
+S3_BUCKET_NAME_FOR_JOB_LOGS = 'jupiter-app-test-storage'
+BCP_SEPARATOR = '0x01'
+CSV_SEPARATOR = '\u0001'
+TAGS=["jupiter", "promo", "dev"]
+PARAMETERS_FILE = 'PARAMETERS.csv'
+
+def separator_convert_hex_to_string(sep):
+    sep_map = {'0x01':'\x01'}
+    return sep_map.get(sep, sep)
+
+@task(multiple_outputs=True)
+def get_parameters(**kwargs):
+    ti = kwargs['ti']
+    ds = kwargs['ds']
+    dag_run = kwargs['dag_run']
+    parent_process_date = dag_run.conf.get('parent_process_date')
+    process_date = parent_process_date if parent_process_date else ds
+    execution_date = kwargs['execution_date'].strftime("%Y/%m/%d")
+    parent_run_id = dag_run.conf.get('parent_run_id')
+    run_id = urllib.parse.quote_plus(parent_run_id) if parent_run_id else urllib.parse.quote_plus(kwargs['run_id'])
+    
+    schema = dag_run.conf.get('schema')
+    upload_date = kwargs['logical_date'].strftime("%Y-%m-%d %H:%M:%S")
+    file_name = dag_run.conf.get('FileName')
+    create_date = dag_run.conf.get('CreateDate')
+
+    raw_path = Variable.get("RawPath")
+    process_path = Variable.get("ProcessPath")
+    output_path = Variable.get("OutputPath")
+    white_list = Variable.get("WhiteList",default_var=None)
+    black_list = Variable.get("BlackList",default_var=None)
+    upload_path = f'{raw_path}/{execution_date}/'
+    system_name = Variable.get("SystemName")
+    last_upload_date = Variable.get("LastUploadDate")
+    rolling_day = Variable.get("RollingDay")
+    
+    db_conn = BaseHook.get_connection(MSSQL_CONNECTION_NAME)
+    bcp_parameters = '-S {} -d {} -U {} -P {}'.format(db_conn.host, db_conn.schema, db_conn.login, db_conn.password)
+
+    parameters = {"RawPath": raw_path,
+                  "ProcessPath": process_path,
+                  "OutputPath": output_path,
+                  "WhiteList": white_list,
+                  "BlackList": black_list,
+                  "MaintenancePathPrefix":"{}{}{}_{}_".format(raw_path,"/#MAINTENANCE/",process_date,run_id),
+                  "BcpParameters": bcp_parameters,
+                  "UploadPath": upload_path,
+                  "RunId":run_id,
+                  "SystemName":system_name,
+                  "LastUploadDate":last_upload_date,
+                  "CurrentUploadDate":upload_date,
+                  "ProcessDate":process_date,
+                  "MaintenancePath":"{}{}".format(raw_path,"/#MAINTENANCE/"),
+                  "Schema":schema,
+                  "ParentRunId":parent_run_id,
+                  "FileName":file_name,
+                  "CreateDate":create_date,
+                  "RollingDay":rolling_day,
+                  }
+    print(parameters)
+    return parameters
+
+@task
+def create_child_dag_config(parameters:dict):
+    conf={"parent_run_id":parameters["ParentRunId"],"parent_process_date":parameters["ProcessDate"],"schema":parameters["Schema"]}
+    return conf
 
 with DAG(
-    dag_id="jupiter_rolling_dispatcher",
+    dag_id='jupiter_rolling_dispatcher',
+    schedule_interval=None,
     start_date=pendulum.datetime(2021, 1, 1, tz="UTC"),
     catchup=False,
-    schedule_interval=None,
     tags=TAGS,
+    render_template_as_native_obj=True,
 ) as dag:
+# Get dag parameters from vault    
+    parameters = get_parameters()
     
-    handler_id=generate_handler_id()
-   
-    trigger_jupiter_calc_copy = TriggerDagRunOperator(
-        task_id="trigger_jupiter_calc_copy",
-        trigger_dag_id="jupiter_calc_copy",  
-        conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":"{{dag_run.conf.get('schema')}}"},
+    child_dag_config = create_child_dag_config(parameters)
+    
+    trigger_jupiter_orders_delivery_fdm = TriggerDagRunOperator(
+        task_id="trigger_jupiter_orders_delivery_fdm",
+        trigger_dag_id="jupiter_orders_delivery_fdm",  
+        conf='{{ti.xcom_pull(task_ids="create_child_dag_config")}}',
         wait_for_completion = True,
     )
     
-    trigger_jupiter_baseline_dispatcher = TriggerDagRunOperator(
-        task_id="trigger_jupiter_baseline_dispatcher",
-        trigger_dag_id="jjupiter_baseline_dispatcher",  
-        conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":"{{dag_run.conf.get('schema')}}"},
-        wait_for_completion = True,
-    )
-    
-    trigger_jupiter_copy_after_baseline_update = TriggerDagRunOperator(
-        task_id="trigger_jupiter_copy_after_baseline_update",
-        trigger_dag_id="jupiter_calc_copy",  
-        conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":"{{dag_run.conf.get('schema')}}"},
-        wait_for_completion = True,
-    )
-    
-    trigger_jupiter_promo_filtering = TriggerDagRunOperator(
-        task_id="trigger_jupiter_promo_filtering",
-        trigger_dag_id="jupiter_promo_filtering",  
-        conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":"{{dag_run.conf.get('schema')}}","parent_handler_id":"{{ti.xcom_pull(task_ids='generate_handler_id')}}"},
-        wait_for_completion = True,
-    )
-
-    trigger_jupiter_all_parameters_calc = TriggerDagRunOperator(
-        task_id="trigger_jupiter_all_parameters_calc",
-        trigger_dag_id="jupiter_all_parameters_calc",  
-        conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":"{{dag_run.conf.get('schema')}}","parent_handler_id":"{{ti.xcom_pull(task_ids='generate_handler_id')}}"},
-        wait_for_completion = True,
-    )
-
-    trigger_jupiter_update_promo = TriggerDagRunOperator(
-        task_id="trigger_jupiter_update_promo",
-        trigger_dag_id="jupiter_update_promo",  
-        conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":"{{dag_run.conf.get('schema')}}","parent_handler_id":"{{ti.xcom_pull(task_ids='generate_handler_id')}}"},
-        wait_for_completion = True,
-    )
-    
-    trigger_jupiter_unblock_promo = TriggerDagRunOperator(
-        task_id="trigger_jupiter_unblock_promo",
-        trigger_dag_id="jupiter_unblock_promo",  
-        conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":"{{dag_run.conf.get('schema')}}","parent_handler_id":"{{ti.xcom_pull(task_ids='generate_handler_id')}}"},
-        wait_for_completion = True,
-    )        
-
-    trigger_jupiter_incremental_processing = TriggerDagRunOperator(
-        task_id="trigger_jupiter_incremental_processing",
-        trigger_dag_id="jupiter_incremental_processing",  
-        conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":"{{dag_run.conf.get('schema')}}","parent_handler_id":"{{ti.xcom_pull(task_ids='generate_handler_id')}}"},
-        wait_for_completion = True,
-    )  
-    
-    handler_id >> trigger_jupiter_calc_copy >> trigger_jupiter_baseline_dispatcher >> trigger_jupiter_copy_after_baseline_update >> trigger_jupiter_promo_filtering >> trigger_jupiter_all_parameters_calc >> trigger_jupiter_update_promo >> trigger_jupiter_unblock_promo >> trigger_jupiter_incremental_processing 
-    
+    child_dag_config >> trigger_jupiter_orders_delivery_fdm 
