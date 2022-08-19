@@ -141,19 +141,26 @@ with DAG(
     
     trigger_jupiter_rolling_success_notify = TriggerDagRunOperator(
         task_id="trigger_jupiter_rolling_success_notify",
-        trigger_dag_id="jupiter_rolling_success_notify",  
+        trigger_dag_id="jupiter_rolling_notify",  
         conf='{{ti.xcom_pull(task_ids="create_child_dag_config")}}',
         wait_for_completion = True,
     )
     
     trigger_jupiter_rolling_failure_notify = TriggerDagRunOperator(
         task_id="trigger_jupiter_rolling_failure_notify",
-        trigger_dag_id="jupiter_rolling_failure_notify",  
+        trigger_dag_id="jupiter_rolling_notify",  
         conf='{{ti.xcom_pull(task_ids="create_child_dag_config")}}',
         wait_for_completion = True,
         trigger_rule=TriggerRule.ONE_FAILED,
     )     
     
+    trigger_jupiter_orders_failure_notify = TriggerDagRunOperator(
+        task_id="trigger_jupiter_orders_failure_notify",
+        trigger_dag_id="jupiter_rolling_notify",  
+        conf='{{ti.xcom_pull(task_ids="create_child_dag_config")}}',
+        wait_for_completion = True,
+        trigger_rule=TriggerRule.ONE_FAILED,
+    )  
   
     
     check_rollingday = ShortCircuitOperator(
@@ -164,5 +171,5 @@ with DAG(
     
     
     
-    child_dag_config >> trigger_jupiter_orders_delivery_fdm >> check_rollingday >> trigger_jupiter_rolling_volumes_fdm >> trigger_jupiter_update_rolling >> [trigger_jupiter_rolling_success_notify,trigger_jupiter_rolling_failure_notify]
+    child_dag_config >> trigger_jupiter_orders_delivery_fdm >> [check_rollingday >> trigger_jupiter_rolling_volumes_fdm >> trigger_jupiter_update_rolling >> [trigger_jupiter_rolling_success_notify,trigger_jupiter_rolling_failure_notify],trigger_jupiter_orders_failure_notify]
     
