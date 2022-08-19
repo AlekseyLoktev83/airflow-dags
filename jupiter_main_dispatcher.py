@@ -13,7 +13,7 @@ with DAG(
     catchup=False,
     schedule_interval=None,
 #     schedule_interval='20 7 * * *',
-    tags=["jupiter", "dev"],
+    tags=["jupiter", "dev","main"],
 ) as dag:
     trigger_jupiter_start_night_processing = TriggerDagRunOperator(
         task_id="trigger_jupiter_start_night_processing",
