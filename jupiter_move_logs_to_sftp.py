@@ -27,6 +27,7 @@ import pandas as pd
 import glob
 import os
 from pathlib import Path
+import glob
 
 
 MSSQL_CONNECTION_NAME = 'odbc_jupiter'
@@ -121,6 +122,7 @@ def copy_hdfs_to_sftp(parameters:dict):
     
     conn = hdfs_hook.get_conn()
     conn.download(dst_path, tmp_path, overwrite=True)
+    print(glob.glob(f'{tmp_path}*'))
     
     with ssh_hook.get_conn() as ssh_client:
      sftp_client = ssh_client.open_sftp()
