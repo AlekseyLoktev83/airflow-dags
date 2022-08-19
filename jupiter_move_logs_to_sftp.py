@@ -107,7 +107,7 @@ def get_parameters(**kwargs):
 
 @task
 def copy_hdfs_to_sftp(parameters:dict):
-    file_name=parameters["FileName"]
+    file_name='logs.csv'
     logs_sftp_path=parameters["LogsSftpPath"]
     logs_process_path=parameters["LogsProcessPath"]
     
