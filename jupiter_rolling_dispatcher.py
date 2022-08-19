@@ -10,7 +10,7 @@ from cloud_scripts.custom_dataproc import  DataprocCreatePysparkJobOperator
 from airflow.models import Variable
 from airflow.operators.bash import BashOperator
 from airflow.operators.dummy import DummyOperator
-from airflow.operators.python import PythonOperator, BranchPythonOperator
+from airflow.operators.python import PythonOperator, BranchPythonOperator, ShortCircuitOperator
 from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from airflow.utils.task_group import TaskGroup
 from airflow.hooks.base_hook import BaseHook
@@ -104,8 +104,7 @@ def create_child_dag_config(parameters:dict):
     return conf
 
 def _is_rolling_day(**kwargs):
-    return ['trigger_jupiter_rolling_volumes_fdm'] if kwargs['rolling_day'] == pendulum.today().day_of_week else ['jupiter_orders_failure_notify']
-
+    return kwargs['rolling_day'] == pendulum.today().day_of_week
 with DAG(
     dag_id='jupiter_rolling_dispatcher',
     schedule_interval=None,
@@ -126,10 +125,44 @@ with DAG(
         wait_for_completion = True,
     )
     
-    check_rollingday = BranchPythonOperator(
+    trigger_jupiter_rolling_volumes_fdm = TriggerDagRunOperator(
+        task_id="trigger_jupiter_rolling_volumes_fdm",
+        trigger_dag_id="jupiter_rolling_volumes_fdm",  
+        conf='{{ti.xcom_pull(task_ids="create_child_dag_config")}}',
+        wait_for_completion = True,
+    )
+        
+    trigger_jupiter_update_rolling = TriggerDagRunOperator(
+        task_id="trigger_jupiter_update_rolling",
+        trigger_dag_id="jupiter_update_rolling",  
+        conf='{{ti.xcom_pull(task_ids="create_child_dag_config")}}',
+        wait_for_completion = True,
+    )
+    
+    trigger_jupiter_rolling_success_notify = TriggerDagRunOperator(
+        task_id="trigger_jupiter_rolling_success_notify",
+        trigger_dag_id="jupiter_rolling_success_notify",  
+        conf='{{ti.xcom_pull(task_ids="create_child_dag_config")}}',
+        wait_for_completion = True,
+    )
+    
+    trigger_jupiter_rolling_failure_notify = TriggerDagRunOperator(
+        task_id="trigger_jupiter_rolling_failure_notify",
+        trigger_dag_id="jupiter_rolling_failure_notify",  
+        conf='{{ti.xcom_pull(task_ids="create_child_dag_config")}}',
+        wait_for_completion = True,
+        trigger_rule=TriggerRule.ONE_FAILED,
+    )     
+    
+  
+    
+    check_rollingday = ShortCircuitOperator(
         task_id='check_rollingday',
         python_callable=_is_rolling_day,
         op_kwargs={'rolling_day': parameters["RollingDay"]},
     )
     
-    child_dag_config >> trigger_jupiter_orders_delivery_fdm >> check_rollingday 
+    
+    
+    child_dag_config >> trigger_jupiter_orders_delivery_fdm >> check_rollingday >> trigger_jupiter_rolling_volumes_fdm >> trigger_jupiter_update_rolling >> trigger_jupiter_rolling_success_notify >> [trigger_jupiter_rolling_success_notify,trigger_jupiter_rolling_failure_notify]
+    
