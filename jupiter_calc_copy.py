@@ -116,7 +116,7 @@ def copy_data_db_to_hdfs(query, dst_dir, dst_file):
 
     df = odbc_hook.get_pandas_df(query)
     df.to_csv(f'/tmp/{dst_file}', index=False, sep=CSV_SEPARATOR)
-    conn.upload(dst_path, f'/tmp/{dst_file}')
+    conn.upload(dst_path, f'/tmp/{dst_file}',overwrite=True)
 
     return True
 
