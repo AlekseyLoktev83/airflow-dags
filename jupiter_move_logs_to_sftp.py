@@ -109,12 +109,12 @@ def get_parameters(**kwargs):
 
 @task
 def copy_hdfs_to_sftp(parameters:dict):
-#     file_name='logs.csv'
     logs_sftp_path=parameters["LogsSftpPath"]
     logs_process_path=parameters["LogsProcessPath"]
+    file_name=os.path.basename(logs_process_path)
     
     tmp_path=f'/tmp/'
-    sftp_path=f'{logs_sftp_path}'
+    sftp_path=f'{logs_sftp_path}/{file_name}'
     dst_path = f'{logs_process_path}'
     
     ssh_hook=SSHHook(SSH_CONNECTION_NAME)
@@ -122,13 +122,13 @@ def copy_hdfs_to_sftp(parameters:dict):
     
     conn = hdfs_hook.get_conn()
     conn.download(dst_path, tmp_path, overwrite=True)
-    print(glob.glob(f'{tmp_path}*'))
+    
+    src_file_path=glob.glob(f'{tmp_path}*.csv/*.csv')[0]
+    print(src_file_path)
     
     with ssh_hook.get_conn() as ssh_client:
      sftp_client = ssh_client.open_sftp()
-     local_folder = os.path.dirname(tmp_path)
-     Path(local_folder).mkdir(parents=True, exist_ok=True)
-     sftp_client.put(f'{tmp_path}../*.csv',sftp_path)
+     sftp_client.put(src_file_path,sftp_path)
     
     return True
 
