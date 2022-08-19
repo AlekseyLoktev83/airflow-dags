@@ -140,7 +140,7 @@ def generate_upload_script(prev_task, src_dir, src_file, upload_path, bcp_parame
 
     del entities_df['Extraction']
     entities_df.to_csv(tmp_dst_path, index=False, sep=CSV_SEPARATOR)
-    conn.upload(dst_path, tmp_dst_path)
+    conn.upload(dst_path, tmp_dst_path,overwrite=True)
 
     return entities_json
 
@@ -199,7 +199,7 @@ def start_monitoring_detail(dst_dir, upload_path, runid, entities):
                             'ErrorDescription': None
                             }])
         df.to_csv(temp_file_path, index=False, sep=CSV_SEPARATOR)
-        conn.upload(monitoring_file_path, temp_file_path)
+        conn.upload(monitoring_file_path, temp_file_path,overwrite=True)
 
     return entities
 
