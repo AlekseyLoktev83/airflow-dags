@@ -103,6 +103,9 @@ def create_child_dag_config(parameters:dict):
     conf={"parent_run_id":parameters["ParentRunId"],"parent_process_date":parameters["ProcessDate"],"schema":parameters["Schema"]}
     return conf
 
+def _is_rolling_day(**kwargs):
+    return ['trigger_jupiter_rolling_volumes_fdm'] if kwargs['rolling_day'] == pendulum.today().day_of_week else ['jupiter_orders_failure_notify']
+
 with DAG(
     dag_id='jupiter_rolling_dispatcher',
     schedule_interval=None,
@@ -123,4 +126,10 @@ with DAG(
         wait_for_completion = True,
     )
     
-    child_dag_config >> trigger_jupiter_orders_delivery_fdm 
+    check_rollingday = BranchPythonOperator(
+        task_id='check_rollingday',
+        python_callable=_is_rolling_day,
+        op_kwargs={'rolling_day': parameters["RollingDay"]},
+    )
+    
+    child_dag_config >> trigger_jupiter_orders_delivery_fdm >> check_rollingday 
