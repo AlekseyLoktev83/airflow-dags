@@ -111,7 +111,7 @@ def get_parameters(**kwargs):
 def copy_hdfs_to_sftp(parameters:dict):
     logs_sftp_path=parameters["LogsSftpPath"]
     logs_process_path=parameters["LogsProcessPath"]
-    file_name=os.path.basename(logs_process_path)
+    file_name=f'{parameters["RunId"]}.txt'
     
     tmp_path=f'/tmp/'
     sftp_path=f'{logs_sftp_path}/{file_name}'
