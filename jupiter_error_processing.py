@@ -131,6 +131,7 @@ def log_error_message(parameters:dict):
     hdfs_hook = WebHDFSHook(HDFS_CONNECTION_NAME)
     conn = hdfs_hook.get_conn()
     df = None
+    file_name = None
     try:
      conn.download(old_temp_file_dir,log_file_path)
      old_temp_file_path=glob.glob(f'{old_temp_file_dir}/*.csv')[0]
