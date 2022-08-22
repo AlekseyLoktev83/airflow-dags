@@ -83,6 +83,6 @@ with DAG(
     )        
     trigger_jupiter_start_night_processing >> trigger_jupiter_calculation_dispatcher
 #     Success branch
-    trigger_jupiter_calculation_dispatcher >> trigger_jupiter_end_night_processing >> trigger_jupiter_move_logs_to_blob >> trigger_jupiter_move_promo_to_archive
+    trigger_jupiter_calculation_dispatcher >> trigger_jupiter_end_night_processing >> trigger_jupiter_move_logs_to_sftp >> trigger_jupiter_move_promo_to_archive
 #     Error branch
     trigger_jupiter_calculation_dispatcher >> trigger_jupiter_error_processing >> trigger_jupiter_error_end_night_processing >> trigger_jupiter_error_move_logs_to_blob >> trigger_jupiter_error_move_promo_to_archive
