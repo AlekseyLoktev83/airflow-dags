@@ -36,9 +36,9 @@ with DAG(
         wait_for_completion = True,
     )
     
-    trigger_jupiter_move_logs_to_blob = TriggerDagRunOperator(
-        task_id="trigger_jupiter_move_logs_to_blob",
-        trigger_dag_id="jupiter_move_logs_to_blob",  
+    trigger_jupiter_move_logs_to_sftp = TriggerDagRunOperator(
+        task_id="trigger_jupiter_move_logs_to_sftp",
+        trigger_dag_id="jupiter_move_logs_to_sftp",  
         conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":SCHEMA},
         wait_for_completion = True,
     )
