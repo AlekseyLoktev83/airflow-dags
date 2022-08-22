@@ -61,7 +61,7 @@ with DAG(
     trigger_jupiter_error_end_night_processing = TriggerDagRunOperator(
         task_id="trigger_jupiter_error_end_night_processing",
         trigger_dag_id="jupiter_error_end_night_processingg",  
-        conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":SCHEMA},
+        conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":SCHEMA,"night_processing_value":2},
         wait_for_completion = True,
         trigger_rule=TriggerRule.ONE_FAILED
     )
