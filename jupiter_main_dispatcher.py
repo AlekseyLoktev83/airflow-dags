@@ -53,7 +53,7 @@ with DAG(
     trigger_jupiter_error_processing = TriggerDagRunOperator(
         task_id="trigger_jupiter_error_processing",
         trigger_dag_id="jupiter_error_processing",  
-        conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":SCHEMA},
+        conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":SCHEMA,"error_message":"Jupiter calculation was failed!"},
         wait_for_completion = True,
         trigger_rule=TriggerRule.ONE_FAILED
     )
