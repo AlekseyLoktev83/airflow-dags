@@ -126,7 +126,7 @@ def copy_to_archive(parameters:dict, entity):
     
     hdfs_hook = WebHDFSHook(HDFS_CONNECTION_NAME)
     conn = hdfs_hook.get_conn()
-    print(conn.content(src_path))
+    print(conn.list(src_path))
     
 
     return entity
