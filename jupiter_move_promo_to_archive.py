@@ -104,48 +104,26 @@ def get_parameters(**kwargs):
     print(parameters)
     return parameters
 
-@task
-def create_child_dag_config(parameters:dict):
-    conf={"parent_run_id":parameters["ParentRunId"],"parent_process_date":parameters["ProcessDate"],"schema":parameters["Schema"]}
-    return conf
 
 @task
-def update_blocked_promo_table(parameters:dict):
-    odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
-    schema = parameters["Schema"]
-    result = odbc_hook.run(sql=f"""exec [{schema}].[AddBlockedPromo]""")
-    print(result)
-
-    return result
-
-@task
-def copy_to_archive(parameters:dict, entity):
-    odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
-    src_path = entity['SrcPath']
-    dst_path = entity['DstPath']
-    
-    hdfs_hook = WebHDFSHook(HDFS_CONNECTION_NAME)
-    conn = hdfs_hook.get_conn()
-    print(conn.list(src_path))
-    
-
-    return entity
-
-@task
-def generate_entity_list(parameters:dict):
-    schema = parameters["Schema"]
-    
+def generate_copy_script(parameters:dict):
     output_path=parameters['OutputPath']
     output_archive_path=parameters['OutputArchivePath']
     raw_archive_path=parameters['RawArchivePath']
     
-    tables = [
+    entities = [
               {'SrcPath':f'{output_path}/Promo/Promo.CSV','DstPath':f'{output_archive_path}Promo.CSV'},
 #               {'SrcPath':f'{output_path}/PromoProduct/PromoProduct.CSV','Entity':'PromoProduct.CSV'},
 #               {'SrcPath':f'{output_path}/PromoSupportPromo/PromoSupportPromo.CSV','Entity':'PromoSupportPromo.CSV'},
         
              ]
-    return tables
+    
+    scripts = []
+    for entity in entities:
+        script = f'hadoop dfs -cp -f {entity["SrcPath"]} {entity["DstPath"]}'
+        scripts.append(script)
+
+    return scripts
 
 with DAG(
     dag_id='jupiter_move_promo_to_archive',
@@ -157,4 +135,7 @@ with DAG(
 ) as dag:
 # Get dag parameters from vault    
     parameters = get_parameters()
-    copy_to_archive = copy_to_archive.partial(parameters=parameters).expand(entity=generate_entity_list(parameters))
+    
+    copy_entities = BashOperator.partial(task_id="copy_entities", do_xcom_push=True).expand(
+        bash_command=generate_copy_script(parameters),
+    )
