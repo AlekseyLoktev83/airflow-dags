@@ -27,6 +27,7 @@ import json
 import pandas as pd
 import glob
 import os
+import hdfs
 
 import struct
 from contextlib import closing
@@ -126,7 +127,10 @@ def log_error_message(parameters:dict):
     
     hdfs_hook = WebHDFSHook(HDFS_CONNECTION_NAME)
     conn = hdfs_hook.get_conn()
-    conn.download(temp_file_path,log_file_path)
+    try:
+     conn.download(temp_file_path,log_file_path)
+    except hdfs.util.HdfsError as e:
+        print(str(e))
     
     
     
