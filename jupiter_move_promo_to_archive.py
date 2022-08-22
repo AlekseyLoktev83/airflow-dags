@@ -69,7 +69,8 @@ def get_parameters(**kwargs):
     output_path = Variable.get("OutputPath")
     white_list = Variable.get("WhiteList",default_var=None)
     black_list = Variable.get("BlackList",default_var=None)
-    upload_path = f'{raw_path}/{execution_date}/'
+    raw_archive_path = f'{raw_path}/ARCHIVE/JUPITER/{execution_date}/'
+    output_archive_path = f'{output_path}/ARCHIVE/JUPITER/{execution_date}/'
     system_name = Variable.get("SystemName")
     last_upload_date = Variable.get("LastUploadDate")
     
@@ -85,7 +86,8 @@ def get_parameters(**kwargs):
                   "BlackList": black_list,
                   "MaintenancePathPrefix":"{}{}{}_{}_".format(raw_path,"/#MAINTENANCE/",process_date,run_id),
                   "BcpParameters": bcp_parameters,
-                  "UploadPath": upload_path,
+                  "RawArchivePath": raw_archive_path,
+                  "OutputArchivePath": output_archive_path,
                   "RunId":run_id,
                   "SystemName":system_name,
                   "LastUploadDate":last_upload_date,
@@ -142,12 +144,10 @@ def generate_entity_list(parameters:dict):
     schema = parameters["Schema"]
     output_path=parameters['OutputPath']
     tables = [
-              {'SrcPath':f'{output_path}/Promo/Promo.CSV/*.csv','TableName':f'{schema}.TEMP_PROMO'},
-              {'SrcPath':f'{output_path}/PromoProduct/PromoProduct.CSV/*.csv','TableName':f'{schema}.TEMP_PROMOPRODUCT'},
-              {'SrcPath':f'{output_path}/PromoSupportPromo/PromoSupportPromo.CSV/*.csv','TableName':f'{schema}.TEMP_PROMOSUPPORTPROMO'},
-              {'SrcPath':f'{output_path}/ServiceInfo/ServiceInfo.CSV/*.csv','TableName':f'{schema}.ServiceInfo'},
-              {'SrcPath':f'{output_path}/ProductChangeIncident/NewProductChangeIncident.CSV/*.csv','TableName':f'{schema}.TEMP_PRODUCTCHANGEINCIDENTS'},
-              {'SrcPath':f'{output_path}/ChangesIncident/ChangesIncident.CSV/*.csv','TableName':f'{schema}.ChangesIncident'},
+              {'SrcPath':f'{output_path}/Promo/Promo.CSV','Entity':f'{output_path}/ARCHIVE/{}'},
+              {'SrcPath':f'{output_path}/PromoProduct/PromoProduct.CSV','Entity':'PromoProduct.CSV'},
+              {'SrcPath':f'{output_path}/PromoSupportPromo/PromoSupportPromo.CSV','Entity':'PromoSupportPromo.CSV'},
+        
              ]
     return tables
 
