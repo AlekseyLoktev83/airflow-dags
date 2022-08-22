@@ -120,9 +120,16 @@ def save_parameters(parameters:dict):
     return [args]
 
 @task
-def create_child_dag_config(parameters:dict):
-    conf={"parent_run_id":parameters["ParentRunId"],"parent_process_date":parameters["ProcessDate"],"schema":parameters["Schema"],"parent_handler_id":parameters["HandlerId"]}
-    return conf
+def log_error_message(parameters:dict):
+    log_file_path=f'{parameters["ProcessPath"]}/Logs/{parameters["RunId"]}.csv'
+    temp_file_path=f'/TMP/{parameters["RunId"]}.csv'
+    
+    hdfs_hook = WebHDFSHook(HDFS_CONNECTION_NAME)
+    conn = hdfs_hook.get_conn()
+    conn.download(log_file_path,temp_file_path)
+    
+    
+    
 
 with DAG(
     dag_id='jupiter_error_processing',
@@ -135,34 +142,27 @@ with DAG(
 # Get dag parameters from vault    
     parameters = get_parameters()
     save_params = save_parameters(parameters)
+    log_error = log_error_message(parameters)
     
-    log_error_message = DataprocCreatePysparkJobOperator(
-        task_id='log_error_message',
-        cluster_id='c9qc9m3jccl8v7vigq10',
-        main_python_file_uri='hdfs:///SRC/JUPITER/PROMO_PARAMETERS_CALCULATION/LOG_ERROR_MESSAGE.py	',
-        python_file_uris=[
-            'hdfs:///SRC/SHARED/EXTRACT_SETTING.py',
-            'hdfs:///SRC/SHARED/SUPPORT_FUNCTIONS.py',
-        ],
-        file_uris=[
-            's3a://data-proc-public/jobs/sources/data/config.json',
-        ],
-        args=save_params,
-        properties={
-            'spark.submit.deployMode': 'cluster'
-        },
-        packages=['org.slf4j:slf4j-simple:1.7.30'],
-        repositories=['https://repo1.maven.org/maven2'],
-        exclude_packages=['com.amazonaws:amazon-kinesis-client'],
-    )
+#     log_error_message = DataprocCreatePysparkJobOperator(
+#         task_id='log_error_message',
+#         cluster_id='c9qc9m3jccl8v7vigq10',
+#         main_python_file_uri='hdfs:///SRC/JUPITER/PROMO_PARAMETERS_CALCULATION/LOG_ERROR_MESSAGE.py	',
+#         python_file_uris=[
+#             'hdfs:///SRC/SHARED/EXTRACT_SETTING.py',
+#             'hdfs:///SRC/SHARED/SUPPORT_FUNCTIONS.py',
+#         ],
+#         file_uris=[
+#             's3a://data-proc-public/jobs/sources/data/config.json',
+#         ],
+#         args=save_params,
+#         properties={
+#             'spark.submit.deployMode': 'cluster'
+#         },
+#         packages=['org.slf4j:slf4j-simple:1.7.30'],
+#         repositories=['https://repo1.maven.org/maven2'],
+#         exclude_packages=['com.amazonaws:amazon-kinesis-client'],
+#     )
     
-    child_dag_config = create_child_dag_config(parameters)
     
-    trigger_jupiter_block_promo = TriggerDagRunOperator(
-        task_id="trigger_jupiter_block_promo",
-        trigger_dag_id="jupiter_block_promo",  
-        conf='{{ti.xcom_pull(task_ids="create_child_dag_config")}}',
-        wait_for_completion = True,
-    )
-    
-    promo_filtering_for_recalculation >> child_dag_config >> trigger_jupiter_block_promo
+    save_params >> log_error
