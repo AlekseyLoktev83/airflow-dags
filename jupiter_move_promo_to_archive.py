@@ -112,7 +112,7 @@ def generate_copy_script(parameters:dict):
     raw_archive_path=parameters['RawArchivePath']
     
     entities = [
-              {'SrcPath':f'{output_path}/Promo/Promo.CSV','DstPath':f'{output_archive_path}Promo.CSV'},
+              {'SrcPath':f'{output_path}/Promo/Promo.CSV/*','DstPath':f'{output_archive_path}Promo.CSV'},
 #               {'SrcPath':f'{output_path}/PromoProduct/PromoProduct.CSV','Entity':'PromoProduct.CSV'},
 #               {'SrcPath':f'{output_path}/PromoSupportPromo/PromoSupportPromo.CSV','Entity':'PromoSupportPromo.CSV'},
         
@@ -135,12 +135,12 @@ with DAG(
 ) as dag:
 # Get dag parameters from vault    
     parameters = get_parameters()
-    create_directories=BashOperator(task_id="create_directories", 
-                 do_xcom_push=True,
-                 bash_command='hadoop dfs -mkdir -p {{ti.xcom_pull(task_ids="get_parameters",key="RawArchivePath")}} ',
-    )
+#     create_directories=BashOperator(task_id="create_directories", 
+#                  do_xcom_push=True,
+#                  bash_command='hadoop dfs -mkdir -p {{ti.xcom_pull(task_ids="get_parameters",key="RawArchivePath")}} ',
+#     )
     copy_entities = BashOperator.partial(task_id="copy_entities", do_xcom_push=True).expand(
         bash_command=generate_copy_script(parameters),
     )
     
-    parameters >> create_directories >> copy_entities
+    parameters >> copy_entities
