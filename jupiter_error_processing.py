@@ -140,7 +140,7 @@ def log_error_message(parameters:dict):
      new_df = pd.DataFrame([[f'[ERROR]: {parameters["ErrorMessage"]}']],columns=['logMessage'])
      print(old_df.to_markdown())
      print(new_df.to_markdown())
-     df = pd.concat(old_df,new_df)   
+     df = pd.concat(old_df,new_df, axis=0)
         
     except hdfs.util.HdfsError as e:
         print('Log not found! Creating new one.')
