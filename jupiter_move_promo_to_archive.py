@@ -143,4 +143,4 @@ with DAG(
         bash_command=generate_copy_script(parameters),
     )
     
-    create_directories >> copy_entities
+    parameters >> create_directories >> copy_entities
