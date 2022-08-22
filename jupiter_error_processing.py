@@ -127,10 +127,7 @@ def log_error_message(parameters:dict):
     log_file_path=f'{parameters["ProcessPath"]}/Logs/{parameters["RunId"]}.csv'
     old_temp_file_dir=f'/TMP/{parameters["RunId"]}_old.csv'
     new_temp_file_path=f'/TMP/{parameters["RunId"]}_new.csv'
-    
-    src_file_path=glob.glob(f'{old_temp_file_dir}/*.csv')[0]
-    print(src_file_path)
-    
+
     hdfs_hook = WebHDFSHook(HDFS_CONNECTION_NAME)
     conn = hdfs_hook.get_conn()
     df = None
