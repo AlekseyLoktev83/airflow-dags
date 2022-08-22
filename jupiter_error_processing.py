@@ -138,6 +138,8 @@ def log_error_message(parameters:dict):
      file_name=os.path.basename(old_temp_file_path)   
      old_df = pd.read_csv(old_temp_file_path,sep=CSV_SEPARATOR)
      new_df = pd.DataFrame([[f'[ERROR]: {parameters["ErrorMessage"]}']],columns=['logMessage'])
+     print(old_df.to_markdown())
+     print(new_df.to_markdown())
      df = pd.concat(old_df,new_df)   
         
     except hdfs.util.HdfsError as e:
