@@ -126,7 +126,7 @@ def log_error_message(parameters:dict):
     
     hdfs_hook = WebHDFSHook(HDFS_CONNECTION_NAME)
     conn = hdfs_hook.get_conn()
-    conn.download(log_file_path,temp_file_path)
+    conn.download(temp_file_path,log_file_path)
     
     
     
