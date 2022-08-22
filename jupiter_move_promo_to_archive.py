@@ -120,7 +120,7 @@ def generate_copy_script(parameters:dict):
     
     scripts = []
     for entity in entities:
-        script = f'hadoop dfs -cp -f -p {entity["SrcPath"]} {entity["DstPath"]}'
+        script = f'hadoop dfs -mkdir -p {entity["DstPath"]} ; hadoop dfs -cp -f -p {entity["SrcPath"]} {entity["DstPath"]} '
         scripts.append(script)
 
     return scripts
