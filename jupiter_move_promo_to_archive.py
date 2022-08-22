@@ -119,34 +119,28 @@ def update_blocked_promo_table(parameters:dict):
     return result
 
 @task
-def truncate_table(parameters:dict, entity):
+def copy_to_archive(parameters:dict, entity):
     odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
-    schema = parameters["Schema"]
-    table_name = entity['TableName']
-    result = odbc_hook.run(sql=f"""truncate table {table_name}""")
-    print(result)
+    src_path = entity['SrcPath']
+    dst_path = entity['DstPath']
+    
+    hdfs_hook = WebHDFSHook(HDFS_CONNECTION_NAME)
+    conn = hdfs_hook.get_conn()
+    print(conn.content(src_path))
+    
 
     return entity
 
 @task
-def generate_bcp_import_script(parameters:dict, entity):
-    schema = parameters["Schema"]
-    table_name = entity['TableName']
-    src_path = entity['SrcPath']
-    bcp_import_parameters=parameters['BcpImportParameters']
-    script = f'cp -r /tmp/data/src/. ~/ && chmod +x ~/bcp_import.sh && ~/bcp_import.sh {src_path} {bcp_import_parameters} \"{table_name}\" "1" '
-    print(script)
-
-    return script
-
-@task
 def generate_entity_list(parameters:dict):
     schema = parameters["Schema"]
-    output_path=parameters['OutputPath']
+    output_archive_path=parameters['OutputArchivePath']
+    raw_archive_path=parameters['RawArchivePath']
+    
     tables = [
-              {'SrcPath':f'{output_path}/Promo/Promo.CSV','Entity':f'{output_path}/ARCHIVE/{}'},
-              {'SrcPath':f'{output_path}/PromoProduct/PromoProduct.CSV','Entity':'PromoProduct.CSV'},
-              {'SrcPath':f'{output_path}/PromoSupportPromo/PromoSupportPromo.CSV','Entity':'PromoSupportPromo.CSV'},
+              {'SrcPath':f'{output_path}/Promo/Promo.CSV','DstPath':f'{output_archive_path}Promo.CSV'},
+#               {'SrcPath':f'{output_path}/PromoProduct/PromoProduct.CSV','Entity':'PromoProduct.CSV'},
+#               {'SrcPath':f'{output_path}/PromoSupportPromo/PromoSupportPromo.CSV','Entity':'PromoSupportPromo.CSV'},
         
              ]
     return tables
@@ -161,9 +155,4 @@ with DAG(
 ) as dag:
 # Get dag parameters from vault    
     parameters = get_parameters()
-    trunc_tables = truncate_table.partial(parameters=parameters).expand(entity=generate_entity_list(parameters))
-
-    upload_tables = BashOperator.partial(task_id="import_table",
-                                       do_xcom_push=True,
-                                      ).expand(bash_command=generate_bcp_import_script.partial(parameters=parameters).expand(entity=trunc_tables),
-                                              )
+    copy_to_archive = copy_to_archive.partial(parameters=parameters).expand(entity=generate_entity_list(parameters))
