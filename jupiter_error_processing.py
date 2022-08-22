@@ -147,7 +147,7 @@ def log_error_message(parameters:dict):
     
     file_name = file_name if file_name else f'{parameters["RunId"]}.csv'
     df.to_csv(new_temp_file_path, index=False, sep=CSV_SEPARATOR)
-    conn.upload(log_file_path,f'{new_temp_file_path}/{file_name}',overwrite=True)
+    conn.upload(f'{log_file_path}/{file_name}',new_temp_file_path',overwrite=True)
     
     
     
