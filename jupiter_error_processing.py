@@ -149,4 +149,3 @@ with DAG(
     parameters = get_parameters()
     log_error = log_error_message(parameters)  
     
-    save_params >> log_error
