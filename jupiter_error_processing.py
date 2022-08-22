@@ -133,7 +133,7 @@ def log_error_message(parameters:dict):
     df = None
     file_name = None
     try:
-     conn.download(old_temp_file_dir,log_file_path)
+     conn.download(log_file_path,old_temp_file_dir)
      old_temp_file_path=glob.glob(f'{old_temp_file_dir}/*.csv')[0]
      file_name=os.path.basename(old_temp_file_path)   
      old_df = pd.read_csv(old_temp_file_path,sep=CSV_SEPARATOR)
