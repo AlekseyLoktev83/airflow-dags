@@ -116,7 +116,7 @@ def generate_copy_script(parameters:dict):
               {'SrcPath':f'{output_path}/Promo/Promo.CSV/*','DstPath':f'{output_archive_path}Promo.CSV'},
               {'SrcPath':f'{output_path}/PromoProduct/PromoProduct.CSV/*','DstPath':f'{output_archive_path}PromoProduct.CSV'},
               {'SrcPath':f'{output_path}/PromoSupportPromo/PromoSupportPromo.CSV/*','DstPath':f'{output_archive_path}PromoSupportPromo.CSV'},
-              {'SrcPath':f'{raw_path}/SOURCES/JUPITER/Promo/*','DstPath':'DstPath':f'{raw_archive_path}Promo'},
+              {'SrcPath':f'{raw_path}/SOURCES/JUPITER/Promo/*','DstPath':f'{raw_archive_path}Promo'},
               {'SrcPath':f'{raw_path}/SOURCES/JUPITER/PromoProduct/*','DstPath':f'{raw_archive_path}PromoProduct'},
               {'SrcPath':f'{raw_path}/SOURCES/JUPITER/PromoSupportPromo/*','DstPath':f'{raw_archive_path}PromoSupportPromo'},
         
