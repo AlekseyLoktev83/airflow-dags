@@ -143,6 +143,7 @@ def log_error_message(parameters:dict):
     except hdfs.util.HdfsError as e:
         print('Log not found! Creating new one.')
         df = pd.DataFrame([[f'[ERROR]: {parameters["ErrorMessage"]}']],columns=['logMessage'])
+        conn.makedirs(log_file_path)
     
     file_name = file_name if file_name else f'{parameters["RunId"]}.csv'
     df.to_csv(new_temp_file_path, index=False, sep=CSV_SEPARATOR)
