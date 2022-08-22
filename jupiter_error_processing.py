@@ -125,8 +125,8 @@ def save_parameters(parameters:dict):
 @task
 def log_error_message(parameters:dict):
     log_file_path=f'{parameters["ProcessPath"]}/Logs/{parameters["RunId"]}.csv'
-    old_temp_file_dir=f'/TMP/{parameters["RunId"]}_old.csv'
-    new_temp_file_path=f'/TMP/{parameters["RunId"]}_new.csv'
+    old_temp_file_dir=f'/tmp/{parameters["RunId"]}_old.csv'
+    new_temp_file_path=f'/tmp/{parameters["RunId"]}_new.csv'
 
     hdfs_hook = WebHDFSHook(HDFS_CONNECTION_NAME)
     conn = hdfs_hook.get_conn()
