@@ -134,6 +134,8 @@ def copy_to_archive(parameters:dict, entity):
 @task
 def generate_entity_list(parameters:dict):
     schema = parameters["Schema"]
+    
+    output_path=parameters['OutputPath']
     output_archive_path=parameters['OutputArchivePath']
     raw_archive_path=parameters['RawArchivePath']
     
