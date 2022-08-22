@@ -139,10 +139,7 @@ with DAG(
 ) as dag:
 # Get dag parameters from vault    
     parameters = get_parameters()
-#     create_directories=BashOperator(task_id="create_directories", 
-#                  do_xcom_push=True,
-#                  bash_command='hadoop dfs -mkdir -p {{ti.xcom_pull(task_ids="get_parameters",key="RawArchivePath")}} ',
-#     )
+
     copy_entities = BashOperator.partial(task_id="copy_entities", do_xcom_push=True).expand(
         bash_command=generate_copy_script(parameters),
     )
