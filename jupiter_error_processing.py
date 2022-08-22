@@ -66,6 +66,7 @@ def get_parameters(**kwargs):
     upload_date = kwargs['logical_date'].strftime("%Y-%m-%d %H:%M:%S")
     file_name = dag_run.conf.get('FileName')
     create_date = dag_run.conf.get('CreateDate')
+    error_message = dag_run.conf.get('error_message')
 
     raw_path = Variable.get("RawPath")
     process_path = Variable.get("ProcessPath")
@@ -98,6 +99,7 @@ def get_parameters(**kwargs):
                   "FileName":file_name,
                   "CreateDate":create_date,
                   "HandlerId":handler_id,
+                  "ErrorMessage":error_message,
                   }
     print(parameters)
     return parameters
@@ -123,14 +125,30 @@ def save_parameters(parameters:dict):
 @task
 def log_error_message(parameters:dict):
     log_file_path=f'{parameters["ProcessPath"]}/Logs/{parameters["RunId"]}.csv'
-    temp_file_path=f'/TMP/{parameters["RunId"]}.csv'
+    old_temp_file_dir=f'/TMP/{parameters["RunId"]}_old.csv'
+    new_temp_file_path=f'/TMP/{parameters["RunId"]}_new.csv'
+    
+    src_file_path=glob.glob(f'{old_temp_file_dir}/*.csv')[0]
+    print(src_file_path)
     
     hdfs_hook = WebHDFSHook(HDFS_CONNECTION_NAME)
     conn = hdfs_hook.get_conn()
+    df = None
     try:
-     conn.download(temp_file_path,log_file_path)
+     conn.download(old_temp_file_dir,log_file_path)
+     old_temp_file_path=glob.glob(f'{old_temp_file_dir}/*.csv')[0]
+     file_name=os.path.basename(old_temp_file_path)   
+     old_df = pd.read_csv(old_temp_file_path,sep=CSV_SEPARATOR)
+     new_df = pd.DataFrame([[f'[ERROR]: {parameters["ErrorMessage"]}']],columns=['logMessage'])
+     df = pd.concat(old_df,new_df)   
+        
     except hdfs.util.HdfsError as e:
-        print(str(e))
+        print('Log not found! Creating new one.')
+        df = pd.DataFrame([[f'[ERROR]: {parameters["ErrorMessage"]}']],columns=['logMessage'])
+    
+    file_name = file_name if file_name else f'{parameters["RunId"]}.csv'
+    df.to_csv(new_temp_file_path, index=False, sep=CSV_SEPARATOR)
+    conn.upload(log_file_path,f'{new_temp_file_path}/{file_name}',overwrite=True)
     
     
     
