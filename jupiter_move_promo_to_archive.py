@@ -69,7 +69,7 @@ def get_parameters(**kwargs):
     output_path = Variable.get("OutputPath")
     white_list = Variable.get("WhiteList",default_var=None)
     black_list = Variable.get("BlackList",default_var=None)
-    raw_archive_path = f'{raw_path}/ARCHIVE/JUPITER/{execution_date}/'
+    raw_archive_path = f'{raw_path}/SOURCES/ARCHIVE/JUPITER/{execution_date}/'
     output_archive_path = f'{output_path}/ARCHIVE/JUPITER/{execution_date}/'
     system_name = Variable.get("SystemName")
     last_upload_date = Variable.get("LastUploadDate")
