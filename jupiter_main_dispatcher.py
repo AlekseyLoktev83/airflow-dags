@@ -60,15 +60,15 @@ with DAG(
     
     trigger_jupiter_error_end_night_processing = TriggerDagRunOperator(
         task_id="trigger_jupiter_error_end_night_processing",
-        trigger_dag_id="jupiter_error_end_night_processingg",  
+        trigger_dag_id="jupiter_end_night_processing",  
         conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":SCHEMA,"night_processing_value":2},
         wait_for_completion = True,
         trigger_rule=TriggerRule.ONE_FAILED
     )
     
-    trigger_jupiter_error_move_logs_to_blob = TriggerDagRunOperator(
-        task_id="trigger_jupiter_error_move_logs_to_blob",
-        trigger_dag_id="jupiter_error_move_logs_to_blob",  
+    trigger_jupiter_error_move_logs_to_sftp = TriggerDagRunOperator(
+        task_id="trigger_jupiter_error_move_logs_to_sftp",
+        trigger_dag_id="jupiter_move_logs_to_sftp",  
         conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":SCHEMA},
         wait_for_completion = True,
         trigger_rule=TriggerRule.ONE_FAILED
@@ -76,7 +76,7 @@ with DAG(
     
     trigger_jupiter_error_move_promo_to_archive = TriggerDagRunOperator(
         task_id="trigger_jupiter_error_move_promo_to_archive",
-        trigger_dag_id="jupiter_error_move_promo_to_archive",  
+        trigger_dag_id="jupiter_move_promo_to_archive",  
         conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":SCHEMA},
         wait_for_completion = True,
         trigger_rule=TriggerRule.ONE_FAILED
@@ -85,4 +85,4 @@ with DAG(
 #     Success branch
     trigger_jupiter_calculation_dispatcher >> trigger_jupiter_end_night_processing >> trigger_jupiter_move_logs_to_sftp >> trigger_jupiter_move_promo_to_archive
 #     Error branch
-    trigger_jupiter_calculation_dispatcher >> trigger_jupiter_error_processing >> trigger_jupiter_error_end_night_processing >> trigger_jupiter_error_move_logs_to_blob >> trigger_jupiter_error_move_promo_to_archive
+    trigger_jupiter_calculation_dispatcher >> trigger_jupiter_error_processing >> trigger_jupiter_error_end_night_processing >> trigger_jupiter_error_move_logs_to_sftp >> trigger_jupiter_error_move_promo_to_archive
