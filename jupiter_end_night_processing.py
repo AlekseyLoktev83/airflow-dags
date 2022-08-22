@@ -10,7 +10,7 @@ from cloud_scripts.custom_dataproc import  DataprocCreatePysparkJobOperator
 from airflow.models import Variable
 from airflow.operators.bash import BashOperator
 from airflow.operators.dummy import DummyOperator
-from airflow.operators.python import PythonOperator, BranchPythonOperator
+from airflow.operators.python import PythonOperator, BranchPythonOperator, ShortCircuitOperator
 from airflow.utils.task_group import TaskGroup
 from airflow.hooks.base_hook import BaseHook
 from airflow.providers.hashicorp.hooks.vault import VaultHook
@@ -77,7 +77,10 @@ def get_parameters(**kwargs):
     
     db_conn = BaseHook.get_connection(MSSQL_CONNECTION_NAME)
     bcp_parameters = '-S {} -d {} -U {} -P {}'.format(db_conn.host, db_conn.schema, db_conn.login, db_conn.password)
-
+   
+    night_processing_value = dag_run.conf.get('night_processing_value')
+    night_processing_value = night_processing_value if night_processing_value else 0
+    
     parameters = {"RawPath": raw_path,
                   "ProcessPath": process_path,
                   "OutputPath": output_path,
@@ -93,6 +96,7 @@ def get_parameters(**kwargs):
                   "ProcessDate":process_date,
                   "MaintenancePath":"{}{}".format(raw_path,"/#MAINTENANCE/"),
                   "Schema":schema,
+                  "NightProcessingValue":night_processing_value
                   }
     print(parameters)
     return parameters
@@ -115,6 +119,8 @@ def set_incidents_processdate(parameters:dict):
 
     return result
 
+def _is_night_processing_success(**kwargs):
+    return kwargs['input']['NightProcessingValue'] == 0
 
 with DAG(
     dag_id='jupiter_end_night_processing',
@@ -128,4 +134,10 @@ with DAG(
     parameters = get_parameters()
     flag_down = set_night_processing_progress_flag_down(parameters)
     incidents_processdate = set_incidents_processdate(parameters)
-    flag_down >> incidents_processdate
+    
+    is_night_processing_success = ShortCircuitOperator(
+        task_id='is_night_processing_success',
+        python_callable=_is_night_processing_success,
+        op_kwargs={'input': parameters},
+    )
+    flag_down >> is_night_processing_success >> incidents_processdate
