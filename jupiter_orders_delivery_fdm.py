@@ -42,8 +42,11 @@ CSV_SEPARATOR = '\u0001'
 TAGS=["jupiter", "rolling", "dev"]
 BASELINE_ENTITY_NAME='BaseLine'
 PARAMETERS_FILE = 'PARAMETERS.csv'
-PROMOPRODUCT_PROCESS_DIR='/PromoProduct/NewPromoProduct.CSV/*.csv'
 
+MONITORING_FILE = 'MONITORING.csv'
+STATUS_FAILURE = 'FAILURE'
+STATUS_COMPLETE = 'COMPLETE'
+STATUS_PROCESS = 'PROCESS'
 
 def separator_convert_hex_to_string(sep):
     sep_map = {'0x01':'\x01'}
@@ -97,6 +100,8 @@ def get_parameters(**kwargs):
                   "FileName":file_name,
                   "CreateDate":create_date,
                   "DagId":dag.dag_id,
+                  "DateDir":execution_date,
+                  "StartDate":pendulum.now(),
                   }
     print(parameters)
     return parameters
@@ -114,10 +119,42 @@ def save_parameters(parameters:dict):
     conn.upload(parameters_file_path,temp_file_path,overwrite=True)
     
     
-    args = json.dumps({"MaintenancePathPrefix":parameters["MaintenancePathPrefix"],"ProcessDate":parameters["ProcessDate"],"Schema":parameters["Schema"]})
+    args = json.dumps({"MaintenancePathPrefix":parameters["MaintenancePathPrefix"],"ProcessDate":parameters["ProcessDate"],"Schema":parameters["Schema"],"PipelineName":parameters["DagId"]})
                                                                             
                                                                                             
     return [args]
+
+def _update_output_monitoring(parameters:dict,prev_task_result):
+    monitoring_file_path = f'{parameters["MaintenancePathPrefix"]}{MONITORING_FILE}'
+    entity_path = f'{parameters["OutputPath"]}/{parameters["DagId"]}/{parameters["DateDir]}/ORDERS_DELIVERY_FDM.parquet'
+    end_date = pendulum.now()
+    start_date = parameters["StartDate"]
+    duration = end_date.diff(start_date).in_seconds()
+
+    temp_file_path = f'/tmp/{MONITORING_FILE}'
+    df = pd.DataFrame([{'PipelineRunId': runid,
+                        'EntityName':'ORDERS_DELIVERY_FDM.parquet',
+                        'StartDate': pendulum.now(),
+                        'Status': STATUS_COMPLETE if prev_task_result else STATUS_FAILURE,
+                        'TargetPath': entity_path,
+                        'TargetFormat':'parquet',
+                        'Duration':duration, 
+                        }])
+    df.to_csv(temp_file_path, index=False, sep=CSV_SEPARATOR)
+
+    hdfs_hook = WebHDFSHook(HDFS_CONNECTION_NAME)
+    conn = hdfs_hook.get_conn()
+    conn.upload(monitoring_file_path, temp_file_path, overwrite=True)
+
+    return True
+
+@task(task_id="update_output_monitoring_failure",trigger_rule=TriggerRule.ONE_FAILED)
+def update_output_monitoring_failure(parameters:dict):
+    _update_output_monitoring_failure(parameters:dict,False)
+
+@task(task_id="update_output_monitoring_success")
+def update_output_monitoring_success(parameters:dict):
+    _update_output_monitoring_failure(parameters:dict,True)
 
 with DAG(
     dag_id='jupiter_orders_delivery_fdm',
@@ -150,5 +187,9 @@ with DAG(
         repositories=['https://repo1.maven.org/maven2'],
         exclude_packages=['com.amazonaws:amazon-kinesis-client'],
     )
+
+    mon_success = update_output_monitoring_success(parameters)
+    mon_failure = update_output_monitoring_failure(parameters)
     
-    build_model
+    build_model >> mon_success
+    build_model >> mon_failure
