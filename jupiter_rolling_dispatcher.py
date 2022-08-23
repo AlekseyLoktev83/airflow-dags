@@ -99,7 +99,7 @@ def get_parameters(**kwargs):
     return parameters
 
 def _is_rolling_day(**kwargs):
-    return kwargs['rolling_day'] == pendulum.today().day_of_week
+    return int(kwargs['rolling_day']) == pendulum.today().day_of_week
 with DAG(
     dag_id='jupiter_rolling_dispatcher',
     schedule_interval=None,
