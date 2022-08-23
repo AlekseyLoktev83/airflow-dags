@@ -77,7 +77,7 @@ def get_parameters(**kwargs):
     db_conn = BaseHook.get_connection(MSSQL_CONNECTION_NAME)
     bcp_parameters = '-S {} -d {} -U {} -P {}'.format(db_conn.host, db_conn.schema, db_conn.login, db_conn.password)
     bcp_import_parameters = f'\"DRIVER=ODBC Driver 18 for SQL Server;SERVER={db_conn.host};DATABASE={db_conn.schema};UID={db_conn.login};PWD={db_conn.password};Encrypt=no;\"'
-    baseline_output_path=f'{output_path}/BASELINE/{execution_date}/'
+    rolling_volumes_output_path=f'{output_path}/BASELINE/{execution_date}/'
     
     parameters = {"RawPath": raw_path,
                   "ProcessPath": process_path,
@@ -98,7 +98,7 @@ def get_parameters(**kwargs):
                   "FileName":file_name,
                   "CreateDate":create_date,
                   "BcpImportParameters":bcp_import_parameters,
-                  "BaseLineOutputPath":baseline_output_path,
+                  "RollingVolumesOutputPath":rolling_volumes_output_path,
                   }
     print(parameters)
     return parameters
@@ -115,10 +115,10 @@ def update_baseline(parameters:dict):
 
 
 @task
-def truncate_temp_baseline(parameters:dict):
+def truncate_rolling_volumes(parameters:dict):
     odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
     schema = parameters["Schema"]
-    result = odbc_hook.run(sql=f"""truncate table [{schema}].[TEMP_BASELINE]""")
+    result = odbc_hook.run(sql=f"""truncate table [{schema}].[ROLLING_VOLUMES_FDM]""")
     print(result)
 
     return result
@@ -133,11 +133,10 @@ with DAG(
 ) as dag:
 # Get dag parameters from vault    
     parameters = get_parameters()
-    truncate_temp_baseline1 = truncate_temp_baseline(parameters)
-    upload_baseline = BashOperator(task_id="upload_baseline",
+    truncate_rolling_volumes = truncate_rolling_volumes(parameters)
+    upload_rolling_volumes = BashOperator(task_id="upload_rolling_volumes",
                                  do_xcom_push=True,
-                                 bash_command='cp -r /tmp/data/src/. ~/ && chmod +x ~/bcp_import.sh && ~/bcp_import.sh {{ti.xcom_pull(task_ids="get_parameters",key="BaseLineOutputPath")}}{{params.OUT_DIR}} {{ti.xcom_pull(task_ids="get_parameters",key="BcpImportParameters")}} \"{{ti.xcom_pull(task_ids="get_parameters",key="Schema")}}.ROLLING_VOLUMES_FDM\" "1" ',
-                                 params={'OUT_DIR':BASELINE_OUTPUT_DIR},  
+                                 bash_command='cp -r /tmp/data/src/. ~/ && chmod +x ~/bcp_import.sh && ~/bcp_import.sh {{ti.xcom_pull(task_ids="get_parameters",key="RollingVolumesOutputPath")}} {{ti.xcom_pull(task_ids="get_parameters",key="BcpImportParameters")}} \"{{ti.xcom_pull(task_ids="get_parameters",key="Schema")}}.ROLLING_VOLUMES_FDM\" "1" ',
                                 )
     up_baseline=update_baseline(parameters)
                 
