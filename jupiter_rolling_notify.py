@@ -88,7 +88,7 @@ with DAG(
           task_id='send_email', 
           to='{{ti.xcom_pull(task_ids="get_parameters")["EmailTo"]}}', 
           subject='Rolling volumes notification', 
-          html_content='{{ti.xcom_pull(task_ids="get_parameters")["Message"]}}',
+          html_content='<h2>{{ti.xcom_pull(task_ids="get_parameters")["Message"]}}</h2>',
     )
     
     parameters >> send_email
