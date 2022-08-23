@@ -90,3 +90,6 @@ with DAG(
           subject='Rolling volumes notification', 
           html_content='{{parameters["Message"]}}',
     )
+    
+    parameters >> send_email
+    
