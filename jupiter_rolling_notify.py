@@ -86,7 +86,7 @@ with DAG(
     
     send_email = EmailOperator( 
           task_id='send_email', 
-          to='{{parameters['EmailTo']}}', 
+          to='{{parameters["EmailTo"]}}', 
           subject='Rolling volumes notification', 
-          html_content='{{parameters['Message']}}',
+          html_content='{{parameters["Message"]}}',
     )
