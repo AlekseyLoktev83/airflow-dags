@@ -126,7 +126,7 @@ def save_parameters(parameters:dict):
 
 def _update_output_monitoring(parameters:dict,prev_task_result):
     monitoring_file_path = f'{parameters["MaintenancePathPrefix"]}{MONITORING_FILE}'
-    entity_path = f'{parameters["OutputPath"]}/{parameters["DagId"]}/{parameters["DateDir]}/ORDERS_DELIVERY_FDM.parquet'
+    entity_path = f'{parameters["OutputPath"]}/{parameters["DagId"]}/{parameters["DateDir"]}/ORDERS_DELIVERY_FDM.parquet'
     end_date = pendulum.now()
     start_date = parameters["StartDate"]
     duration = end_date.diff(start_date).in_seconds()
