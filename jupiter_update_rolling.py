@@ -41,9 +41,6 @@ S3_BUCKET_NAME_FOR_JOB_LOGS = 'jupiter-app-test-storage'
 BCP_SEPARATOR = '0x01'
 CSV_SEPARATOR = '\u0001'
 TAGS=["jupiter", "rolling", "dev"]
-BASELINE_ENTITY_NAME='BaseLine'
-BASELINE_OUTPUT_DIR='BaseLine.CSV/*.csv'
-NEW_BASELINE_OUTPUT_DIR='NewBaseLine.CSV/*.csv'
 
 def separator_convert_hex_to_string(sep):
     sep_map = {'0x01':'\x01'}
@@ -77,7 +74,7 @@ def get_parameters(**kwargs):
     db_conn = BaseHook.get_connection(MSSQL_CONNECTION_NAME)
     bcp_parameters = '-S {} -d {} -U {} -P {}'.format(db_conn.host, db_conn.schema, db_conn.login, db_conn.password)
     bcp_import_parameters = f'\"DRIVER=ODBC Driver 18 for SQL Server;SERVER={db_conn.host};DATABASE={db_conn.schema};UID={db_conn.login};PWD={db_conn.password};Encrypt=no;\"'
-    rolling_volumes_output_path=f'{output_path}/BASELINE/{execution_date}/'
+    rolling_volumes_output_path=f'{output_path}/jupiter_rolling_volumes_fdm/{execution_date}/ROLLINGVOLUMES_FDM.CSV/*.csv'
     
     parameters = {"RawPath": raw_path,
                   "ProcessPath": process_path,
@@ -105,10 +102,10 @@ def get_parameters(**kwargs):
 
 
 @task
-def update_baseline(parameters:dict):
+def fill_rolling_volumes(parameters:dict):
     odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
     schema = parameters["Schema"]
-    result = odbc_hook.run(sql=f"""exec [{schema}].[UpdateBaseline]""")
+    result = odbc_hook.run(sql=f"""exec [{schema}].[FillRollingVolumes]""")
     print(result)
 
     return result
@@ -138,6 +135,8 @@ with DAG(
                                  do_xcom_push=True,
                                  bash_command='cp -r /tmp/data/src/. ~/ && chmod +x ~/bcp_import.sh && ~/bcp_import.sh {{ti.xcom_pull(task_ids="get_parameters",key="RollingVolumesOutputPath")}} {{ti.xcom_pull(task_ids="get_parameters",key="BcpImportParameters")}} \"{{ti.xcom_pull(task_ids="get_parameters",key="Schema")}}.ROLLING_VOLUMES_FDM\" "1" ',
                                 )
-    up_baseline=update_baseline(parameters)
+    fill=fill_rolling_volumes(parameters)
+    
+    truncate_rolling_volumes >> upload_rolling_volumes >> fill
                 
     
