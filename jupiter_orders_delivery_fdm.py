@@ -150,11 +150,11 @@ def _update_output_monitoring(parameters:dict,prev_task_result):
 
 @task(task_id="update_output_monitoring_failure",trigger_rule=TriggerRule.ONE_FAILED)
 def update_output_monitoring_failure(parameters:dict):
-    _update_output_monitoring_failure(parameters:dict,False)
+    _update_output_monitoring(parameters:dict,False)
 
 @task(task_id="update_output_monitoring_success")
 def update_output_monitoring_success(parameters:dict):
-    _update_output_monitoring_failure(parameters:dict,True)
+    _update_output_monitoring(parameters:dict,True)
 
 with DAG(
     dag_id='jupiter_orders_delivery_fdm',
