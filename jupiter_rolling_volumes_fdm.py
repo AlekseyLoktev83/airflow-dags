@@ -121,7 +121,7 @@ def save_parameters(parameters:dict):
     conn.upload(parameters_file_path,temp_file_path,overwrite=True)
     
     
-    args = json.dumps({"MaintenancePathPrefix":parameters["MaintenancePathPrefix"],"ProcessDate":parameters["ProcessDate"],"Schema":parameters["Schema"],"PipelineName":parameters["DagId"],"StartRollingDate":parameters["StartRollingDate"]})
+    args = json.dumps({"MaintenancePathPrefix":parameters["MaintenancePathPrefix"],"ProcessDate":parameters["ProcessDate"],"Schema":parameters["Schema"],"PipelineName":parameters["DagId"]})
                                                                             
                                                                                             
     return [args]
