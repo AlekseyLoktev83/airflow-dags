@@ -86,9 +86,9 @@ with DAG(
     
     send_email = EmailOperator( 
           task_id='send_email', 
-          to='{{parameters["EmailTo"]}}', 
+          to='{{ti.xcom_pull(task_ids='get_parameters')["EmailTo"]}}', 
           subject='Rolling volumes notification', 
-          html_content='{{parameters["Message"]}}',
+          html_content='{{ti.xcom_pull(task_ids='get_parameters')["Message"]}}',
     )
     
     parameters >> send_email
