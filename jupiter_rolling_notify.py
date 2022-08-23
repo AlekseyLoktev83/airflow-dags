@@ -111,5 +111,4 @@ with DAG(
 ) as dag:
 # Get dag parameters from vault    
     parameters = get_parameters()
-    save_params = save_parameters(parameters)
    
