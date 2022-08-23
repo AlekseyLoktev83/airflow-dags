@@ -59,44 +59,15 @@ def get_parameters(**kwargs):
     execution_date = kwargs['execution_date'].strftime("%Y/%m/%d")
     parent_run_id = dag_run.conf.get('parent_run_id')
     run_id = urllib.parse.quote_plus(parent_run_id) if parent_run_id else urllib.parse.quote_plus(kwargs['run_id'])
-    
-    schema = dag_run.conf.get('schema')
-    upload_date = kwargs['logical_date'].strftime("%Y-%m-%d %H:%M:%S")
-    file_name = dag_run.conf.get('FileName')
-    create_date = dag_run.conf.get('CreateDate')
-
-    raw_path = Variable.get("RawPath")
-    process_path = Variable.get("ProcessPath")
-    output_path = Variable.get("OutputPath")
-    white_list = Variable.get("WhiteList",default_var=None)
-    black_list = Variable.get("BlackList",default_var=None)
-    upload_path = f'{raw_path}/{execution_date}/'
-    system_name = Variable.get("SystemName")
-    last_upload_date = Variable.get("LastUploadDate")
-    
-    db_conn = BaseHook.get_connection(MSSQL_CONNECTION_NAME)
-    bcp_parameters = '-S {} -d {} -U {} -P {}'.format(db_conn.host, db_conn.schema, db_conn.login, db_conn.password)
     dag = kwargs['dag']
-    
-    parameters = {"RawPath": raw_path,
-                  "ProcessPath": process_path,
-                  "OutputPath": output_path,
-                  "WhiteList": white_list,
-                  "BlackList": black_list,
-                  "MaintenancePathPrefix":"{}{}{}_{}_".format(output_path,"/#MAINTENANCE/",process_date,run_id),
-                  "BcpParameters": bcp_parameters,
-                  "UploadPath": upload_path,
-                  "RunId":run_id,
-                  "SystemName":system_name,
-                  "LastUploadDate":last_upload_date,
-                  "CurrentUploadDate":upload_date,
-                  "ProcessDate":process_date,
-                  "MaintenancePath":"{}{}".format(raw_path,"/#MAINTENANCE/"),
-                  "Schema":schema,
+    message = dag_run.conf.get('message')
+    email_to=Variable.get("EmailTo")
+      
+    parameters = {"RunId":run_id,
                   "ParentRunId":parent_run_id,
-                  "FileName":file_name,
-                  "CreateDate":create_date,
                   "DagId":dag.dag_id,
+                  "EmailTo":email_to,
+                  "Message":message,
                   }
     print(parameters)
     return parameters
@@ -115,7 +86,7 @@ with DAG(
     
     send_email = EmailOperator( 
           task_id='send_email', 
-          to='aleksey.loktev@smartcom.software', 
-          subject='ingestion complete', 
-          html_content="Date: {{ ds }}",
+          to='{{parameters['EmailTo']}}', 
+          subject='Rolling volumes notification', 
+          html_content='{{parameters['Message']}}',
     )
