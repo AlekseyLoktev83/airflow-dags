@@ -101,7 +101,7 @@ def get_parameters(**kwargs):
                   "CreateDate":create_date,
                   "DagId":dag.dag_id,
                   "DateDir":execution_date,
-                  "StartDate":pendulum.now(),
+                  "StartDate":pendulum.now().isoformat(),
                   }
     print(parameters)
     return parameters
@@ -128,7 +128,7 @@ def _update_output_monitoring(parameters:dict,prev_task_result):
     monitoring_file_path = f'{parameters["MaintenancePathPrefix"]}{MONITORING_FILE}'
     entity_path = f'{parameters["OutputPath"]}/{parameters["DagId"]}/{parameters["DateDir"]}/ORDERS_DELIVERY_FDM.parquet'
     end_date = pendulum.now()
-    start_date = parameters["StartDate"]
+    start_date = pendulum.parse(parameters["StartDate"])
     duration = end_date.diff(start_date).in_seconds()
 
     temp_file_path = f'/tmp/{MONITORING_FILE}'
