@@ -76,6 +76,7 @@ def get_parameters(**kwargs):
     
     db_conn = BaseHook.get_connection(MSSQL_CONNECTION_NAME)
     bcp_parameters = '-S {} -d {} -U {} -P {}'.format(db_conn.host, db_conn.schema, db_conn.login, db_conn.password)
+    dag = kwargs['dag']
     
     parameters = {"RawPath": raw_path,
                   "ProcessPath": process_path,
@@ -95,18 +96,10 @@ def get_parameters(**kwargs):
                   "ParentRunId":parent_run_id,
                   "FileName":file_name,
                   "CreateDate":create_date,
+                  "DagId":dag.dag_id,
                   }
     print(parameters)
     return parameters
-
-@task
-def truncate_temp_promoproduct(parameters:dict):
-    odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
-    schema = parameters["Schema"]
-    result = odbc_hook.run(sql=f"""truncate table [{schema}].[TEMP_PROMOPRODUCT]""")
-    print(result)
-
-    return result
 
 @task(task_id='save_parameters')
 def save_parameters(parameters:dict):
@@ -125,15 +118,6 @@ def save_parameters(parameters:dict):
                                                                             
                                                                                             
     return [args]
-
-@task
-def update_promoproduct(parameters:dict):
-    odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
-    schema = parameters["Schema"]
-    result = odbc_hook.run(sql=f"""exec [{schema}].[AddNewPromoProduct]""")
-    print(result)
-
-    return result
 
 with DAG(
     dag_id='jupiter_orders_delivery_fdm',
