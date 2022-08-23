@@ -132,7 +132,7 @@ def _update_output_monitoring(parameters:dict,prev_task_result):
     duration = end_date.diff(start_date).in_seconds()
 
     temp_file_path = f'/tmp/{MONITORING_FILE}'
-    df = pd.DataFrame([{'PipelineRunId': runid,
+    df = pd.DataFrame([{'PipelineRunId': parameters["RunId"],
                         'EntityName':'ORDERS_DELIVERY_FDM.parquet',
                         'StartDate': pendulum.now(),
                         'Status': STATUS_COMPLETE if prev_task_result else STATUS_FAILURE,
