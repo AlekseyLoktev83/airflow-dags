@@ -82,7 +82,7 @@ def get_parameters(**kwargs):
                   "OutputPath": output_path,
                   "WhiteList": white_list,
                   "BlackList": black_list,
-                  "MaintenancePathPrefix":"{}{}{}_{}_".format(raw_path,"/#MAINTENANCE/",process_date,run_id),
+                  "MaintenancePathPrefix":"{}{}{}_{}_".format(output_path,"/#MAINTENANCE/",process_date,run_id),
                   "BcpParameters": bcp_parameters,
                   "UploadPath": upload_path,
                   "RunId":run_id,
@@ -167,14 +167,4 @@ with DAG(
         exclude_packages=['com.amazonaws:amazon-kinesis-client'],
     )
     
-    truncate_temp = truncate_temp_promoproduct(parameters)
-    
-    add_new_promoproduct = BashOperator(task_id="add_new_promoproduct",
-                                 do_xcom_push=True,
-                                 bash_command='cp -r /tmp/data/src/. ~/ && chmod +x ~/bcp_import.sh && ~/bcp_import.sh {{ti.xcom_pull(task_ids="get_parameters",key="ProcessPath")}}{{params.PROCESS_DIR}} {{ti.xcom_pull(task_ids="get_parameters",key="BcpImportParameters")}} \"{{ti.xcom_pull(task_ids="get_parameters",key="Schema")}}.TEMP_PROMOPRODUCT\" "1" ',
-                                 params={'PROCESS_DIR':PROMOPRODUCT_PROCESS_DIR},  
-                                )
-    
-    upd_promoproduct=update_promoproduct(parameters)
-    
-    build_model >> truncate_temp >> add_new_promoproduct >> upd_promoproduct
+    build_model
