@@ -76,7 +76,7 @@ def get_parameters(**kwargs):
     upload_path = f'{raw_path}/{execution_date}/'
     system_name = Variable.get("SystemName")
     last_upload_date = Variable.get("LastUploadDate")
-    rolling_day = Variable.get("RollingDay")
+    start_rolling_date = Variable.get("StartRollingDate")
     
     db_conn = BaseHook.get_connection(MSSQL_CONNECTION_NAME)
     bcp_parameters = '-S {} -d {} -U {} -P {}'.format(db_conn.host, db_conn.schema, db_conn.login, db_conn.password)
@@ -103,7 +103,7 @@ def get_parameters(**kwargs):
                   "DagId":dag.dag_id,
                   "DateDir":execution_date,
                   "StartDate":pendulum.now().isoformat(),
-                  "RollingDay":rolling_day,
+                  "StartRollingDate":start_rolling_date,
                   }
     print(parameters)
     return parameters
@@ -121,7 +121,7 @@ def save_parameters(parameters:dict):
     conn.upload(parameters_file_path,temp_file_path,overwrite=True)
     
     
-    args = json.dumps({"MaintenancePathPrefix":parameters["MaintenancePathPrefix"],"ProcessDate":parameters["ProcessDate"],"Schema":parameters["Schema"],"PipelineName":parameters["DagId"],"RollingDay":parameters["RollingDay"]})
+    args = json.dumps({"MaintenancePathPrefix":parameters["MaintenancePathPrefix"],"ProcessDate":parameters["ProcessDate"],"Schema":parameters["Schema"],"PipelineName":parameters["DagId"],"StartRollingDate":parameters["StartRollingDate"]})
                                                                             
                                                                                             
     return [args]
