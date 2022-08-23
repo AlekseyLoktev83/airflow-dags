@@ -16,6 +16,7 @@ from airflow.utils.task_group import TaskGroup
 from airflow.hooks.base_hook import BaseHook
 from airflow.providers.hashicorp.hooks.vault import VaultHook
 from airflow.providers.http.operators.http import SimpleHttpOperator
+from airflow.operators.email_operator import EmailOperator
 
 import uuid
 from io import StringIO
@@ -111,4 +112,10 @@ with DAG(
 ) as dag:
 # Get dag parameters from vault    
     parameters = get_parameters()
-   
+    
+    send_email = EmailOperator( 
+          task_id='send_email', 
+          to='aleksey.loktev@smartcom.software', 
+          subject='ingestion complete', 
+          html_content="Date: {{ ds }}",
+    )
