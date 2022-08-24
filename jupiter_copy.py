@@ -71,9 +71,12 @@ def get_parameters(**kwargs):
     output_path = Variable.get("OutputPath")
     white_list = Variable.get("PromoCalculationEntites", default_var=None)
     black_list = Variable.get("BlackList", default_var=None)
-    upload_path = f'{raw_path}/SOURCES/JUPITER/'
+    extract_schema = dag_run.conf.get('extract_schema')
+    upload_path = f'{raw_path}/SOURCES/UPLOAD_FROM_SCENARIO/{extract_schema}/'
     system_name = Variable.get("SystemName")
     last_upload_date = Variable.get("LastUploadDate")
+    schema = dag_run.conf.get('schema')
+    extract_schema = dag_run.conf.get('extract_schema')
 
     db_conn = BaseHook.get_connection(MSSQL_CONNECTION_NAME)
     bcp_parameters = '-S {} -d {} -U {} -P {}'.format(
@@ -93,6 +96,8 @@ def get_parameters(**kwargs):
                   "CurrentUploadDate": upload_date,
                   "ProcessDate": process_date,
                   "MaintenancePath": "{}{}".format(raw_path, "/#MAINTENANCE/"),
+                  "Schema":schema,
+                  "ExtractSchema":extract_schema,
                   }
     print(parameters)
     return parameters
