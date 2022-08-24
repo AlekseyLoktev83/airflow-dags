@@ -165,9 +165,9 @@ with DAG(
   
     disable_previous_scenario_data = disable_previous_scenario_data(parameters)
     add_scenario_promo = add_scenario_promo(parameters)
-    add_scenario_promoproduct >> add_scenario_promoproduct(parameters)
-    add_scenario_promoproductscorrection >> add_scenario_promoproductscorrection(parameters)
-    add_scenario_promoproducttree >> add_scenario_promoproducttree(parameters)
+    add_scenario_promoproduct = add_scenario_promoproduct(parameters)
+    add_scenario_promoproductscorrection = add_scenario_promoproductscorrection(parameters)
+    add_scenario_promoproducttree = add_scenario_promoproducttree(parameters)
     
     disable_previous_scenario_data >> add_scenario_promo >> add_scenario_promoproduct >> add_scenario_promoproductscorrection
     disable_previous_scenario_data >> add_scenario_promo >> add_scenario_promoproducttree
