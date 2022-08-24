@@ -75,7 +75,7 @@ def get_parameters(**kwargs):
     last_upload_date = Variable.get("LastUploadDate")
     
     budget_year = dag_run.conf.get('budget_year')
-    scenario_list = dag_run.conf.get('scenario_list')
+    client_list = dag_run.conf.get('client_list')
     
     db_conn = BaseHook.get_connection(MSSQL_CONNECTION_NAME)
     bcp_parameters = '-S {} -d {} -U {} -P {}'.format(db_conn.host, db_conn.schema, db_conn.login, db_conn.password)
@@ -100,7 +100,7 @@ def get_parameters(**kwargs):
                   "CreateDate":create_date,
                   "HandlerId":handler_id,
                   "BudgetYear":budget_year,
-                  "ScenarioList":scenario_list,
+                  "ClientList":client_list,
                   }
     print(parameters)
     return parameters
@@ -109,9 +109,9 @@ def get_parameters(**kwargs):
 def disable_previous_scenario_data(parameters:dict):
     odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
     budget_year=parameters["BudgetYear"]
-    scenario_list=parameters["ScenarioList"]
+    client_list=parameters["ClientList"]
     
-    result = odbc_hook.run(sql=f"""exec [Jupiter].[DisablePreviousScenarioData]  @ClientList=?, @BudgetYear=? """,parameters=(budget_year,scenario_list))
+    result = odbc_hook.run(sql=f"""exec [Jupiter].[DisablePreviousScenarioData]  @ClientList=?, @BudgetYear=? """,parameters=(client_list,budget_year))
     print(result)
 
     return result
