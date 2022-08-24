@@ -146,6 +146,8 @@ def get_incoming_files_folder_metadata(parameters:dict):
     entities = []
     for file in files:
         entities.append({'File':file,'SrcPath':f'{src_path}{file}'})
+    
+    return entities
 
 with DAG(
     dag_id='jupiter_incoming_file_collect',
