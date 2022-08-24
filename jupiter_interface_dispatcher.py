@@ -21,4 +21,6 @@ with DAG(
         wait_for_completion = True,
     )
     
+    trigger_jupiter_incoming_file_collect
+    
    
