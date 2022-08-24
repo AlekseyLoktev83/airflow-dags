@@ -125,6 +125,33 @@ def add_scenario_promo(parameters:dict):
 
     return result
 
+@task
+def add_scenario_promoproduct(parameters:dict):
+    odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
+ 
+    result = odbc_hook.run(sql=f"""exec [Jupiter].[AddScenarioPromoProduct] """)
+    print(result)
+
+    return result
+
+@task
+def add_scenario_promoproductscorrection(parameters:dict):
+    odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
+ 
+    result = odbc_hook.run(sql=f"""exec [Jupiter].[AddScenarioPromoProductsCorrection] """)
+    print(result)
+
+    return result
+
+@task
+def add_scenario_promoproducttree(parameters:dict):
+    odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
+ 
+    result = odbc_hook.run(sql=f"""exec [Jupiter].[AddScenarioPromoProductTree] """)
+    print(result)
+
+    return result
+
 with DAG(
     dag_id='jupiter_update_target_promo_tables',
     schedule_interval=None,
@@ -138,5 +165,9 @@ with DAG(
   
     disable_previous_scenario_data = disable_previous_scenario_data(parameters)
     add_scenario_promo = add_scenario_promo(parameters)
+    add_scenario_promoproduct >> add_scenario_promoproduct(parameters)
+    add_scenario_promoproductscorrection >> add_scenario_promoproductscorrection(parameters)
+    add_scenario_promoproducttree >> add_scenario_promoproducttree(parameters)
     
-    disable_previous_scenario_data >> add_scenario_promo
+    disable_previous_scenario_data >> add_scenario_promo >> add_scenario_promoproduct >> add_scenario_promoproductscorrection
+    disable_previous_scenario_data >> add_scenario_promo >> add_scenario_promoproducttree
