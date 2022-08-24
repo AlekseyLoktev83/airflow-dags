@@ -137,7 +137,7 @@ def generate_entity_list(parameters:dict):
     return tables
 
 @task
-def get_incoming_files_folder_metadata(parameters:dict):'
+def get_incoming_files_folder_metadata(parameters:dict):
     hdfs_hook = WebHDFSHook(HDFS_CONNECTION_NAME)
     conn = hdfs_hook.get_conn()
     src_path=f'{parameters["RawPath"]}/SOURCES/BASELINE_ANAPLAN/'
