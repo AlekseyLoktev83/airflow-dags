@@ -71,10 +71,10 @@ def get_parameters(**kwargs):
     system_name = Variable.get("SystemName")
     last_upload_date = Variable.get("LastUploadDate")
     
-    budget_year = dag_run.conf.get('BudgetYear')
-    scenario_list = dag_run.conf.get('ScenarioList')
-    need_scenario_copy = dag_run.conf.get('NeedScenarioCopy')
-    client_list = dag_run.conf.get('ClientList')
+    budget_year = dag_run.conf.get('budget_year')
+    scenario_list = dag_run.conf.get('scenario_list')
+    need_scenario_copy = dag_run.conf.get('need_scenario_copy')
+    client_list = dag_run.conf.get('client_list')
     
     db_conn = BaseHook.get_connection(MSSQL_CONNECTION_NAME)
     bcp_parameters = '-S {} -d {} -U {} -P {}'.format(db_conn.host, db_conn.schema, db_conn.login, db_conn.password)
