@@ -42,8 +42,6 @@ BCP_SEPARATOR = '0x01'
 CSV_SEPARATOR = '\u0001'
 TAGS=["jupiter", "scenario", "dev"]
 
-BLOCKED_PROMO_OUTPUT_DIR='BlockedPromo.CSV/*.csv'
-
 def separator_convert_hex_to_string(sep):
     sep_map = {'0x01':'\x01'}
     return sep_map.get(sep, sep)
@@ -76,7 +74,6 @@ def get_parameters(**kwargs):
     db_conn = BaseHook.get_connection(MSSQL_CONNECTION_NAME)
     bcp_parameters = '-S {} -d {} -U {} -P {}'.format(db_conn.host, db_conn.schema, db_conn.login, db_conn.password)
     bcp_import_parameters = f'\"DRIVER=ODBC Driver 18 for SQL Server;SERVER={db_conn.host};DATABASE={db_conn.schema};UID={db_conn.login};PWD={db_conn.password};Encrypt=no;\"'
-    blocked_promo_output_path=f'{process_path}/BlockedPromo/'
     
     parameters = {"RawPath": raw_path,
                   "ProcessPath": process_path,
@@ -97,7 +94,6 @@ def get_parameters(**kwargs):
                   "FileName":file_name,
                   "CreateDate":create_date,
                   "BcpImportParameters":bcp_import_parameters,
-                  "BlockedPromoOutputPath":blocked_promo_output_path,
                   }
     print(parameters)
     return parameters
@@ -106,15 +102,6 @@ def get_parameters(**kwargs):
 def create_child_dag_config(parameters:dict):
     conf={"parent_run_id":parameters["ParentRunId"],"parent_process_date":parameters["ProcessDate"],"schema":parameters["Schema"]}
     return conf
-
-@task
-def update_blocked_promo_table(parameters:dict):
-    odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
-    schema = parameters["Schema"]
-    result = odbc_hook.run(sql=f"""exec [{schema}].[AddBlockedPromo]""")
-    print(result)
-
-    return result
 
 @task
 def truncate_table(parameters:dict, entity):
@@ -140,14 +127,16 @@ def generate_bcp_import_script(parameters:dict, entity):
 @task
 def generate_entity_list(parameters:dict):
     schema = parameters["Schema"]
-    output_path=parameters['OutputPath']
+    process_path=parameters['ProcessPath']
     tables = [
-              {'SrcPath':f'{output_path}/Promo/Promo.CSV/*.csv','TableName':f'{schema}.TEMP_PROMO'},
-              {'SrcPath':f'{output_path}/PromoProduct/PromoProduct.CSV/*.csv','TableName':f'{schema}.TEMP_PROMOPRODUCT'},
-              {'SrcPath':f'{output_path}/PromoSupportPromo/PromoSupportPromo.CSV/*.csv','TableName':f'{schema}.TEMP_PROMOSUPPORTPROMO'},
-              {'SrcPath':f'{output_path}/ServiceInfo/ServiceInfo.CSV/*.csv','TableName':f'{schema}.ServiceInfo'},
-              {'SrcPath':f'{output_path}/ProductChangeIncident/NewProductChangeIncident.CSV/*.csv','TableName':f'{schema}.TEMP_PRODUCTCHANGEINCIDENTS'},
-              {'SrcPath':f'{output_path}/ChangesIncident/ChangesIncident.CSV/*.csv','TableName':f'{schema}.ChangesIncident'},
+              {'SrcPath':f'{process_path}/UPLOAD_FROM_SCENARIO/Promo/Promo.CSV/*.csv','TableName':f'{schema}.TEMP_SCENARIO_PROMO'},
+              {'SrcPath':f'{process_path}/UPLOAD_FROM_SCENARIO/PromoProduct/PromoProduct.CSV/*.csv','TableName':f'{schema}.TEMP_SCENARIO_PROMOPRODUCT'},
+              {'SrcPath':f'{process_path}/UPLOAD_FROM_SCENARIO/PromoSupportPromo/PromoSupportPromo.CSV/*.csv','TableName':f'{schema}.TEMP_SCENARIO_PROMOSUPPORTPROMO'},
+              {'SrcPath':f'{process_path}/UPLOAD_FROM_SCENARIO/PromoProductsCorrection/PromoProductsCorrection.CSV/*.csv','TableName':f'{schema}.TEMP_SCENARIO_PROMOPRODUCTSCORRECTION'},
+              {'SrcPath':f'{process_path}/UPLOAD_FROM_SCENARIO/PromoProductTree/PromoProductTree.CSV/*.csv','TableName':f'{schema}.TEMP_SCENARIO_PROMOPRODUCTTREE'},
+              {'SrcPath':f'{process_path}/UPLOAD_FROM_SCENARIO/BTLPromo/BTLPromo.CSV/*.csv','TableName':f'{schema}.TEMP_SCENARIO_BTLPROMO'},
+              {'SrcPath':f'{process_path}/UPLOAD_FROM_SCENARIO/BTL/BTL.CSV/*.csv','TableName':f'{schema}.TEMP_SCENARIO_BTL'},
+              {'SrcPath':f'{process_path}/UPLOAD_FROM_SCENARIO/PromoSupport/PromoSupport.CSV/*.csv','TableName':f'{schema}.TEMP_SCENARIO_PROMOSUPPORT'},
              ]
     return tables
 
