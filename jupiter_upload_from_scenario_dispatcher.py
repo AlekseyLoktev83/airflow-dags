@@ -126,11 +126,19 @@ with DAG(
         wait_for_completion = True,
     )
     
+    trigger_jupiter_scenario_copy = TriggerDagRunOperator(
+        task_id="trigger_jupiter_scenario_copy",
+        trigger_dag_id="jupiter_copy",  
+        conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":"{{dag_run.conf.get('schema')}}","extract_schema":"Scenario"},
+        wait_for_completion = True,
+    )
+    
     trigger_jupiter_merge_scenario_data = TriggerDagRunOperator(
         task_id="trigger_jupiter_merge_scenario_data",
         trigger_dag_id="jupiter_merge_scenario_data",  
         conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":"{{dag_run.conf.get('schema')}}"},
         wait_for_completion = True,
+        trigger_rule=TriggerRule.NONE_FAILED,
     )
         
     trigger_jupiter_update_promo_from_scenario = TriggerDagRunOperator(
@@ -138,6 +146,7 @@ with DAG(
         trigger_dag_id="jupiter_update_promo_from_scenario",  
         conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":"{{dag_run.conf.get('schema')}}"},
         wait_for_completion = True,
+        trigger_rule=TriggerRule.NONE_FAILED,
     )
     
     trigger_jupiter_update_target_promo_tables = TriggerDagRunOperator(
@@ -145,6 +154,7 @@ with DAG(
         trigger_dag_id="jupiter_update_target_promo_tables",  
         conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":"{{dag_run.conf.get('schema')}}","message":"Orders/delivery and rolling building has been completed successfully."},
         wait_for_completion = True,
+        trigger_rule=TriggerRule.NONE_FAILED,
     )
     
     
@@ -156,5 +166,5 @@ with DAG(
     
        
 
-    parameters >> trigger_jupiter_copy >> if_need_scenario_copy >> trigger_jupiter_merge_scenario_data >> trigger_jupiter_update_promo_from_scenario >> trigger_jupiter_update_target_promo_tables
+    parameters >> trigger_jupiter_copy >> if_need_scenario_copy >> trigger_jupiter_scenario_copy >> trigger_jupiter_merge_scenario_data >> trigger_jupiter_update_promo_from_scenario >> trigger_jupiter_update_target_promo_tables
 
