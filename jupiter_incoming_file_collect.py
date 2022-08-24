@@ -40,7 +40,7 @@ AVAILABILITY_ZONE_ID = 'ru-central1-b'
 S3_BUCKET_NAME_FOR_JOB_LOGS = 'jupiter-app-test-storage'
 BCP_SEPARATOR = '0x01'
 CSV_SEPARATOR = '\u0001'
-TAGS=["jupiter", "scenario", "dev"]
+TAGS=["jupiter", "interface", "dev"]
 
 def separator_convert_hex_to_string(sep):
     sep_map = {'0x01':'\x01'}
