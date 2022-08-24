@@ -70,7 +70,11 @@ def get_parameters(**kwargs):
     upload_path = f'{raw_path}/{execution_date}/'
     system_name = Variable.get("SystemName")
     last_upload_date = Variable.get("LastUploadDate")
-    rolling_day = Variable.get("RollingDay")
+    
+    budget_year = dag_run.conf.get('BudgetYear')
+    scenario_list = dag_run.conf.get('ScenarioList')
+    need_scenario_copy = dag_run.conf.get('NeedScenarioCopy')
+    client_list = dag_run.conf.get('ClientList')
     
     db_conn = BaseHook.get_connection(MSSQL_CONNECTION_NAME)
     bcp_parameters = '-S {} -d {} -U {} -P {}'.format(db_conn.host, db_conn.schema, db_conn.login, db_conn.password)
@@ -93,7 +97,10 @@ def get_parameters(**kwargs):
                   "ParentRunId":parent_run_id,
                   "FileName":file_name,
                   "CreateDate":create_date,
-                  "RollingDay":rolling_day,
+                  "BudgetYear":budget_year,
+                  "ScenarioList":scenario_list,
+                  "NeedScenarioCopy":need_scenario_copy, 
+                  "ClientList":client_list,                  
                   }
     print(parameters)
     return parameters
