@@ -136,7 +136,7 @@ with DAG(
     trigger_jupiter_merge_scenario_data = TriggerDagRunOperator(
         task_id="trigger_jupiter_merge_scenario_data",
         trigger_dag_id="jupiter_merge_scenario_data",  
-        conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":"{{dag_run.conf.get('schema')}}"},
+        conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":"{{dag_run.conf.get('schema')}}","budget_year":"{{dag_run.conf.get('budget_year')}}","scenario_list":"{{dag_run.conf.get('scenario_list')}}"},
         wait_for_completion = True,
         trigger_rule=TriggerRule.NONE_FAILED,
     )
@@ -144,7 +144,7 @@ with DAG(
     trigger_jupiter_update_promo_from_scenario = TriggerDagRunOperator(
         task_id="trigger_jupiter_update_promo_from_scenario",
         trigger_dag_id="jupiter_update_promo_from_scenario",  
-        conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":"{{dag_run.conf.get('schema')}}"},
+        conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":"{{dag_run.conf.get('schema')}}","budget_year":"{{dag_run.conf.get('budget_year')}}","client_list":"{{dag_run.conf.get('client_list')}}"},
         wait_for_completion = True,
         trigger_rule=TriggerRule.NONE_FAILED,
     )
@@ -152,7 +152,7 @@ with DAG(
     trigger_jupiter_update_target_promo_tables = TriggerDagRunOperator(
         task_id="trigger_jupiter_update_target_promo_tables",
         trigger_dag_id="jupiter_update_target_promo_tables",  
-        conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":"{{dag_run.conf.get('schema')}}","message":"Orders/delivery and rolling building has been completed successfully."},
+        conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":"{{dag_run.conf.get('schema')}}","budget_year":"{{dag_run.conf.get('budget_year')}}","client_list":"{{dag_run.conf.get('client_list')}}"},
         wait_for_completion = True,
         trigger_rule=TriggerRule.NONE_FAILED,
     )
