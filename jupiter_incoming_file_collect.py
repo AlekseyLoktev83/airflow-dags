@@ -59,7 +59,6 @@ def get_parameters(**kwargs):
     
     schema = dag_run.conf.get('schema')
     upload_date = kwargs['logical_date'].strftime("%Y-%m-%d %H:%M:%S")
-    file_name = dag_run.conf.get('FileName')
     create_date = dag_run.conf.get('CreateDate')
 
     raw_path = Variable.get("RawPath")
@@ -73,8 +72,7 @@ def get_parameters(**kwargs):
     
     db_conn = BaseHook.get_connection(MSSQL_CONNECTION_NAME)
     bcp_parameters = '-S {} -d {} -U {} -P {}'.format(db_conn.host, db_conn.schema, db_conn.login, db_conn.password)
-    bcp_import_parameters = f'\"DRIVER=ODBC Driver 18 for SQL Server;SERVER={db_conn.host};DATABASE={db_conn.schema};UID={db_conn.login};PWD={db_conn.password};Encrypt=no;\"'
-    
+       
     parameters = {"RawPath": raw_path,
                   "ProcessPath": process_path,
                   "OutputPath": output_path,
@@ -91,10 +89,8 @@ def get_parameters(**kwargs):
                   "MaintenancePath":"{}{}".format(raw_path,"/#MAINTENANCE/"),
                   "Schema":schema,
                   "ParentRunId":parent_run_id,
-                  "FileName":file_name,
-                  "CreateDate":create_date,
-                  "BcpImportParameters":bcp_import_parameters,
-                  }
+                   "CreateDate":create_date,
+                   }
     print(parameters)
     return parameters
 
@@ -140,6 +136,17 @@ def generate_entity_list(parameters:dict):
              ]
     return tables
 
+@task
+def get_incoming_files_folder_metadata(parameters:dict):'
+    hdfs_hook = WebHDFSHook(HDFS_CONNECTION_NAME)
+    conn = hdfs_hook.get_conn()
+    src_path=f'{parameters["RawPath"]}/SOURCES/BASELINE_ANAPLAN/'
+    files = conn.list(src_path)
+    
+    entities = []
+    for file in files:
+        entities.append({'File':file,'SrcPath':f'{src_path}{file}'})
+
 with DAG(
     dag_id='jupiter_incoming_file_collect',
     schedule_interval=None,
@@ -150,9 +157,10 @@ with DAG(
 ) as dag:
 # Get dag parameters from vault    
     parameters = get_parameters()
-    trunc_tables = truncate_table.partial(parameters=parameters).expand(entity=generate_entity_list(parameters))
+    get_incoming_files_folder_metadata = get_incoming_files_folder_metadata(parameters)
+#     trunc_tables = truncate_table.partial(parameters=parameters).expand(entity=generate_entity_list(parameters))
 
-    upload_tables = BashOperator.partial(task_id="import_table",
-                                       do_xcom_push=True,
-                                      ).expand(bash_command=generate_bcp_import_script.partial(parameters=parameters).expand(entity=trunc_tables),
-                                              )
+#     upload_tables = BashOperator.partial(task_id="import_table",
+#                                        do_xcom_push=True,
+#                                       ).expand(bash_command=generate_bcp_import_script.partial(parameters=parameters).expand(entity=trunc_tables),
+#                                               )
