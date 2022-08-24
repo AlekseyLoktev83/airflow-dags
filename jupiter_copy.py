@@ -69,10 +69,10 @@ def get_parameters(**kwargs):
     raw_path = Variable.get("RawPath")
     process_path = Variable.get("ProcessPath")
     output_path = Variable.get("OutputPath")
-    white_list = Variable.get("PromoCalculationEntites", default_var=None)
     black_list = Variable.get("BlackList", default_var=None)
     extract_schema = dag_run.conf.get('extract_schema')
     upload_path = f'{raw_path}/SOURCES/UPLOAD_FROM_SCENARIO/{extract_schema}/'
+    white_list = Variable.get(f"WhiteList{extract_schema}", default_var=None)
     system_name = Variable.get("SystemName")
     last_upload_date = Variable.get("LastUploadDate")
     schema = dag_run.conf.get('schema')
