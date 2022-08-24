@@ -152,6 +152,43 @@ def add_scenario_promoproducttree(parameters:dict):
 
     return result
 
+@task
+def add_scenario_promosupport(parameters:dict):
+    odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
+ 
+    result = odbc_hook.run(sql=f"""exec [Jupiter].[AddScenarioPromoSupport] """)
+    print(result)
+
+    return result
+
+@task
+def add_scenario_promosupportpromo(parameters:dict):
+    odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
+ 
+    result = odbc_hook.run(sql=f"""exec [Jupiter].[AddScenarioPromoSupportPromo] """)
+    print(result)
+
+    return result
+
+
+@task
+def add_scenario_btl(parameters:dict):
+    odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
+ 
+    result = odbc_hook.run(sql=f"""exec [Jupiter].[AddScenarioBTL] """)
+    print(result)
+
+    return result
+
+@task
+def add_scenario_btlpromo(parameters:dict):
+    odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
+ 
+    result = odbc_hook.run(sql=f"""exec [Jupiter].[AddScenarioBTLPromo] """)
+    print(result)
+
+    return result
+
 with DAG(
     dag_id='jupiter_update_target_promo_tables',
     schedule_interval=None,
@@ -168,6 +205,13 @@ with DAG(
     add_scenario_promoproduct = add_scenario_promoproduct(parameters)
     add_scenario_promoproductscorrection = add_scenario_promoproductscorrection(parameters)
     add_scenario_promoproducttree = add_scenario_promoproducttree(parameters)
+    add_scenario_promosupport=add_scenario_promosupport(parameters)
+    add_scenario_promosupportpromo=add_scenario_promosupportpromo(parameters)
+    add_scenario_btl=add_scenario_btl(parameters)
+    add_scenario_btlpromo=add_scenario_btlpromo(parameters)
     
     disable_previous_scenario_data >> add_scenario_promo >> add_scenario_promoproduct >> add_scenario_promoproductscorrection
     disable_previous_scenario_data >> add_scenario_promo >> add_scenario_promoproducttree
+    disable_previous_scenario_data >> add_scenario_promo >> add_scenario_promosupport >> add_scenario_promosupportpromo
+    disable_previous_scenario_data >> add_scenario_promo >> add_scenario_btl >> add_scenario_btlpromo
+
