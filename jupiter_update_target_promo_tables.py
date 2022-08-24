@@ -74,6 +74,9 @@ def get_parameters(**kwargs):
     system_name = Variable.get("SystemName")
     last_upload_date = Variable.get("LastUploadDate")
     
+    budget_year = dag_run.conf.get('budget_year')
+    scenario_list = dag_run.conf.get('scenario_list')
+    
     db_conn = BaseHook.get_connection(MSSQL_CONNECTION_NAME)
     bcp_parameters = '-S {} -d {} -U {} -P {}'.format(db_conn.host, db_conn.schema, db_conn.login, db_conn.password)
 
@@ -96,16 +99,28 @@ def get_parameters(**kwargs):
                   "FileName":file_name,
                   "CreateDate":create_date,
                   "HandlerId":handler_id,
+                  "BudgetYear":budget_year,
+                  "ScenarioList":scenario_list,
                   }
     print(parameters)
     return parameters
 
 @task
-def unblock_promo(parameters:dict):
+def disable_previous_scenario_data(parameters:dict):
     odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
-    schema = parameters["Schema"]
-    handler_id=parameters["HandlerId"]
-    result = odbc_hook.run(sql=f"""exec [{schema}].[UnblockPromo] @HandlerId=? """,parameters=(str(handler_id)))
+    budget_year=parameters["BudgetYear"]
+    scenario_list=parameters["ScenarioList"]
+    
+    result = odbc_hook.run(sql=f"""exec [Jupiter].[DisablePreviousScenarioData] @BudgetYear=? @ClientList=? """,parameters=(budget_year,scenario_list))
+    print(result)
+
+    return result
+
+@task
+def add_scenario_promo(parameters:dict):
+    odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
+ 
+    result = odbc_hook.run(sql=f"""exec [Jupiter].[AddScenarioPromo] """)
     print(result)
 
     return result
@@ -121,4 +136,7 @@ with DAG(
 # Get dag parameters from vault    
     parameters = get_parameters()
   
-    unblock_promo(parameters)
+    disable_previous_scenario_data = disable_previous_scenario_data(parameters)
+    add_scenario_promo = add_scenario_promo(parameters)
+    
+    disable_previous_scenario_data >> add_scenario_promo
