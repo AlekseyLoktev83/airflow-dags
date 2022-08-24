@@ -105,8 +105,8 @@ def get_parameters(**kwargs):
     print(parameters)
     return parameters
 
-def _is_rolling_day(**kwargs):
-    return int(kwargs['rolling_day']) == pendulum.today().day_of_week
+def _if_need_scenario_copy(**kwargs):
+    return kwargs['need_scenario_copy']
 with DAG(
     dag_id='jupiter_upload_from_scenario_dispatcher',
     schedule_interval=None,
@@ -119,58 +119,42 @@ with DAG(
     parameters = get_parameters()
     
    
-    trigger_jupiter_orders_delivery_fdm = TriggerDagRunOperator(
-        task_id="trigger_jupiter_orders_delivery_fdm",
-        trigger_dag_id="jupiter_orders_delivery_fdm",  
-        conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":"{{dag_run.conf.get('schema')}}"},
+    trigger_jupiter_copy = TriggerDagRunOperator(
+        task_id="trigger_jupiter_copy",
+        trigger_dag_id="jupiter_copy",  
+        conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":"{{dag_run.conf.get('schema')}}","extract_schema":"Jupiter"},
         wait_for_completion = True,
     )
     
-    trigger_jupiter_rolling_volumes_fdm = TriggerDagRunOperator(
-        task_id="trigger_jupiter_rolling_volumes_fdm",
-        trigger_dag_id="jupiter_rolling_volumes_fdm",  
+    trigger_jupiter_merge_scenario_data = TriggerDagRunOperator(
+        task_id="trigger_jupiter_merge_scenario_data",
+        trigger_dag_id="jupiter_merge_scenario_data",  
         conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":"{{dag_run.conf.get('schema')}}"},
         wait_for_completion = True,
     )
         
-    trigger_jupiter_update_rolling = TriggerDagRunOperator(
-        task_id="trigger_jupiter_update_rolling",
-        trigger_dag_id="jupiter_update_rolling",  
+    trigger_jupiter_update_promo_from_scenario = TriggerDagRunOperator(
+        task_id="trigger_jupiter_update_promo_from_scenario",
+        trigger_dag_id="jupiter_update_promo_from_scenario",  
         conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":"{{dag_run.conf.get('schema')}}"},
         wait_for_completion = True,
     )
     
-    trigger_jupiter_rolling_success_notify = TriggerDagRunOperator(
-        task_id="trigger_jupiter_rolling_success_notify",
-        trigger_dag_id="jupiter_rolling_notify",  
+    trigger_jupiter_update_target_promo_tables = TriggerDagRunOperator(
+        task_id="trigger_jupiter_update_target_promo_tables",
+        trigger_dag_id="jupiter_update_target_promo_tables",  
         conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":"{{dag_run.conf.get('schema')}}","message":"Orders/delivery and rolling building has been completed successfully."},
         wait_for_completion = True,
     )
     
-    trigger_jupiter_rolling_failure_notify = TriggerDagRunOperator(
-        task_id="trigger_jupiter_rolling_failure_notify",
-        trigger_dag_id="jupiter_rolling_notify",  
-        conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":"{{dag_run.conf.get('schema')}}","message":"Orders/delivery and rolling building failed"},
-        wait_for_completion = True,
-        trigger_rule=TriggerRule.ONE_FAILED,
-    )     
     
-    trigger_jupiter_orders_failure_notify = TriggerDagRunOperator(
-        task_id="trigger_jupiter_orders_failure_notify",
-        trigger_dag_id="jupiter_rolling_notify",  
-        conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":"{{dag_run.conf.get('schema')}}","message":"Orders/delivery building failed"},
-        wait_for_completion = True,
-        trigger_rule=TriggerRule.ONE_FAILED,
-    )  
-  
-    
-    check_rollingday = ShortCircuitOperator(
-        task_id='check_rollingday',
-        python_callable=_is_rolling_day,
-        op_kwargs={'rolling_day': parameters["RollingDay"]},
+    if_need_scenario_copy = ShortCircuitOperator(
+        task_id='if_need_scenario_copy',
+        python_callable=_if_need_scenario_copy,
+        op_kwargs={'need_scenario_copy': parameters["NeedScenarioCopy"]},
     )
     
        
 
-    parameters >> trigger_jupiter_orders_delivery_fdm >> check_rollingday >> trigger_jupiter_rolling_volumes_fdm >> trigger_jupiter_update_rolling >> [trigger_jupiter_rolling_success_notify,trigger_jupiter_rolling_failure_notify]
-    parameters >> trigger_jupiter_orders_delivery_fdm >> trigger_jupiter_orders_failure_notify
+    parameters >> trigger_jupiter_copy >> if_need_scenario_copy >> trigger_jupiter_merge_scenario_data >> trigger_jupiter_update_promo_from_scenario >> trigger_jupiter_update_target_promo_tables
+
