@@ -111,7 +111,7 @@ def disable_previous_scenario_data(parameters:dict):
     budget_year=parameters["BudgetYear"]
     scenario_list=parameters["ScenarioList"]
     
-    result = odbc_hook.run(sql=f"""exec [Jupiter].[DisablePreviousScenarioData] @BudgetYear=?, @ClientList=? """,parameters=(budget_year,scenario_list))
+    result = odbc_hook.run(sql=f"""exec [Jupiter].[DisablePreviousScenarioData]  @ClientList=?, @BudgetYear=? """,parameters=(budget_year,scenario_list))
     print(result)
 
     return result
