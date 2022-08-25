@@ -81,6 +81,8 @@ def get_parameters(**kwargs):
     client_name = dag_run.conf.get('client_name')
     drop_files_if_errors = dag_run.conf.get('drop_files_if_errors')    
     copy_mode = dag_run.conf.get('copy_mode')
+    source_path = dag_run.conf.get('source_mode')
+    
     handler_id = parent_handler_id if parent_handler_id else str(uuid.uuid4())
     timestamp_field = pendulum.now().strftime("%Y%m%d%H%M%S")
     
@@ -113,7 +115,7 @@ def get_parameters(**kwargs):
                   "CopyMode":copy_mode,
                   "HandlerId":handler_id,
                   "TimestampField":timestamp_field,
-                  "ClientPromoDir":
+                  "SourcePath": source_path,
                   }
     print(parameters)
     return parameters
