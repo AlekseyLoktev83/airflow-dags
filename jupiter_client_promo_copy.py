@@ -213,7 +213,7 @@ with DAG(
     
     join = DummyOperator(
         task_id='join',
-        trigger_rule=TriggerRule.ALL_DONE,
+#         trigger_rule=TriggerRule.ALL_DONE,
     )
     
     child_dag_config >> set_client_upload_processing_flag_up >> create_client_upload_wait_handler >> if_load_from_database >> trigger_jupiter_client_promo_copy_table >> join >> [jupiter_send_copy_successful_notification,set_client_upload_processing_flag_complete,set_client_upload_processing_flag_error]
