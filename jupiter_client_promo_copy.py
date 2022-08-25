@@ -83,6 +83,7 @@ def get_parameters(**kwargs):
     copy_mode = dag_run.conf.get('copy_mode')
     source_path = dag_run.conf.get('source_mode')
     
+    parent_handler_id = dag_run.conf.get('parent_handler_id')   
     handler_id = parent_handler_id if parent_handler_id else str(uuid.uuid4())
     timestamp_field = pendulum.now().strftime("%Y%m%d%H%M%S")
     
