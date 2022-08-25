@@ -73,12 +73,18 @@ def get_parameters(**kwargs):
     black_list = Variable.get("BlackList", default_var=None)
     extract_schema = dag_run.conf.get('extract_schema')
     upload_path = f'{raw_path}/UPLOAD_FROM_SCENARIO/{extract_schema}/'
-    white_list = Variable.get(f"WhiteList{extract_schema}", default_var=None)
+    white_list = Variable.get("PromoCopyEntites", default_var=None)
     system_name = Variable.get("SystemName")
     last_upload_date = Variable.get("LastUploadDate")
     schema = dag_run.conf.get('schema')
     extract_schema = dag_run.conf.get('extract_schema')
+    client_prefix = dag_run.conf.get('client_prefix') 
+    client_name = dag_run.conf.get('client_name')
+    drop_files_if_errors = dag_run.conf.get('drop_files_if_errors')    
+    copy_mode = dag_run.conf.get('copy_mode')      
 
+    
+    
     db_conn = BaseHook.get_connection(MSSQL_CONNECTION_NAME)
     bcp_parameters = '-S {} -d {} -U {} -P {}'.format(
         db_conn.host, db_conn.schema, db_conn.login, db_conn.password)
@@ -99,6 +105,10 @@ def get_parameters(**kwargs):
                   "MaintenancePath": "{}{}".format(raw_path, "/#MAINTENANCE/"),
                   "Schema":schema,
                   "ExtractSchema":extract_schema,
+                  "ClientPrefix":client_prefix,
+                  "ClientName":client_name,
+                  "DropFilesIfErrors":drop_files_if_errors,
+                  "CopyMode":copy_mode,
                   }
     print(parameters)
     return parameters
@@ -283,6 +293,15 @@ def update_last_upload_date(last_upload_date):
     conn = vault_hook.get_conn()
     conn.secrets.kv.v1.create_or_update_secret(
         path="variables/LastUploadDate", secret={"value": last_upload_date})
+    
+@task(trigger_rule=TriggerRule.ALL_SUCCESS)
+def set_client_upload_processing_flag_up(parameters:dict):
+    odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
+    schema = parameters["Schema"]
+    result = odbc_hook.run(sql=f"""exec [Jupiter].[AddFileBuffer] @FileName = ? ,@ProcessDate = ?,  @HandlerId = ? """, parameters=(entity["File"],entity["ProcessDate"], parameters["HandlerId"]))
+    print(result)
+
+    return result    
 
 
 with DAG(
