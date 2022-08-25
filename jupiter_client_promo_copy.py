@@ -147,7 +147,7 @@ def create_client_upload_wait_handler(parameters:dict):
 def _if_load_from_database(**kwargs):
     return ['trigger_jupiter_client_promo_copy_table'] if kwargs['input'] == COPY_MODE_DATABASE else ['copy_from_existing']
 
-@task  
+@task(trigger_rule=TriggerRule.NONE_FAILED)  
 def set_client_upload_processing_flag_complete(parameters:dict):
     odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
     schema = parameters["Schema"]
@@ -208,6 +208,7 @@ with DAG(
           to='{{ti.xcom_pull(task_ids="get_parameters")["Emails"]}}', 
           subject='Copy promo for client {{ti.xcom_pull(task_ids="get_parameters")["ClientName"]}}', 
           html_content='Promo for client {{ti.xcom_pull(task_ids="get_parameters")["ClientName"]}} copied successful.',
+          trigger_rule=TriggerRule.NONE_FAILED,
     )
     
     set_client_upload_processing_flag_complete = set_client_upload_processing_flag_complete(parameters)
