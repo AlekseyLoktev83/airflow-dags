@@ -81,7 +81,8 @@ def get_parameters(**kwargs):
     client_prefix = dag_run.conf.get('client_prefix') 
     client_name = dag_run.conf.get('client_name')
     drop_files_if_errors = dag_run.conf.get('drop_files_if_errors')    
-    copy_mode = dag_run.conf.get('copy_mode')      
+    copy_mode = dag_run.conf.get('copy_mode')
+    handler_id = parent_handler_id if parent_handler_id else str(uuid.uuid4())
 
     
     
@@ -109,6 +110,7 @@ def get_parameters(**kwargs):
                   "ClientName":client_name,
                   "DropFilesIfErrors":drop_files_if_errors,
                   "CopyMode":copy_mode,
+                  "HandlerId":handler_id,
                   }
     print(parameters)
     return parameters
@@ -301,7 +303,16 @@ def set_client_upload_processing_flag_up(parameters:dict):
     result = odbc_hook.run(sql=f"""exec [{schema}].[DLSetClientUploadFlag] @Prefix = ? ,@Name = ?,  @Flag = ? """, parameters=(parameters["ClientPrefix"],parameters["ClientName"], 1))
     print(result)
 
-    return result    
+    return result 
+
+@task(trigger_rule=TriggerRule.ALL_SUCCESS)
+def create_client_upload_wait_handler(parameters:dict):
+    odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
+    schema = parameters["Schema"]
+    result = odbc_hook.run(sql=f"""exec [{schema}].[DLCreateClientUploadWaitHandler] @Prefix = ? ,@HandlerId = ? """, parameters=(parameters["ClientPrefix"],parameters["HandlerId"]))
+    print(result)
+
+    return result 
 
 
 with DAG(
