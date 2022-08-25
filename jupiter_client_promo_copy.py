@@ -146,6 +146,24 @@ def create_client_upload_wait_handler(parameters:dict):
 def _if_load_from_database(**kwargs):
     return ['trigger_jupiter_client_promo_copy_table'] if kwargs['input'] == COPY_MODE_DATABASE else ['copy_from_existing']
 
+@task  
+def set_client_upload_processing_flag_complete(parameters:dict):
+    odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
+    schema = parameters["Schema"]
+    result = odbc_hook.run(sql=f"""exec [{schema}].[DLSetClientUploadFlag] @Prefix = ? ,@Name = ?,  @Flag = ? """, parameters=(parameters["ClientPrefix"],parameters["ClientName"], 0))
+    print(result)
+
+    return result
+
+@task  
+def set_client_upload_processing_flag_error(parameters:dict):
+    odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
+    schema = parameters["Schema"]
+    result = odbc_hook.run(sql=f"""exec [{schema}].[DLSetClientUploadFlag] @Prefix = ? ,@Name = ?,  @Flag = ? """, parameters=(parameters["ClientPrefix"],parameters["ClientName"], 2))
+    print(result)
+
+    return result 
+
 
 
 with DAG(
@@ -182,5 +200,12 @@ with DAG(
         bash_command='hadoop dfs -cp {{ti.xcom_pull(task_ids="get_parameters",key="SourcePath")}} {{ti.xcom_pull(task_ids="get_parameters",key="UploadPath")}} ',
     )
     
-    child_dag_config >> set_client_upload_processing_flag_up >> create_client_upload_wait_handler >> if_load_from_database >> trigger_jupiter_client_promo_copy_table
+    jupiter_send_copy_successful_notification = EmailOperator( 
+          task_id='jupiter_send_copy_successful_notification', 
+          to='{{ti.xcom_pull(task_ids="get_parameters")["Emails"]}}', 
+          subject='Copy promo for client {{ti.xcom_pull(task_ids="get_parameters")["ClientName"]}}', 
+          html_content='Promo for client {{ti.xcom_pull(task_ids="get_parameters")["ClientName"]}} copied successful.',
+    )
+    
+    child_dag_config >> set_client_upload_processing_flag_up >> create_client_upload_wait_handler >> if_load_from_database >> trigger_jupiter_client_promo_copy_table >> [set_client_upload_processing_flag_complete, jupiter_send_copy_successful_notification]
     child_dag_config >> set_client_upload_processing_flag_up >> create_client_upload_wait_handler >> if_load_from_database >> copy_from_existing
