@@ -139,7 +139,8 @@ def update_promoproductscorrection_table(parameters:dict):
     print(result)
 
     return result
-  
+
+@task  
 def set_client_upload_processing_flag_up(parameters:dict):
     odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
     schema = parameters["Schema"]
@@ -148,6 +149,7 @@ def set_client_upload_processing_flag_up(parameters:dict):
 
     return result 
 
+@task
 def create_client_upload_wait_handler(parameters:dict):
     odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
     schema = parameters["Schema"]
