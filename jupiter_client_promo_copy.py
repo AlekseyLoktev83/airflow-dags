@@ -124,24 +124,6 @@ def create_child_dag_config(parameters:dict):
     conf={"parent_run_id":parameters["ParentRunId"],"parent_process_date":parameters["ProcessDate"],"schema":parameters["Schema"]}
     return conf
 
-@task
-def update_parameters(parameters:dict):
-    odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
-    schema = parameters["Schema"]
-    result = odbc_hook.run(sql=f"""exec [{schema}].[UpdatePromo]""")
-    print(result)
-
-    return result
-
-@task
-def update_promoproductscorrection_table(parameters:dict):
-    odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
-    schema = parameters["Schema"]
-    result = odbc_hook.run(sql=f"""exec [{schema}].[UpdatePromoProductsCorrection]""")
-    print(result)
-
-    return result
-
 @task  
 def set_client_upload_processing_flag_up(parameters:dict):
     odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
@@ -155,10 +137,15 @@ def set_client_upload_processing_flag_up(parameters:dict):
 def create_client_upload_wait_handler(parameters:dict):
     odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
     schema = parameters["Schema"]
-    result = odbc_hook.run(sql=f"""exec [{schema}].[DLCreateClientUploadWaitHandler] @Prefix = ? ,@HandlerId = ? """, parameters=(parameters["ClientPrefix"],parameters["HandlerId"]))
+    result = odbc_hook.run(sql=f"""exec [{schema}].[DLCreateClientUploadWaitHandler] @Prefix = ? ,@HandlerId = ? """, parameters=(parameters["ClientName"],parameters["HandlerId"]))
     print(result)
 
-    return result   
+    return result
+
+def _if_load_from_database(**kwargs):
+    return ['trigger_jupiter_client_promo_copy_table'] if kwargs['input'] == 'Database' else ['copy_from_existing']
+
+
 
 with DAG(
     dag_id='jupiter_client_promo_copy',
@@ -176,11 +163,23 @@ with DAG(
     set_client_upload_processing_flag_up = set_client_upload_processing_flag_up(parameters)
     create_client_upload_wait_handler = create_client_upload_wait_handler(parameters)
     
-#     trigger_jupiter_update_promo_copy = TriggerDagRunOperator(
-#         task_id="trigger_jupiter_update_promo_copy",
-#         trigger_dag_id="jupiter_update_promo_copy",  
-#         conf='{{ti.xcom_pull(task_ids="create_child_dag_config")}}',
-#         wait_for_completion = True,
-#     )
+    if_load_from_database = BranchPythonOperator(
+        task_id='if_load_from_database',
+        python_callable=_if_load_from_database,
+        op_kwargs={'input': parameters['CopyMode']},
+    )
     
-    child_dag_config >> set_client_upload_processing_flag_up >> create_client_upload_wait_handler
+    trigger_jupiter_client_promo_copy_table = TriggerDagRunOperator(
+        task_id="trigger_jupiter_client_promo_copy_table",
+        trigger_dag_id="jupiter_client_promo_copy_table",  
+        conf='{{ti.xcom_pull(task_ids="create_child_dag_config")}}',
+        wait_for_completion = True,
+    )
+    
+    copy_from_existing = BashOperator(
+        task_id='copy_from_existing',
+        bash_command='hadoop dfs -cp {{ti.xcom_pull(task_ids="get_parameters",key="SourcePath")}} {{ti.xcom_pull(task_ids="get_parameters",key="UploadPath")}} ',
+    )
+    
+    child_dag_config >> set_client_upload_processing_flag_up >> create_client_upload_wait_handler >> if_load_from_database >> trigger_jupiter_client_promo_copy_table
+    child_dag_config >> set_client_upload_processing_flag_up >> create_client_upload_wait_handler >> if_load_from_database >> copy_from_existing
