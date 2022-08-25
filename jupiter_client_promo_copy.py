@@ -41,6 +41,7 @@ BCP_SEPARATOR = '0x01'
 CSV_SEPARATOR = '\u0001'
 TAGS=["jupiter", "promo", "dev"]
 PARAMETERS_FILE = 'PARAMETERS.csv'
+COPY_MODE_DATABASE='Database'
 
 def separator_convert_hex_to_string(sep):
     sep_map = {'0x01':'\x01'}
@@ -143,7 +144,7 @@ def create_client_upload_wait_handler(parameters:dict):
     return result
 
 def _if_load_from_database(**kwargs):
-    return ['trigger_jupiter_client_promo_copy_table'] if kwargs['input'] == 'Database' else ['copy_from_existing']
+    return ['trigger_jupiter_client_promo_copy_table'] if kwargs['input'] == COPY_MODE_DATABASE else ['copy_from_existing']
 
 
 
