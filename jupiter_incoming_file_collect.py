@@ -72,6 +72,8 @@ def get_parameters(**kwargs):
     
     db_conn = BaseHook.get_connection(MSSQL_CONNECTION_NAME)
     bcp_parameters = '-S {} -d {} -U {} -P {}'.format(db_conn.host, db_conn.schema, db_conn.login, db_conn.password)
+    parent_handler_id = dag_run.conf.get('parent_handler_id')
+    handler_id = parent_handler_id if parent_handler_id else str(uuid.uuid4())
        
     parameters = {"RawPath": raw_path,
                   "ProcessPath": process_path,
@@ -89,7 +91,8 @@ def get_parameters(**kwargs):
                   "MaintenancePath":"{}{}".format(raw_path,"/#MAINTENANCE/"),
                   "Schema":schema,
                   "ParentRunId":parent_run_id,
-                   "CreateDate":create_date,
+                  "CreateDate":create_date,
+                  "HandlerId":handler_id,
                    }
     print(parameters)
     return parameters
