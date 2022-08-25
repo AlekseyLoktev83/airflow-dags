@@ -298,7 +298,7 @@ def update_last_upload_date(last_upload_date):
 def set_client_upload_processing_flag_up(parameters:dict):
     odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
     schema = parameters["Schema"]
-    result = odbc_hook.run(sql=f"""exec [Jupiter].[AddFileBuffer] @FileName = ? ,@ProcessDate = ?,  @HandlerId = ? """, parameters=(entity["File"],entity["ProcessDate"], parameters["HandlerId"]))
+    result = odbc_hook.run(sql=f"""exec [{schema}].[DLSetClientUploadFlag] @Prefix = ? ,@Name = ?,  @Flag = ? """, parameters=(parameters["ClientPrefix"],parameters["ClientName"], 1))
     print(result)
 
     return result    
