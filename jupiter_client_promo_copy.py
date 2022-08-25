@@ -71,8 +71,7 @@ def get_parameters(**kwargs):
     process_path = Variable.get("ProcessPath")
     output_path = Variable.get("OutputPath")
     black_list = Variable.get("BlackList", default_var=None)
-    extract_schema = dag_run.conf.get('extract_schema')
-    upload_path = f'{raw_path}/UPLOAD_FROM_SCENARIO/{extract_schema}/'
+    extract_schema = dag_run.conf.get('extract_schema')    
     white_list = Variable.get("PromoCopyEntites", default_var=None)
     system_name = Variable.get("SystemName")
     last_upload_date = Variable.get("LastUploadDate")
@@ -83,8 +82,10 @@ def get_parameters(**kwargs):
     drop_files_if_errors = dag_run.conf.get('drop_files_if_errors')    
     copy_mode = dag_run.conf.get('copy_mode')
     handler_id = parent_handler_id if parent_handler_id else str(uuid.uuid4())
-
+    timestamp_field = pendulum.now().strftime("%Y%m%d%H%M%S")
     
+    client_promo_dir = Variable.get("ClientPromoDir")
+    upload_path = f'{raw_path}/{ client_promo_dir}/{client_prefix}_{timestamp_field}/'    
     
     db_conn = BaseHook.get_connection(MSSQL_CONNECTION_NAME)
     bcp_parameters = '-S {} -d {} -U {} -P {}'.format(
@@ -111,6 +112,8 @@ def get_parameters(**kwargs):
                   "DropFilesIfErrors":drop_files_if_errors,
                   "CopyMode":copy_mode,
                   "HandlerId":handler_id,
+                  "TimestampField":timestamp_field,
+                  "ClientPromoDir":
                   }
     print(parameters)
     return parameters
@@ -296,7 +299,6 @@ def update_last_upload_date(last_upload_date):
     conn.secrets.kv.v1.create_or_update_secret(
         path="variables/LastUploadDate", secret={"value": last_upload_date})
     
-@task(trigger_rule=TriggerRule.ALL_SUCCESS)
 def set_client_upload_processing_flag_up(parameters:dict):
     odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
     schema = parameters["Schema"]
@@ -305,7 +307,6 @@ def set_client_upload_processing_flag_up(parameters:dict):
 
     return result 
 
-@task(trigger_rule=TriggerRule.ALL_SUCCESS)
 def create_client_upload_wait_handler(parameters:dict):
     odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
     schema = parameters["Schema"]
