@@ -10,7 +10,7 @@ from cloud_scripts.custom_dataproc import  DataprocCreatePysparkJobOperator
 from airflow.models import Variable
 from airflow.operators.bash import BashOperator
 from airflow.operators.dummy import DummyOperator
-from airflow.operators.python import PythonOperator, BranchPythonOperator
+from airflow.operators.python import PythonOperator, BranchPythonOperator, ShortCircuitOperator
 from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from airflow.utils.task_group import TaskGroup
 from airflow.hooks.base_hook import BaseHook
@@ -165,6 +165,8 @@ def set_client_upload_processing_flag_error(parameters:dict):
 
     return result 
 
+def _check_drop_data_if_failure(**kwargs):
+    return kwargs['drop_files_if_errors']
 
 
 with DAG(
@@ -216,6 +218,19 @@ with DAG(
 #         trigger_rule=TriggerRule.ALL_DONE,
     )
     
+    check_drop_data_if_failure = ShortCircuitOperator(
+        task_id='check_drop_data_if_failure',
+        python_callable=_check_drop_data_if_failure,
+        op_kwargs={'drop_files_if_errors': parameters["DropFilesIfErrors"]},
+        trigger_rule=TriggerRule.ONE_FAILED,
+    )
+    
+    drop_uploaded_data = BashOperator(
+        task_id='drop_uploaded_data',
+        bash_command='hadoop dfs -rm -r {{ti.xcom_pull(task_ids="get_parameters",key="UploadPath")}} ',
+    )
+    
     child_dag_config >> set_client_upload_processing_flag_up >> create_client_upload_wait_handler >> if_load_from_database >> trigger_jupiter_client_promo_copy_table >> join
     child_dag_config >> set_client_upload_processing_flag_up >> create_client_upload_wait_handler >> if_load_from_database >> copy_from_existing >> join
     join >> [jupiter_send_copy_successful_notification,set_client_upload_processing_flag_complete,set_client_upload_processing_flag_error]
+    join >> check_drop_data_if_failure >> drop_uploaded_data
