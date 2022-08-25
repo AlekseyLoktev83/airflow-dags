@@ -156,7 +156,7 @@ def set_client_upload_processing_flag_complete(parameters:dict):
 
     return result
 
-@task  
+@task(trigger_rule=TriggerRule.ONE_FAILED)  
 def set_client_upload_processing_flag_error(parameters:dict):
     odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
     schema = parameters["Schema"]
@@ -209,11 +209,12 @@ with DAG(
     )
     
     set_client_upload_processing_flag_complete = set_client_upload_processing_flag_complete(parameters)
+    set_client_upload_processing_flag_error = set_client_upload_processing_flag_error(parameters)
     
     join = DummyOperator(
         task_id='join',
-        trigger_rule=TriggerRule.NONE_FAILED_OR_SKIPPED,
+        trigger_rule=TriggerRule.ALL_DONE,
     )
     
-    child_dag_config >> set_client_upload_processing_flag_up >> create_client_upload_wait_handler >> if_load_from_database >> trigger_jupiter_client_promo_copy_table >> join >> [jupiter_send_copy_successful_notification,set_client_upload_processing_flag_complete]
+    child_dag_config >> set_client_upload_processing_flag_up >> create_client_upload_wait_handler >> if_load_from_database >> trigger_jupiter_client_promo_copy_table >> join >> [jupiter_send_copy_successful_notification,set_client_upload_processing_flag_complete,set_client_upload_processing_flag_error]
     child_dag_config >> set_client_upload_processing_flag_up >> create_client_upload_wait_handler >> if_load_from_database >> copy_from_existing >> join
