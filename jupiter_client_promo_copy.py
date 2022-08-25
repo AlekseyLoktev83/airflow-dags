@@ -208,10 +208,12 @@ with DAG(
           html_content='Promo for client {{ti.xcom_pull(task_ids="get_parameters")["ClientName"]}} copied successful.',
     )
     
+    set_client_upload_processing_flag_complete = set_client_upload_processing_flag_complete(parameters)
+    
     join = DummyOperator(
         task_id='join',
         trigger_rule=TriggerRule.NONE_FAILED_OR_SKIPPED,
     )
     
-    child_dag_config >> set_client_upload_processing_flag_up >> create_client_upload_wait_handler >> if_load_from_database >> trigger_jupiter_client_promo_copy_table >> join 
+    child_dag_config >> set_client_upload_processing_flag_up >> create_client_upload_wait_handler >> if_load_from_database >> trigger_jupiter_client_promo_copy_table >> join >> [jupiter_send_copy_successful_notification,set_client_upload_processing_flag_complete]
     child_dag_config >> set_client_upload_processing_flag_up >> create_client_upload_wait_handler >> if_load_from_database >> copy_from_existing >> join
