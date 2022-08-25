@@ -164,7 +164,8 @@ def get_incoming_files_folder_metadata(parameters:dict):
 def copy_file_into_target_folder(parameters:dict, entity):
     interface_sftp_path=parameters["InterfaceSftpPath"]
     src_path=entity["SrcPath"]
-    file_name=os.path.splitext(entity["File"])[0] + pendulum.now().strftime("_%Y%m%d_%H%M%S.dat")
+    current_process_date = pendulum.now()
+    file_name=os.path.splitext(entity["File"])[0] + current_process_date.strftime("_%Y%m%d_%H%M%S.dat")
     
     tmp_path=f'/tmp/{entity["File"]}'
     sftp_path=f'{interface_sftp_path}/{file_name}'
@@ -179,7 +180,16 @@ def copy_file_into_target_folder(parameters:dict, entity):
      sftp_client = ssh_client.open_sftp()
      sftp_client.put(tmp_path,sftp_path)
     
-    return True
+    return {"File":entity["File"].replace(".csv",".dat"), "ProcessDate":current_process_date.isoformat()}
+
+@task(trigger_rule=TriggerRule.ALL_SUCCESS)
+def add_filebuffer_sp(parameters:dict,entity):
+    odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
+    schema = parameters["Schema"]
+    result = odbc_hook.run(sql=f"""exec [Jupiter].[AddFileBuffer] @FileName = ? ,@ProcessDate = ?,  @HandlerId = ? """, parameters=(entity["File"],entity["ProcessDate"], parameters["HandlerId"]))
+    print(result)
+
+    return result
 
 with DAG(
     dag_id='jupiter_incoming_file_collect',
@@ -192,7 +202,7 @@ with DAG(
 # Get dag parameters from vault    
     parameters = get_parameters()
     upload_files = copy_file_into_target_folder.partial(parameters=parameters).expand(entity=get_incoming_files_folder_metadata(parameters))
-
+    add_filebuffer_sp.partial(parameters=parameters).expand(entity=upload_files)
 #     upload_tables = BashOperator.partial(task_id="import_table",
 #                                        do_xcom_push=True,
 #                                       ).expand(bash_command=generate_bcp_import_script.partial(parameters=parameters).expand(entity=trunc_tables),
