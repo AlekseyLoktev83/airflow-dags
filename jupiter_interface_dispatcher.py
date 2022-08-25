@@ -25,7 +25,7 @@ with DAG(
     trigger_jupiter_incoming_file_collect = TriggerDagRunOperator(
         task_id="trigger_jupiter_incoming_file_collect",
         trigger_dag_id="jupiter_incoming_file_collect",
-        conf={"parent_run_id":"parent_handler_id":"{{ti.xcom_pull(task_ids='generate_handler_id')}}"},
+        conf={"parent_handler_id":"{{ti.xcom_pull(task_ids='generate_handler_id')}}"},
         wait_for_completion = True,
     )
     
