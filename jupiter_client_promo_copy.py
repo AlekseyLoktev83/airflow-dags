@@ -80,6 +80,7 @@ def get_parameters(**kwargs):
     drop_files_if_errors = dag_run.conf.get('drop_files_if_errors')    
     copy_mode = dag_run.conf.get('copy_mode')
     source_path = dag_run.conf.get('source_mode')
+    emails = dag_run.conf.get('emails')
     
     parent_handler_id = dag_run.conf.get('parent_handler_id')   
     handler_id = parent_handler_id if parent_handler_id else str(uuid.uuid4())
@@ -113,6 +114,7 @@ def get_parameters(**kwargs):
                   "HandlerId":handler_id,
                   "TimestampField":timestamp_field,
                   "SourcePath": source_path,
+                  "Emails":emails,
                   }
     print(parameters)
     return parameters
