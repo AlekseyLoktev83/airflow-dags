@@ -88,7 +88,7 @@ def get_parameters(**kwargs):
     timestamp_field = pendulum.now().strftime("%Y%m%d%H%M%S")
     
     client_promo_dir = Variable.get("ClientPromoDir")
-    upload_path = f'{raw_path}/{ client_promo_dir}/{client_prefix}_{timestamp_field}/'   
+    upload_path = f'{raw_path}/{ client_promo_dir}/{client_prefix}_{timestamp_field}'   
 
     parameters = {"RawPath": raw_path,
                   "ProcessPath": process_path,
