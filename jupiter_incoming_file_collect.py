@@ -17,6 +17,7 @@ from airflow.utils.task_group import TaskGroup
 from airflow.hooks.base_hook import BaseHook
 from airflow.providers.hashicorp.hooks.vault import VaultHook
 from airflow.providers.http.operators.http import SimpleHttpOperator
+from airflow.providers.ssh.hooks.ssh import SSHHook
 
 import uuid
 from io import StringIO
@@ -36,6 +37,8 @@ from contextlib import closing
 MSSQL_CONNECTION_NAME = 'odbc_jupiter'
 HDFS_CONNECTION_NAME = 'webhdfs_default'
 VAULT_CONNECTION_NAME = 'vault_default'
+SSH_CONNECTION_NAME = 'ssh_jupiter'
+
 AVAILABILITY_ZONE_ID = 'ru-central1-b'
 S3_BUCKET_NAME_FOR_JOB_LOGS = 'jupiter-app-test-storage'
 BCP_SEPARATOR = '0x01'
@@ -74,6 +77,9 @@ def get_parameters(**kwargs):
     bcp_parameters = '-S {} -d {} -U {} -P {}'.format(db_conn.host, db_conn.schema, db_conn.login, db_conn.password)
     parent_handler_id = dag_run.conf.get('parent_handler_id')
     handler_id = parent_handler_id if parent_handler_id else str(uuid.uuid4())
+    
+    interface_sftp_path = Variable.get("InterfaceSftpPath")
+    interface_raw_path = f'{raw_path}/SOURCES/BASELINE_ANAPLAN/'
        
     parameters = {"RawPath": raw_path,
                   "ProcessPath": process_path,
@@ -93,6 +99,8 @@ def get_parameters(**kwargs):
                   "ParentRunId":parent_run_id,
                   "CreateDate":create_date,
                   "HandlerId":handler_id,
+                  "InterfaceSftpPath":interface_sftp_path,
+                  "InterfaceRawPath":interface_raw_path,                  
                    }
     print(parameters)
     return parameters
@@ -143,7 +151,7 @@ def generate_entity_list(parameters:dict):
 def get_incoming_files_folder_metadata(parameters:dict):
     hdfs_hook = WebHDFSHook(HDFS_CONNECTION_NAME)
     conn = hdfs_hook.get_conn()
-    src_path=f'{parameters["RawPath"]}/SOURCES/BASELINE_ANAPLAN/'
+    src_path=parameters["InterfaceRawPath"]
     files = conn.list(src_path)
     
     entities = []
@@ -151,6 +159,27 @@ def get_incoming_files_folder_metadata(parameters:dict):
         entities.append({'File':file,'SrcPath':f'{src_path}{file}'})
     
     return entities
+
+@task
+def copy_file_into_target_folder(parameters:dict, entity):
+    interface_sftp_path=parameters["InterfaceSftpPath"]
+    src_path=entity["SrcPath"]
+    file_name=os.path.splitext(entity["File"])[0] + pendulum.now().strftime("_%Y%m%d_%H%M%S.dat")
+    
+    tmp_path=f'/tmp/{entity["File"]}'
+    sftp_path=f'{interface_sftp_path}/{file_name}'
+    
+    ssh_hook=SSHHook(SSH_CONNECTION_NAME)
+    hdfs_hook = WebHDFSHook(HDFS_CONNECTION_NAME)
+    
+    conn = hdfs_hook.get_conn()
+    conn.download(src_path, tmp_path, overwrite=True)
+    
+    with ssh_hook.get_conn() as ssh_client:
+     sftp_client = ssh_client.open_sftp()
+     sftp_client.put(tmp_path,sftp_path)
+    
+    return True
 
 with DAG(
     dag_id='jupiter_incoming_file_collect',
@@ -162,8 +191,7 @@ with DAG(
 ) as dag:
 # Get dag parameters from vault    
     parameters = get_parameters()
-    get_incoming_files_folder_metadata = get_incoming_files_folder_metadata(parameters)
-#     trunc_tables = truncate_table.partial(parameters=parameters).expand(entity=generate_entity_list(parameters))
+    upload_files = copy_file_into_target_folder.partial(parameters=parameters).expand(entity=get_incoming_files_folder_metadata(parameters))
 
 #     upload_tables = BashOperator.partial(task_id="import_table",
 #                                        do_xcom_push=True,
