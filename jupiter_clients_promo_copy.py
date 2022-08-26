@@ -81,9 +81,6 @@ def get_parameters(**kwargs):
    
     db_conn = BaseHook.get_connection(MSSQL_CONNECTION_NAME)
     bcp_parameters = '-S {} -d {} -U {} -P {}'.format(db_conn.host, db_conn.schema, db_conn.login, db_conn.password)
-    
-    client_promo_dir = Variable.get("ClientPromoDir")
-    source_path = f'{raw_path}/{ client_promo_dir}/{client_prefix}_{timestamp_field}/'
     client_promo_dir = Variable.get("ClientPromoDir")
 
     parameters = {"RawPath": raw_path,
