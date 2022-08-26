@@ -129,6 +129,20 @@ def generate_schema_query(parameters: dict):
 
     return query
 
+@task
+def copy_data_db_to_hdfs(query, dst_dir, dst_file):
+
+    dst_path = f"{dst_dir}{dst_file}"
+    odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
+    hdfs_hook = WebHDFSHook(HDFS_CONNECTION_NAME)
+    conn = hdfs_hook.get_conn()
+
+    df = odbc_hook.get_pandas_df(query)
+    df.to_csv(f'/tmp/{dst_file}', index=False, sep=CSV_SEPARATOR)
+    conn.upload(dst_path, f'/tmp/{dst_file}',overwrite=True)
+
+    return True
+
 
 @task
 def generate_upload_script(prev_task, src_dir, src_file, upload_path, bcp_parameters, current_upload_date, last_upload_date):
@@ -177,12 +191,15 @@ with DAG(
     parameters = get_parameters()
 #     Generate schema extraction query
     schema_query = generate_schema_query(parameters)
-
+    
+    extract_schema = copy_data_db_to_hdfs(
+        schema_query, parameters["MaintenancePathPrefix"], RAW_SCHEMA_FILE)
+    
     upload_tables = BashOperator.partial(task_id="upload_tables", do_xcom_push=True).expand(
         bash_command=generate_bcp_script(
             upload_path=parameters["UploadPath"], bcp_parameters=parameters["BcpParameters"], 
             entities=generate_upload_script(
-        schema_query, parameters["MaintenancePathPrefix"], 
+        extract_schema, parameters["MaintenancePathPrefix"], 
                 RAW_SCHEMA_FILE,
                 parameters["UploadPath"],
                 parameters["BcpParameters"],
