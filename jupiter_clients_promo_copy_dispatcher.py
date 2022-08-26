@@ -76,11 +76,7 @@ def get_parameters(**kwargs):
     system_name = Variable.get("SystemName")
     last_upload_date = Variable.get("LastUploadDate")
     
-    budget_year = dag_run.conf.get('budget_year')
-    scenario_list = dag_run.conf.get('scenario_list')
-    need_scenario_copy = dag_run.conf.get('need_scenario_copy')
-    client_list = dag_run.conf.get('client_list')
-    
+   
     db_conn = BaseHook.get_connection(MSSQL_CONNECTION_NAME)
     bcp_parameters = '-S {} -d {} -U {} -P {}'.format(db_conn.host, db_conn.schema, db_conn.login, db_conn.password)
 
@@ -101,11 +97,7 @@ def get_parameters(**kwargs):
                   "Schema":schema,
                   "ParentRunId":parent_run_id,
                   "FileName":file_name,
-                  "CreateDate":create_date,
-                  "BudgetYear":budget_year,
-                  "ScenarioList":scenario_list,
-                  "NeedScenarioCopy":need_scenario_copy, 
-                  "ClientList":client_list,                  
+                  "CreateDate":create_date,             
                   }
     print(parameters)
     return parameters
@@ -141,7 +133,7 @@ with DAG(
     trigger_jupiter_clients_promo_copy = TriggerDagRunOperator(
         task_id="trigger_jupiter_clients_promo_copy",
         trigger_dag_id="jupiter_clients_promo_copy",  
-        conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":"{{dag_run.conf.get('schema')}}","budget_year":"{{dag_run.conf.get('budget_year')}}","client_list":"{{dag_run.conf.get('client_list')}}"},
+        conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":"{{dag_run.conf.get('schema')}}"},
         wait_for_completion = True,
     )
     
