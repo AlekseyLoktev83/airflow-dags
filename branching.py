@@ -33,15 +33,16 @@ catchup=False) as dag:
                         task_id='choose_best_model',
                         python_callable=_choose_best_model
                                             )
-    join = DummyOperator(
-                        task_id='join',
-                        trigger_rule=TriggerRule.NONE_FAILED,
+    on_error = DummyOperator(
+                        task_id='on_error',
+                        trigger_rule=TriggerRule.ALL_FAILED,
                             )
-#     inaccurate = DummyOperator(
-#                         task_id='inaccurate'
-#                              )
+    on_success = DummyOperator(
+                        task_id='on_success',
+                        rigger_rule=TriggerRule.NONE_FAILED,
+                             )
     pos_task = pos_task()
     neg_task = neg_task()
 
-    choose_best_model >> pos_task >> join
-    choose_best_model >> neg_task >> join
+    choose_best_model >> pos_task >> on_success >> on_error
+    choose_best_model >> neg_task >> on_success >> on_error
