@@ -34,7 +34,8 @@ catchup=False) as dag:
                         python_callable=_choose_best_model
                                             )
     join = DummyOperator(
-                        task_id='join'
+                        task_id='join',
+                        trigger_rule=TriggerRule.NONE_FAILED,
                             )
 #     inaccurate = DummyOperator(
 #                         task_id='inaccurate'
