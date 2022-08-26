@@ -61,7 +61,7 @@ catchup=False) as dag:
      
     some_work = DummyOperator(
                         task_id='some_work',
-                        trigger_rule=TriggerRule.ONE_FAILED,
+#                         trigger_rule=TriggerRule.ONE_FAILED,
                             ) 
 
     pos_task = pos_task()
