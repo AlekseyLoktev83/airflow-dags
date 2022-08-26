@@ -128,6 +128,7 @@ def create_child_dag_config(parameters:dict):
           "schema":parameters["Schema"],
           "client_prefix":parameters["ClientPrefix"],
           "client_name":parameters["ClientName"],
+          "source_path":parameters["SourcePath"],
          }
     return conf
 
