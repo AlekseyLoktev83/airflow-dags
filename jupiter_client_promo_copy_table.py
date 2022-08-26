@@ -131,21 +131,6 @@ def generate_schema_query(parameters: dict):
 
 
 @task
-def copy_data_db_to_hdfs(query, dst_dir, dst_file):
-
-    dst_path = f"{dst_dir}{dst_file}"
-    odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
-    hdfs_hook = WebHDFSHook(HDFS_CONNECTION_NAME)
-    conn = hdfs_hook.get_conn()
-
-    df = odbc_hook.get_pandas_df(query)
-    df.to_csv(f'/tmp/{dst_file}', index=False, sep=CSV_SEPARATOR)
-    conn.upload(dst_path, f'/tmp/{dst_file}',overwrite=True)
-
-    return True
-
-
-@task
 def generate_upload_script(prev_task, src_dir, src_file, upload_path, bcp_parameters, current_upload_date, last_upload_date):
     src_path = f"{src_dir}{src_file}"
     tmp_path = f"/tmp/{src_file}"
@@ -180,145 +165,6 @@ def generate_bcp_script(upload_path, bcp_parameters, entities):
     return scripts
 
 
-@task
-def start_monitoring(prev_task, dst_dir, system_name, runid):
-    monitoring_file_path = f'{dst_dir}{MONITORING_FILE}'
-
-    temp_file_path = f'/tmp/{MONITORING_FILE}'
-    df = pd.DataFrame([{'PipelineRunId': runid,
-                        'SystemName': system_name,
-                        'StartDate': pendulum.now(),
-                        'EndDate': None,
-                        'Status': STATUS_PROCESS
-                        }])
-    df.to_csv(temp_file_path, index=False, sep=CSV_SEPARATOR)
-
-    hdfs_hook = WebHDFSHook(HDFS_CONNECTION_NAME)
-    conn = hdfs_hook.get_conn()
-    conn.upload(monitoring_file_path, temp_file_path, overwrite=True)
-
-    return True
-
-
-@task
-def start_monitoring_detail(dst_dir, upload_path, runid, entities):
-    hdfs_hook = WebHDFSHook(HDFS_CONNECTION_NAME)
-    conn = hdfs_hook.get_conn()
-
-    for ent in entities:
-        schema = ent["Schema"]
-        entity_name = ent["EntityName"]
-        method = ent["Method"]
-        monitoring_file_path = f'{dst_dir}{MONITORING_DETAIL_DIR_PREFIX}/{schema}_{entity_name}.csv'
-
-        temp_file_path = f'/tmp/{schema}_{entity_name}.csv'
-        df = pd.DataFrame([{'PipelineRunId': runid,
-                           'Schema': schema,
-                            'EntityName': entity_name,
-                            'TargetPath': f'{upload_path}{entity_name}/{entity_name}.csv',
-                            'TargetFormat': 'CSV',
-                            'StartDate': pendulum.now(),
-                            'Duration': 0,
-                            'Status': STATUS_PROCESS,
-                            'ErrorDescription': None
-                            }])
-        df.to_csv(temp_file_path, index=False, sep=CSV_SEPARATOR)
-        conn.upload(monitoring_file_path, temp_file_path,overwrite=True)
-
-    return entities
-
-
-@task
-def end_monitoring_detail(dst_dir, entities):
-    hdfs_hook = WebHDFSHook(HDFS_CONNECTION_NAME)
-    conn = hdfs_hook.get_conn()
-
-    result = []
-    for ent in list(entities):
-
-        prev_tast_output = json.loads(ent)
-        schema = prev_tast_output["Schema"]
-        entity_name = prev_tast_output["EntityName"].split('.')[1]
-        prev_task_result = prev_tast_output["Result"]
-
-        temp_file_path = f'/tmp/{schema}_{entity_name}.csv'
-        monitoring_file_path = f'{dst_dir}{MONITORING_DETAIL_DIR_PREFIX}/{schema}_{entity_name}.csv'
-
-        conn.download(monitoring_file_path, temp_file_path)
-
-        df = pd.read_csv(
-            temp_file_path, keep_default_na=False, sep=CSV_SEPARATOR)
-        df['Status'] = STATUS_COMPLETE if prev_task_result else STATUS_FAILURE
-        df['Duration'] = prev_tast_output["Duration"]
-
-        df.to_csv(temp_file_path, index=False, sep=CSV_SEPARATOR)
-        conn.upload(monitoring_file_path, temp_file_path, overwrite=True)
-        result.append(prev_tast_output)
-
-    return result
-
-
-@task(trigger_rule=TriggerRule.ALL_DONE)
-def get_upload_result(dst_dir, input):
-    monintoring_details = input
-    print(monintoring_details)
-    return not any(d['Result'] == False for d in monintoring_details)
-
-
-def _end_monitoring(dst_dir, status):
-    monitoring_file_path = f'{dst_dir}{MONITORING_FILE}'
-    temp_file_path = f'/tmp/{MONITORING_FILE}'
-
-    hdfs_hook = WebHDFSHook(HDFS_CONNECTION_NAME)
-    conn = hdfs_hook.get_conn()
-    conn.download(monitoring_file_path, temp_file_path)
-
-    df = pd.read_csv(temp_file_path, keep_default_na=False, sep=CSV_SEPARATOR)
-    df['Status'] = STATUS_COMPLETE if status else STATUS_FAILURE
-    df['EndDate'] = pendulum.now()
-
-    df.to_csv(temp_file_path, index=False, sep=CSV_SEPARATOR)
-    conn.upload(monitoring_file_path, temp_file_path, overwrite=True)
-
-
-def _check_upload_result(**kwargs):
-    return ['end_monitoring_success'] if kwargs['input'] else ['end_monitoring_failure']
-
-
-@task(task_id="end_monitoring_success")
-def end_monitoring_success(dst_dir):
-    _end_monitoring(dst_dir, True)
-
-
-@task(task_id="end_monitoring_failure")
-def end_monitoring_failure(dst_dir):
-    _end_monitoring(dst_dir, False)
-
-
-@task(task_id="update_last_upload_date")
-def update_last_upload_date(last_upload_date):
-    vault_hook = VaultHook(VAULT_CONNECTION_NAME)
-    conn = vault_hook.get_conn()
-    conn.secrets.kv.v1.create_or_update_secret(
-        path="variables/LastUploadDate", secret={"value": last_upload_date})
-    
-def set_client_upload_processing_flag_up(parameters:dict):
-    odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
-    schema = parameters["Schema"]
-    result = odbc_hook.run(sql=f"""exec [{schema}].[DLSetClientUploadFlag] @Prefix = ? ,@Name = ?,  @Flag = ? """, parameters=(parameters["ClientPrefix"],parameters["ClientName"], 1))
-    print(result)
-
-    return result 
-
-def create_client_upload_wait_handler(parameters:dict):
-    odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
-    schema = parameters["Schema"]
-    result = odbc_hook.run(sql=f"""exec [{schema}].[DLCreateClientUploadWaitHandler] @Prefix = ? ,@HandlerId = ? """, parameters=(parameters["ClientPrefix"],parameters["HandlerId"]))
-    print(result)
-
-    return result 
-
-
 with DAG(
     dag_id='jupiter_client_promo_copy_table',
     schedule_interval=None,
@@ -331,29 +177,18 @@ with DAG(
     parameters = get_parameters()
 #     Generate schema extraction query
     schema_query = generate_schema_query(parameters)
-#     Extract db schema and save result to hdfs
-    extract_schema = copy_data_db_to_hdfs(
-        schema_query, parameters["MaintenancePathPrefix"], RAW_SCHEMA_FILE)
-    start_mon = start_monitoring(
-        extract_schema, dst_dir=parameters["MaintenancePathPrefix"], system_name=parameters["SystemName"], runid=parameters["RunId"])
-#    Create entities list and start monitoring for them
-    start_mon_detail = start_monitoring_detail(dst_dir=parameters["MaintenancePathPrefix"], upload_path=parameters["UploadPath"], runid=parameters["RunId"], entities=generate_upload_script(
-        start_mon, parameters["MaintenancePathPrefix"], RAW_SCHEMA_FILE, parameters["UploadPath"], parameters["BcpParameters"], parameters["CurrentUploadDate"], parameters["LastUploadDate"]))
-# Upload entities from sql to hdfs in parallel
+
     upload_tables = BashOperator.partial(task_id="upload_tables", do_xcom_push=True).expand(
         bash_command=generate_bcp_script(
-            upload_path=parameters["UploadPath"], bcp_parameters=parameters["BcpParameters"], entities=start_mon_detail),
-    )
-#     Check entities upload results and update monitoring files
-    end_mon_detail = end_monitoring_detail(
-        dst_dir=parameters["MaintenancePathPrefix"], entities=XComArg(upload_tables))
-    upload_result = get_upload_result(
-        dst_dir=parameters["MaintenancePathPrefix"], input=end_mon_detail)
-
-    branch_task = BranchPythonOperator(
-        task_id='branching',
-        python_callable=_check_upload_result,
-        op_kwargs={'input': upload_result},
+            upload_path=parameters["UploadPath"], bcp_parameters=parameters["BcpParameters"], 
+            entities=generate_upload_script(
+        schema_query, parameters["MaintenancePathPrefix"], 
+                RAW_SCHEMA_FILE,
+                parameters["UploadPath"],
+                parameters["BcpParameters"],
+                parameters["CurrentUploadDate"],
+                parameters["LastUploadDate"])
+                                     ),
     )
 
     cleanup = BashOperator(
@@ -363,7 +198,4 @@ with DAG(
         params={'days_to_keep_old_files': DAYS_TO_KEEP_OLD_FILES},
     )
 
-    branch_task >> end_monitoring_success(dst_dir=parameters["MaintenancePathPrefix"]) >> update_last_upload_date(
-        last_upload_date=parameters["CurrentUploadDate"]) >> cleanup
-    branch_task >> end_monitoring_failure(
-        dst_dir=parameters["MaintenancePathPrefix"]) >> cleanup
+    upload_tables >> cleanup
