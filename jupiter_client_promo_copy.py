@@ -237,7 +237,7 @@ with DAG(
         bash_command='hadoop dfs -rm -r {{ti.xcom_pull(task_ids="get_parameters",key="UploadPath")}} ',
     )
     
-    child_dag_config >> set_client_upload_processing_flag_up >> create_client_upload_wait_handler >> if_load_from_database >> trigger_jupiter_client_promo_copy_table >> join
-    child_dag_config >> set_client_upload_processing_flag_up >> create_client_upload_wait_handler >> if_load_from_database >> copy_from_existing >> join
-    join >> [jupiter_send_copy_successful_notification,set_client_upload_processing_flag_complete,set_client_upload_processing_flag_error]
-    join >> check_drop_data_if_failure >> drop_uploaded_data
+    child_dag_config >> set_client_upload_processing_flag_up >> create_client_upload_wait_handler >> if_load_from_database >> trigger_jupiter_client_promo_copy_table >> [jupiter_send_copy_successful_notification,set_client_upload_processing_flag_complete,set_client_upload_processing_flag_error]
+    child_dag_config >> set_client_upload_processing_flag_up >> create_client_upload_wait_handler >> if_load_from_database >> trigger_jupiter_client_promo_copy_table >> check_drop_data_if_failure >> drop_uploaded_data
+    child_dag_config >> set_client_upload_processing_flag_up >> create_client_upload_wait_handler >> if_load_from_database >> copy_from_existing >> [jupiter_send_copy_successful_notification,set_client_upload_processing_flag_complete,set_client_upload_processing_flag_error]
+    child_dag_config >> set_client_upload_processing_flag_up >> create_client_upload_wait_handler >> if_load_from_database >> copy_from_existing >> check_drop_data_if_failure >> drop_uploaded_data
