@@ -10,7 +10,7 @@ default_args = {
 }
 
 def _choose_best_model():
-    accuracy = 3
+    accuracy = 7
     if accuracy > 5:
         return 'pos_task'
     return 'neg_task'
@@ -37,12 +37,21 @@ catchup=False) as dag:
                         task_id='on_error',
                         trigger_rule=TriggerRule.ALL_FAILED,
                             )
+    on_error2 = DummyOperator(
+                        task_id='on_error2',
+                        trigger_rule=TriggerRule.ALL_FAILED,
+                            ) 
     on_success = DummyOperator(
                         task_id='on_success',
                         trigger_rule=TriggerRule.NONE_FAILED,
                              )
+    on_success2 = DummyOperator(
+                        task_id='on_success2',
+                        trigger_rule=TriggerRule.NONE_FAILED,
+                             )
+
     pos_task = pos_task()
     neg_task = neg_task()
 
-    choose_best_model >> pos_task >> on_success >> on_error
-    choose_best_model >> neg_task >> on_success >> on_error
+    choose_best_model >> pos_task >> [on_success, on_success2 ] >> [on_error, on_error2]
+    choose_best_model >> neg_task >> [on_success, on_success2 ] >> [on_error, on_error2]
