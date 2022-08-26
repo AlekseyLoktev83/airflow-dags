@@ -35,11 +35,11 @@ catchup=False) as dag:
                                             )
     on_error = DummyOperator(
                         task_id='on_error',
-                        trigger_rule=TriggerRule.ALL_FAILED,
+                        trigger_rule=TriggerRule.ONE_FAILED,
                             )
     on_error2 = DummyOperator(
                         task_id='on_error2',
-                        trigger_rule=TriggerRule.ALL_FAILED,
+                        trigger_rule=TriggerRule.ONE_FAILED,
                             ) 
     on_success = DummyOperator(
                         task_id='on_success',
