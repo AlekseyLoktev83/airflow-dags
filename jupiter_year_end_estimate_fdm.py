@@ -76,13 +76,14 @@ def get_parameters(**kwargs):
     upload_path = f'{raw_path}/{execution_date}/'
     system_name = Variable.get("SystemName")
     last_upload_date = Variable.get("LastUploadDate")
-    start_rolling_date = Variable.get("StartRollingDate")
     
     db_conn = BaseHook.get_connection(MSSQL_CONNECTION_NAME)
     bcp_parameters = '-S {} -d {} -U {} -P {}'.format(db_conn.host, db_conn.schema, db_conn.login, db_conn.password)
     bcp_import_parameters = f'\"DRIVER=ODBC Driver 18 for SQL Server;SERVER={db_conn.host};DATABASE={db_conn.schema};UID={db_conn.login};PWD={db_conn.password};Encrypt=no;\"'
  
     dag = kwargs['dag']
+    
+    entity_output_dir = f'{output_path}/{dag.dag_id}/YEAR_END_ESTIMATE_FDM.CSV/*.csv'
     
     parameters = {"RawPath": raw_path,
                   "ProcessPath": process_path,
@@ -106,6 +107,7 @@ def get_parameters(**kwargs):
                   "DateDir":execution_date,
                   "StartDate":pendulum.now().isoformat(),
                   "BcpImportParameters":bcp_import_parameters,
+                  "EntityOutputDir":entity_output_dir,
                   }
     print(parameters)
     return parameters
@@ -130,7 +132,7 @@ def save_parameters(parameters:dict):
 
 def _update_output_monitoring(parameters:dict,prev_task_result):
     monitoring_file_path = f'{parameters["MaintenancePathPrefix"]}{MONITORING_FILE}'
-    entity_path = f'{parameters["OutputPath"]}/{parameters["DagId"]}/{parameters["DateDir"]}/YEAR_END_ESTIMATE_FDM.CSV'
+    entity_path = f'{parameters["OutputPath"]}/{parameters["DagId"]}/YEAR_END_ESTIMATE_FDM.CSV'
     end_date = pendulum.now()
     start_date = pendulum.parse(parameters["StartDate"])
     duration = end_date.diff(start_date).in_seconds()
@@ -159,6 +161,11 @@ def update_output_monitoring_failure(parameters:dict):
 @task(task_id="update_output_monitoring_success")
 def update_output_monitoring_success(parameters:dict):
     _update_output_monitoring(parameters,True)
+    
+copy_output_data_to_db = BashOperator(task_id="copy_output_data_to_db",
+                                 do_xcom_push=True,
+                                 bash_command='cp -r /tmp/data/src/. ~/ && chmod +x ~/bcp_import.sh && ~/bcp_import.sh {{ti.xcom_pull(task_ids="get_parameters",key="EntityOutputDir")}} {{ti.xcom_pull(task_ids="get_parameters",key="BcpImportParameters")}} \"{{ti.xcom_pull(task_ids="get_parameters",key="Schema")}}.YEAR_END_ESTIMATE_FDM\" "1" ',
+                                )    
 
 with DAG(
     dag_id='jupiter_year_end_estimate_fdm',
@@ -191,9 +198,13 @@ with DAG(
         repositories=['https://repo1.maven.org/maven2'],
         exclude_packages=['com.amazonaws:amazon-kinesis-client'],
     )
-
+    
+    copy_output_data_to_db = BashOperator(task_id="copy_output_data_to_db",
+                                 do_xcom_push=True,
+                                 bash_command='cp -r /tmp/data/src/. ~/ && chmod +x ~/bcp_import.sh && ~/bcp_import.sh {{ti.xcom_pull(task_ids="get_parameters",key="EntityOutputDir")}} {{ti.xcom_pull(task_ids="get_parameters",key="BcpImportParameters")}} \"{{ti.xcom_pull(task_ids="get_parameters",key="Schema")}}.YEAR_END_ESTIMATE_FDM\" "1" ',
+                                ) 
+    
     mon_success = update_output_monitoring_success(parameters)
     mon_failure = update_output_monitoring_failure(parameters)
     
-    build_model >> mon_success
-    build_model >> mon_failure
+    build_model  >> copy_output_data_to_db >> [mon_success, mon_failure]
