@@ -39,7 +39,7 @@ AVAILABILITY_ZONE_ID = 'ru-central1-b'
 S3_BUCKET_NAME_FOR_JOB_LOGS = 'jupiter-app-test-storage'
 BCP_SEPARATOR = '0x01'
 CSV_SEPARATOR = '\u0001'
-TAGS=["jupiter", "scenario","promo","dev"]
+TAGS=["jupiter","promo","dev"]
 PARAMETERS_FILE = 'PARAMETERS.csv'
 
 def separator_convert_hex_to_string(sep):
