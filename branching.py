@@ -55,7 +55,7 @@ catchup=False) as dag:
     on_error_cond = ShortCircuitOperator(
         task_id='on_error_cond',
         python_callable=_on_error_cond,
-        op_kwargs={'val': True]},
+        op_kwargs={'val': True},
         trigger_rule=TriggerRule.ONE_FAILED,
     )
      
