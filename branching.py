@@ -39,7 +39,7 @@ catchup=False) as dag:
                             )
     on_success = DummyOperator(
                         task_id='on_success',
-                        rigger_rule=TriggerRule.NONE_FAILED,
+                        trigger_rule=TriggerRule.NONE_FAILED,
                              )
     pos_task = pos_task()
     neg_task = neg_task()
