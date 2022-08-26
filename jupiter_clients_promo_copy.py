@@ -171,7 +171,7 @@ with DAG(
         wait_for_completion = True,
     )
     
-    create_dag_config_copy_from_adls = create_dag_config_copy_from_adls(parameters:dict,get_clients_to_copy)
+    create_dag_config_copy_from_adls = create_dag_config_copy_from_adls(parameters,get_clients_to_copy)
     
     trigger_jupiter_client_promo_copy_from_adls = CustomTriggerDagRunOperator.partial(task_id="trigger_jupiter_client_promo_copy_from_adls",
                                                                     wait_for_completion = True,
