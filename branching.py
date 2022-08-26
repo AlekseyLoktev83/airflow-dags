@@ -1,7 +1,7 @@
 from airflow import DAG, XComArg
 from airflow.decorators import dag, task
 from airflow.utils.trigger_rule import TriggerRule
-from airflow.operators.python import BranchPythonOperator
+from airflow.operators.python import BranchPythonOperator, ShortCircuitOperator
 from airflow.operators.dummy import DummyOperator
 from datetime import datetime
 
@@ -24,7 +24,9 @@ def pos_task():
 def neg_task():
      print('neg task')
      
-     
+def _on_error_cond(**kwargs):
+    return kwargs['val']
+
 with DAG('branching', 
 schedule_interval=None,
 default_args=default_args,
@@ -50,8 +52,21 @@ catchup=False) as dag:
                         trigger_rule=TriggerRule.NONE_FAILED,
                              )
 
+    on_error_cond = ShortCircuitOperator(
+        task_id='on_error_cond',
+        python_callable=_on_error_cond,
+        op_kwargs={'val': True]},
+        trigger_rule=TriggerRule.ONE_FAILED,
+    )
+     
+    some_work = DummyOperator(
+                        task_id='some_work',
+                        trigger_rule=TriggerRule.ONE_FAILED,
+                            ) 
+
     pos_task = pos_task()
     neg_task = neg_task()
 
     choose_best_model >> pos_task >> [on_success, on_success2 ,on_error, on_error2]
     choose_best_model >> neg_task >> [on_success, on_success2 ,on_error, on_error2]
+    choose_best_model >> neg_task >> on_error_cond >> some_work
