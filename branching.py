@@ -1,4 +1,6 @@
-from airflow import DAG
+from airflow import DAG, XComArg
+from airflow.decorators import dag, task
+from airflow.utils.trigger_rule import TriggerRule
 from airflow.operators.python import BranchPythonOperator
 from airflow.operators.dummy import DummyOperator
 from datetime import datetime
@@ -10,9 +12,18 @@ default_args = {
 def _choose_best_model():
     accuracy = 6
     if accuracy > 5:
-        return 'accurate'
-    return 'inaccurate'
+        return 'pos_task'
+    return 'neg_task'
 
+@task
+def pos_task():
+     print('pos task')
+     
+@task
+def neg_task():
+     print('neg task')
+     
+     
 with DAG('branching', 
 schedule_interval=None,
 default_args=default_args,
@@ -21,10 +32,13 @@ catchup=False) as dag:
                         task_id='choose_best_model',
                         python_callable=_choose_best_model
                                             )
-    accurate = DummyOperator(
-                        task_id='accurate'
-                            )
-    inaccurate = DummyOperator(
-                        task_id='inaccurate'
-                             )
-    choose_best_model >> [accurate, inaccurate]
+#     accurate = DummyOperator(
+#                         task_id='accurate'
+#                             )
+#     inaccurate = DummyOperator(
+#                         task_id='inaccurate'
+#                              )
+    pos_task = pos_task()
+    neg_task = neg_task()
+
+    choose_best_model >> [pos_task, neg_task]
