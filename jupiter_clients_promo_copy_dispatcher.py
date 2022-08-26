@@ -131,12 +131,12 @@ with DAG(
     get_clients_to_copy = get_clients_to_copy(parameters)
    
      
-#     trigger_jupiter_update_target_promo_tables = TriggerDagRunOperator(
-#         task_id="trigger_jupiter_update_target_promo_tables",
-#         trigger_dag_id="jupiter_update_target_promo_tables",  
-#         conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":"{{dag_run.conf.get('schema')}}","budget_year":"{{dag_run.conf.get('budget_year')}}","client_list":"{{dag_run.conf.get('client_list')}}"},
-#         wait_for_completion = True,
-#     )
+    trigger_jupiter_clients_promo_copy = TriggerDagRunOperator(
+        task_id="trigger_jupiter_clients_promo_copy",
+        trigger_dag_id="jupiter_clients_promo_copy",  
+        conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":"{{dag_run.conf.get('schema')}}","budget_year":"{{dag_run.conf.get('budget_year')}}","client_list":"{{dag_run.conf.get('client_list')}}"},
+        wait_for_completion = True,
+    )
     
     
     check_if_clients_empty = ShortCircuitOperator(
@@ -147,4 +147,4 @@ with DAG(
     
        
 
-    parameters >> if_need_scenario_copy >> trigger_jupiter_scenario_copy 
+    parameters >> check_if_clients_empty >> trigger_jupiter_clients_promo_copy 
