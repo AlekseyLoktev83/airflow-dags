@@ -112,7 +112,7 @@ def _check_if_clients_empty(**kwargs):
 def get_clients_to_copy(parameters:dict):
     odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
     schema = parameters["Schema"]
-    result = mssql_scripts.get_records(odbc_hook,sql=f"""exec SELECT * FROM {schema}.ScenarioCopyTask WHERE [Disabled] = 0 """)
+    result = mssql_scripts.get_records(odbc_hook,sql=f"""SELECT * FROM {schema}.ScenarioCopyTask WHERE [Disabled] = 0 """)
     
     return result
   
