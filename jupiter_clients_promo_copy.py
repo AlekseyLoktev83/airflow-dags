@@ -81,6 +81,9 @@ def get_parameters(**kwargs):
    
     db_conn = BaseHook.get_connection(MSSQL_CONNECTION_NAME)
     bcp_parameters = '-S {} -d {} -U {} -P {}'.format(db_conn.host, db_conn.schema, db_conn.login, db_conn.password)
+    
+    client_promo_dir = Variable.get("ClientPromoDir")
+    source_path = f'{raw_path}/{ client_promo_dir}/{client_prefix}_{timestamp_field}/'   
 
     parameters = {"RawPath": raw_path,
                   "ProcessPath": process_path,
@@ -99,7 +102,8 @@ def get_parameters(**kwargs):
                   "Schema":schema,
                   "ParentRunId":parent_run_id,
                   "FileName":file_name,
-                  "CreateDate":create_date,             
+                  "CreateDate":create_date,
+                  "ClientPromoDir":client_promo_dir,
                   }
     print(parameters)
     return parameters
@@ -129,12 +133,13 @@ def create_dag_config_copy_from_db(parameters:dict, clients):
           "emails":clients[0]["Email"],
           "drop_files_if_errors":True,
           "copy_mode":COPY_MODE_DATABASE,
+          "source_path":f'{parameters["RawPath]}/{parameters["ClientPromoDir"]}/{clients[0]["ClientObjectId"]}_{pendulum.now().strftime("%Y%m%d%H%M%S")}/'   
          }
     return conf
 
 
 @task
-def create_dag_config_copy_from_adls(parameters:dict, clients):
+def create_dag_config_copy_from_adls(parameters:dict, db_conf:dict,clients):
     conf_list = []
     
     for client in clients[1:]:
@@ -145,6 +150,7 @@ def create_dag_config_copy_from_adls(parameters:dict, clients):
           "client_name":client["ClientPrefix"],
           "emails":client["Email"],
           "drop_files_if_errors":True,
+          "source_path":db_conf["source_path"],   
             }
         conf_list.append(conf)
         
@@ -171,7 +177,7 @@ with DAG(
         wait_for_completion = True,
     )
     
-    create_dag_config_copy_from_adls = create_dag_config_copy_from_adls(parameters,get_clients_to_copy)
+    create_dag_config_copy_from_adls = create_dag_config_copy_from_adls(parameters, create_dag_config_copy_from_db, get_clients_to_copy)
     
     trigger_jupiter_client_promo_copy_from_adls = CustomTriggerDagRunOperator.partial(task_id="trigger_jupiter_client_promo_copy_from_adls",
                                                                     wait_for_completion = True,
