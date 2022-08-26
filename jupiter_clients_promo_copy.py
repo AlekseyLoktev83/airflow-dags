@@ -133,7 +133,7 @@ def create_dag_config_copy_from_db(parameters:dict, clients):
           "emails":clients[0]["Email"],
           "drop_files_if_errors":True,
           "copy_mode":COPY_MODE_DATABASE,
-          "source_path":f'{parameters["RawPath]}/{parameters["ClientPromoDir"]}/{clients[0]["ClientObjectId"]}_{pendulum.now().strftime("%Y%m%d%H%M%S")}/'   
+          "source_path":f'{parameters["RawPath"]}/{parameters["ClientPromoDir"]}/{clients[0]["ClientObjectId"]}_{pendulum.now().strftime("%Y%m%d%H%M%S")}/'   
          }
     return conf
 
