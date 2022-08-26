@@ -17,6 +17,7 @@ def _choose_best_model():
 
 @task
 def pos_task():
+     raise ValueError('POS TASK ERROR')
      print('pos task')
      
 @task
@@ -32,13 +33,14 @@ catchup=False) as dag:
                         task_id='choose_best_model',
                         python_callable=_choose_best_model
                                             )
-#     accurate = DummyOperator(
-#                         task_id='accurate'
-#                             )
+    join = DummyOperator(
+                        task_id='join'
+                            )
 #     inaccurate = DummyOperator(
 #                         task_id='inaccurate'
 #                              )
     pos_task = pos_task()
     neg_task = neg_task()
 
-    choose_best_model >> [pos_task, neg_task]
+    choose_best_model >> pos_task >> join
+    choose_best_model >> neg_task >> join
