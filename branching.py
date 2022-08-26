@@ -10,7 +10,7 @@ default_args = {
 }
 
 def _choose_best_model():
-    accuracy = 6
+    accuracy = 3
     if accuracy > 5:
         return 'pos_task'
     return 'neg_task'
