@@ -88,7 +88,7 @@ def get_parameters(**kwargs):
     timestamp_field = pendulum.now().strftime("%Y%m%d%H%M%S")
     
     client_promo_dir = Variable.get("ClientPromoDir")
-    upload_path = f'{raw_path}/{ client_promo_dir}/{client_prefix}_{timestamp_field}/'    
+    upload_path = source_path    
     
     db_conn = BaseHook.get_connection(MSSQL_CONNECTION_NAME)
     bcp_parameters = '-S {} -d {} -U {} -P {}'.format(
