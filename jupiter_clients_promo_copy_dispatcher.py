@@ -120,6 +120,7 @@ def get_clients_to_copy(parameters:dict):
     converters = [(-155, handle_datetimeoffset)]
     result = mssql_scripts.get_records(odbc_hook,sql=f"""SELECT * FROM {schema}.ScenarioCopyTask WHERE [Disabled] = 0 """,output_converters=converters)
     
+    result = [{k: v for k, v in d.items() if k not in ['CreateDate','ProcessDate','DeletedDate']} for d in result]
     return result
   
   
