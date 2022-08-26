@@ -53,5 +53,5 @@ catchup=False) as dag:
     pos_task = pos_task()
     neg_task = neg_task()
 
-    choose_best_model >> pos_task >> [on_success, on_success2 ] >> [on_error, on_error2]
-    choose_best_model >> neg_task >> [on_success, on_success2 ] >> [on_error, on_error2]
+    choose_best_model >> pos_task >> [on_success, on_success2 ,on_error, on_error2]
+    choose_best_model >> neg_task >> [on_success, on_success2 ,on_error, on_error2]
