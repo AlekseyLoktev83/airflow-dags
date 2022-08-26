@@ -81,7 +81,7 @@ def get_parameters(**kwargs):
     client_name = dag_run.conf.get('client_name')
     drop_files_if_errors = dag_run.conf.get('drop_files_if_errors')    
     copy_mode = dag_run.conf.get('copy_mode')
-    source_path = dag_run.conf.get('source_mode')
+    source_path = dag_run.conf.get('source_path')
     
     parent_handler_id = dag_run.conf.get('parent_handler_id')   
     handler_id = parent_handler_id if parent_handler_id else str(uuid.uuid4())
