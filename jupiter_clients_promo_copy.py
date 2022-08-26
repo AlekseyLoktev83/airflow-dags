@@ -123,7 +123,7 @@ def create_dag_config_copy_from_db(parameters:dict, clients):
           "parent_process_date":parameters["ProcessDate"],
           "schema":parameters["Schema"],
           "client_prefix":clients[0]["ClientObjectId"],
-          "client_name":clients[0]["ClientName"],
+          "client_name":clients[0]["ClientPrefix"],
           "emails":clients[0]["Email"],
           "drop_files_if_errors":True,
          }
