@@ -123,7 +123,12 @@ def get_parameters(**kwargs):
 
 @task
 def create_child_dag_config(parameters:dict):
-    conf={"parent_run_id":parameters["ParentRunId"],"parent_process_date":parameters["ProcessDate"],"schema":parameters["Schema"]}
+    conf={"parent_run_id":parameters["ParentRunId"],
+          "parent_process_date":parameters["ProcessDate"],
+          "schema":parameters["Schema"],
+          "client_prefix":parameters["ClientPrefix"],
+          "client_name":parameters["ClientName"],
+         }
     return conf
 
 @task  
