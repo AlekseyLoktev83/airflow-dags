@@ -16,6 +16,7 @@ from airflow.utils.task_group import TaskGroup
 from airflow.hooks.base_hook import BaseHook
 from airflow.providers.hashicorp.hooks.vault import VaultHook
 from airflow.providers.http.operators.http import SimpleHttpOperator
+from cloud_scripts.trigger_dagrun import TriggerDagRunOperator as CustomTriggerDagRunOperator
 
 import uuid
 from io import StringIO
@@ -41,6 +42,7 @@ BCP_SEPARATOR = '0x01'
 CSV_SEPARATOR = '\u0001'
 TAGS=["jupiter","promo","dev"]
 PARAMETERS_FILE = 'PARAMETERS.csv'
+COPY_MODE_DATABASE='Database'
 
 def separator_convert_hex_to_string(sep):
     sep_map = {'0x01':'\x01'}
@@ -126,8 +128,27 @@ def create_dag_config_copy_from_db(parameters:dict, clients):
           "client_name":clients[0]["ClientPrefix"],
           "emails":clients[0]["Email"],
           "drop_files_if_errors":True,
+          "copy_mode":COPY_MODE_DATABASE,
          }
     return conf
+
+
+@task
+def create_dag_config_copy_from_adls(parameters:dict, clients):
+    conf_list = []
+    
+    for client in clients[1:]:
+        conf={"parent_run_id":parameters["ParentRunId"],
+          "parent_process_date":parameters["ProcessDate"],
+          "schema":parameters["Schema"],
+          "client_prefix":client["ClientObjectId"],
+          "client_name":client["ClientPrefix"],
+          "emails":client["Email"],
+          "drop_files_if_errors":True,
+            }
+        conf_list.append(conf)
+        
+    return conf_list
   
   
 with DAG(
@@ -150,14 +171,14 @@ with DAG(
         wait_for_completion = True,
     )
     
-#     trigger_jupiter_client_promo_copy_from  = TriggerDagRunOperator(
-#         task_id="trigger_jupiter_client_promo_copy",
-#         trigger_dag_id="jupiter_client_promo_copy",  
-#         conf='{{ti.xcom_pull(task_ids="create_child_dag_config")}}',
-#         wait_for_completion = True,
-#     )
+    create_dag_config_copy_from_adls = create_dag_config_copy_from_adls(parameters:dict,get_clients_to_copy)
     
+    trigger_jupiter_client_promo_copy_from_adls = CustomTriggerDagRunOperator.partial(task_id="trigger_jupiter_client_promo_copy_from_adls",
+                                                                    wait_for_completion = True,
+                                                                     trigger_dag_id="jupiter_client_promo_copy",
+                                                                    ).expand(conf=create_dag_config_copy_from_adls)
+ 
  
        
 
-    parameters >> get_clients_to_copy >> create_dag_config_copy_from_db >> trigger_jupiter_client_promo_copy_from_db
+    parameters >> get_clients_to_copy >> create_dag_config_copy_from_db >> trigger_jupiter_client_promo_copy_from_db >> create_dag_config_copy_from_adls >> trigger_jupiter_client_promo_copy_from_adls 
