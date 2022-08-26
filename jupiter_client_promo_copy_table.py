@@ -238,7 +238,7 @@ def end_monitoring_detail(dst_dir, entities):
 
         prev_tast_output = json.loads(ent)
         schema = prev_tast_output["Schema"]
-        entity_name = prev_tast_output["EntityName"]
+        entity_name = prev_tast_output["EntityName"].split('.')[1]
         prev_task_result = prev_tast_output["Result"]
 
         temp_file_path = f'/tmp/{schema}_{entity_name}.csv'
