@@ -179,7 +179,7 @@ def truncate_table(parameters:dict):
     return result
 
 with DAG(
-    dag_id='jupiter_customers_copy',
+    dag_id='jupiter_materials_copy',
     schedule_interval=None,
     start_date=pendulum.datetime(2021, 1, 1, tz="UTC"),
     catchup=False,
@@ -194,48 +194,6 @@ with DAG(
         task_id='build_model',
         cluster_id='c9qc9m3jccl8v7vigq10',
         main_python_file_uri='hdfs:///SRC/JUPITER/UNIVERSALCATALOG/CUSTOMERS_FILTER.py',
-        python_file_uris=[
-            'hdfs:///SRC/SHARED/EXTRACT_SETTING.py',
-            'hdfs:///SRC/SHARED/SUPPORT_FUNCTIONS.py',
-        ],
-        file_uris=[
-            's3a://data-proc-public/jobs/sources/data/config.json',
-        ],
-        args=save_params,
-        properties={
-            'spark.submit.deployMode': 'cluster'
-        },
-        packages=['org.slf4j:slf4j-simple:1.7.30'],
-        repositories=['https://repo1.maven.org/maven2'],
-        exclude_packages=['com.amazonaws:amazon-kinesis-client'],
-    )
-    
-    copy_output_data_to_db = BashOperator(task_id="copy_output_data_to_db",
-                                 do_xcom_push=True,
-                                 bash_command='cp -r /tmp/data/src/. ~/ && chmod +x ~/bcp_import.sh && ~/bcp_import.sh {{ti.xcom_pull(task_ids="get_parameters",key="EntityOutputDir")}} {{ti.xcom_pull(task_ids="get_parameters",key="BcpImportParameters")}} \"{{ti.xcom_pull(task_ids="get_parameters",key="Schema")}}.MARS_UNIVERSAL_PETCARE_CUSTOMERS\" "1" ',
-                                )
-    
-    cleanup = BashOperator(
-        task_id='cleanup',
-        trigger_rule=TriggerRule.ALL_DONE,
-        bash_command='cp -r /tmp/data/src/. ~/ && chmod +x ~/hdfs_delete_old_files.sh && ~/hdfs_delete_old_files.sh {{ti.xcom_pull(task_ids="get_parameters",key="MaintenancePath")}} {{params.days_to_keep_old_files}} ',
-        params={'days_to_keep_old_files': DAYS_TO_KEEP_OLD_FILES},
-    )
-    
-    mon_success = update_output_monitoring_success(parameters)
-    mon_failure = update_output_monitoring_failure(parameters)
-    
-    truncate_table >> build_model  >> copy_output_data_to_db >> [mon_success, mon_failure] >> cleanup
-    render_template_as_native_obj=True,
-) as dag:
-# Get dag parameters from vault    
-    parameters = get_parameters()
-    save_params = save_parameters(parameters)
-    truncate_table = truncate_table(parameters)
-    build_model = DataprocCreatePysparkJobOperator(
-        task_id='build_model',
-        cluster_id='c9qc9m3jccl8v7vigq10',
-        main_python_file_uri='hdfs:///SRC/JUPITER/UNIVERSALCATALOG/MATERIALS_FILTER.py',
         python_file_uris=[
             'hdfs:///SRC/SHARED/EXTRACT_SETTING.py',
             'hdfs:///SRC/SHARED/SUPPORT_FUNCTIONS.py',
