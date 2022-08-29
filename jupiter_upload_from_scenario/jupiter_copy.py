@@ -154,7 +154,7 @@ def generate_upload_script(prev_task, src_dir, src_file, upload_path, bcp_parame
 def generate_bcp_script(upload_path, bcp_parameters, entities):
     scripts = []
     for entity in entities:
-        script = 'cp -r /tmp/data/src/. ~/ && chmod +x ~/exec_query.sh && ~/exec_query.sh "{}" {}{}/{}.csv "{}" {} {} "{}" '.format(entity["Extraction"].replace("\'\'", "\'\\'").replace(
+        script = '/utils/exec_query.sh "{}" {}{}/{}.csv "{}" {} {} "{}" '.format(entity["Extraction"].replace("\'\'", "\'\\'").replace(
             "\n", " "), upload_path, entity["EntityName"], entity["EntityName"], bcp_parameters, BCP_SEPARATOR, entity["Schema"], entity["Columns"].replace(",", separator_convert_hex_to_string(BCP_SEPARATOR)))
         scripts.append(script)
 
