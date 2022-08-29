@@ -452,4 +452,4 @@ with DAG(
     mon_success = update_output_monitoring_success(parameters)
     mon_failure = update_output_monitoring_failure(parameters)
     
-    truncate_table >> build_model  >> copy_output_data_to_db >> [mon_success, mon_failure] >> cleanup
+    build_model >> truncate_table >> copy_output_data_to_db >> [mon_success, mon_failure] >> cleanup
