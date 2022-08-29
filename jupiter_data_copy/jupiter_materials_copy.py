@@ -164,11 +164,6 @@ def update_output_monitoring_failure(parameters:dict):
 def update_output_monitoring_success(parameters:dict):
     _update_output_monitoring(parameters,True)
     
-copy_output_data_to_db = BashOperator(task_id="copy_output_data_to_db",
-                                 do_xcom_push=True,
-                                 bash_command='/utils/bcp_import.sh {{ti.xcom_pull(task_ids="get_parameters",key="EntityOutputDir")}} {{ti.xcom_pull(task_ids="get_parameters",key="BcpImportParameters")}} \"{{ti.xcom_pull(task_ids="get_parameters",key="Schema")}}.MARS_UNIVERSAL_PETCARE_MATERIALS\" "1" ',
-                                )
-
 @task
 def truncate_table(parameters:dict):
     odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
