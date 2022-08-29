@@ -85,7 +85,7 @@ def get_parameters(**kwargs):
  
     dag = kwargs['dag']
     
-    entity_output_dir = f'{output_path}/{dag.dag_id}/YEAR_END_ESTIMATE_FDM.CSV/*.csv'
+    entity_output_dir = f'{output_path}/{dag.dag_id}/PRICELIST_FDM.CSV/*.csv'
     
     parameters = {"RawPath": raw_path,
                   "ProcessPath": process_path,
@@ -134,14 +134,14 @@ def save_parameters(parameters:dict):
 
 def _update_output_monitoring(parameters:dict,prev_task_result):
     monitoring_file_path = f'{parameters["MaintenancePathPrefix"]}{MONITORING_FILE}'
-    entity_path = f'{parameters["OutputPath"]}/{parameters["DagId"]}/YEAR_END_ESTIMATE_FDM.CSV'
+    entity_path = f'{parameters["OutputPath"]}/{parameters["DagId"]}/PRICELIST_FDM.CSV'
     end_date = pendulum.now()
     start_date = pendulum.parse(parameters["StartDate"])
     duration = end_date.diff(start_date).in_seconds()
 
     temp_file_path = f'/tmp/{MONITORING_FILE}'
     df = pd.DataFrame([{'PipelineRunId': parameters["RunId"],
-                        'EntityName':'YEAR_END_ESTIMATE_FDM.CSV',
+                        'EntityName':'PRICELIST_FDM.CSV',
                         'StartDate': pendulum.now(),
                         'Status': STATUS_COMPLETE if prev_task_result else STATUS_FAILURE,
                         'TargetPath': entity_path,
@@ -166,14 +166,14 @@ def update_output_monitoring_success(parameters:dict):
     
 copy_output_data_to_db = BashOperator(task_id="copy_output_data_to_db",
                                  do_xcom_push=True,
-                                 bash_command='cp -r /tmp/data/src/. ~/ && chmod +x ~/bcp_import.sh && ~/bcp_import.sh {{ti.xcom_pull(task_ids="get_parameters",key="EntityOutputDir")}} {{ti.xcom_pull(task_ids="get_parameters",key="BcpImportParameters")}} \"{{ti.xcom_pull(task_ids="get_parameters",key="Schema")}}.YEAR_END_ESTIMATE_FDM\" "1" ',
+                                 bash_command='cp -r /tmp/data/src/. ~/ && chmod +x ~/bcp_import.sh && ~/bcp_import.sh {{ti.xcom_pull(task_ids="get_parameters",key="EntityOutputDir")}} {{ti.xcom_pull(task_ids="get_parameters",key="BcpImportParameters")}} \"{{ti.xcom_pull(task_ids="get_parameters",key="Schema")}}.PRICELIST_FDM\" "1" ',
                                 )
 
 @task
 def truncate_table(parameters:dict):
     odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
     schema = parameters["Schema"]
-    result = odbc_hook.run(sql=f"""truncate table [{schema}].[YEAR_END_ESTIMATE_FDM]""")
+    result = odbc_hook.run(sql=f"""truncate table [{schema}].[PRICELIST_FDM]""")
     print(result)
 
     return result
@@ -193,7 +193,7 @@ with DAG(
     build_model = DataprocCreatePysparkJobOperator(
         task_id='build_model',
         cluster_id='c9qc9m3jccl8v7vigq10',
-        main_python_file_uri='hdfs:///SRC/JUPITER/YEAR_END_ESTIMATE/JUPITER_YEAR_END_ESTIMATE_FDM.py',
+        main_python_file_uri='hdfs:///SRC/JUPITER/PRICELIST/JUPITER_PRICELIST_FDM.py',
         python_file_uris=[
             'hdfs:///SRC/SHARED/EXTRACT_SETTING.py',
             'hdfs:///SRC/SHARED/SUPPORT_FUNCTIONS.py',
@@ -212,7 +212,7 @@ with DAG(
     
     copy_output_data_to_db = BashOperator(task_id="copy_output_data_to_db",
                                  do_xcom_push=True,
-                                 bash_command='cp -r /tmp/data/src/. ~/ && chmod +x ~/bcp_import.sh && ~/bcp_import.sh {{ti.xcom_pull(task_ids="get_parameters",key="EntityOutputDir")}} {{ti.xcom_pull(task_ids="get_parameters",key="BcpImportParameters")}} \"{{ti.xcom_pull(task_ids="get_parameters",key="Schema")}}.YEAR_END_ESTIMATE_FDM\" "1" ',
+                                 bash_command='cp -r /tmp/data/src/. ~/ && chmod +x ~/bcp_import.sh && ~/bcp_import.sh {{ti.xcom_pull(task_ids="get_parameters",key="EntityOutputDir")}} {{ti.xcom_pull(task_ids="get_parameters",key="BcpImportParameters")}} \"{{ti.xcom_pull(task_ids="get_parameters",key="Schema")}}.PRICELIST_FDM\" "1" ',
                                 )
     
     cleanup = BashOperator(
