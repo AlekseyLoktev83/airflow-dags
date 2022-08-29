@@ -48,6 +48,8 @@ STATUS_FAILURE = 'FAILURE'
 STATUS_COMPLETE = 'COMPLETE'
 STATUS_PROCESS = 'PROCESS'
 
+DAYS_TO_KEEP_OLD_FILES = 14
+
 def separator_convert_hex_to_string(sep):
     sep_map = {'0x01':'\x01'}
     return sep_map.get(sep, sep)
@@ -211,9 +213,16 @@ with DAG(
     copy_output_data_to_db = BashOperator(task_id="copy_output_data_to_db",
                                  do_xcom_push=True,
                                  bash_command='cp -r /tmp/data/src/. ~/ && chmod +x ~/bcp_import.sh && ~/bcp_import.sh {{ti.xcom_pull(task_ids="get_parameters",key="EntityOutputDir")}} {{ti.xcom_pull(task_ids="get_parameters",key="BcpImportParameters")}} \"{{ti.xcom_pull(task_ids="get_parameters",key="Schema")}}.YEAR_END_ESTIMATE_FDM\" "1" ',
-                                ) 
+                                )
+    
+    cleanup = BashOperator(
+        task_id='cleanup',
+        trigger_rule=TriggerRule.ALL_DONE,
+        bash_command='cp -r /tmp/data/src/. ~/ && chmod +x ~/hdfs_delete_old_files.sh && ~/hdfs_delete_old_files.sh {{ti.xcom_pull(task_ids="get_parameters",key="MaintenancePath")}} {{params.days_to_keep_old_files}} ',
+        params={'days_to_keep_old_files': DAYS_TO_KEEP_OLD_FILES},
+    )
     
     mon_success = update_output_monitoring_success(parameters)
     mon_failure = update_output_monitoring_failure(parameters)
     
-    truncate_table >> build_model  >> copy_output_data_to_db >> [mon_success, mon_failure]
+    truncate_table >> build_model  >> copy_output_data_to_db >> [mon_success, mon_failure] >> cleanup
