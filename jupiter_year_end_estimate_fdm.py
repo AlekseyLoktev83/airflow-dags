@@ -165,7 +165,16 @@ def update_output_monitoring_success(parameters:dict):
 copy_output_data_to_db = BashOperator(task_id="copy_output_data_to_db",
                                  do_xcom_push=True,
                                  bash_command='cp -r /tmp/data/src/. ~/ && chmod +x ~/bcp_import.sh && ~/bcp_import.sh {{ti.xcom_pull(task_ids="get_parameters",key="EntityOutputDir")}} {{ti.xcom_pull(task_ids="get_parameters",key="BcpImportParameters")}} \"{{ti.xcom_pull(task_ids="get_parameters",key="Schema")}}.YEAR_END_ESTIMATE_FDM\" "1" ',
-                                )    
+                                )
+
+@task
+def truncate_table(parameters:dict):
+    odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
+    schema = parameters["Schema"]
+    result = odbc_hook.run(sql=f"""truncate table [{schema}].[YEAR_END_ESTIMATE_FDM]""")
+    print(result)
+
+    return result
 
 with DAG(
     dag_id='jupiter_year_end_estimate_fdm',
@@ -178,7 +187,7 @@ with DAG(
 # Get dag parameters from vault    
     parameters = get_parameters()
     save_params = save_parameters(parameters)
-    
+    truncate_table = truncate_table(parameters)
     build_model = DataprocCreatePysparkJobOperator(
         task_id='build_model',
         cluster_id='c9qc9m3jccl8v7vigq10',
@@ -207,4 +216,4 @@ with DAG(
     mon_success = update_output_monitoring_success(parameters)
     mon_failure = update_output_monitoring_failure(parameters)
     
-    build_model  >> copy_output_data_to_db >> [mon_success, mon_failure]
+    truncate_table >> build_model  >> copy_output_data_to_db >> [mon_success, mon_failure]
