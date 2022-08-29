@@ -85,7 +85,7 @@ def get_parameters(**kwargs):
  
     dag = kwargs['dag']
     
-    entity_output_dir = f'{output_path}/{dag.dag_id}/MARS_UNIVERSAL_PETCARE_CUSTOMERS.CSV/*.csv'
+    entity_output_dir = f'{output_path}/UNIVERSALCATALOG/MARS_UNIVERSAL_PETCARE_CUSTOMERS.CSV/*.csv'
     
     parameters = {"RawPath": raw_path,
                   "ProcessPath": process_path,
