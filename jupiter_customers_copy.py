@@ -179,7 +179,7 @@ def truncate_table(parameters:dict):
     return result
 
 with DAG(
-    dag_id='jupiter_materials_copy',
+    dag_id='jupiter_customers_copy',
     schedule_interval=None,
     start_date=pendulum.datetime(2021, 1, 1, tz="UTC"),
     catchup=False,
