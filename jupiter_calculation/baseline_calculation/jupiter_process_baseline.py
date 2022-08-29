@@ -189,6 +189,7 @@ with DAG(
     catchup=False,
     tags=TAGS,
     render_template_as_native_obj=True,
+    max_active_runs=1,
 ) as dag:
 # Get dag parameters from vault    
     parameters = get_parameters()
