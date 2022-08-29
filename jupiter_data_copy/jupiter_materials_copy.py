@@ -166,7 +166,7 @@ def update_output_monitoring_success(parameters:dict):
     
 copy_output_data_to_db = BashOperator(task_id="copy_output_data_to_db",
                                  do_xcom_push=True,
-                                 bash_command='cp -r /tmp/data/src/. ~/ && chmod +x ~/bcp_import.sh && ~/bcp_import.sh {{ti.xcom_pull(task_ids="get_parameters",key="EntityOutputDir")}} {{ti.xcom_pull(task_ids="get_parameters",key="BcpImportParameters")}} \"{{ti.xcom_pull(task_ids="get_parameters",key="Schema")}}.MARS_UNIVERSAL_PETCARE_MATERIALS\" "1" ',
+                                 bash_command='/utils/bcp_import.sh {{ti.xcom_pull(task_ids="get_parameters",key="EntityOutputDir")}} {{ti.xcom_pull(task_ids="get_parameters",key="BcpImportParameters")}} \"{{ti.xcom_pull(task_ids="get_parameters",key="Schema")}}.MARS_UNIVERSAL_PETCARE_MATERIALS\" "1" ',
                                 )
 
 @task
@@ -212,13 +212,13 @@ with DAG(
     
     copy_output_data_to_db = BashOperator(task_id="copy_output_data_to_db",
                                  do_xcom_push=True,
-                                 bash_command='cp -r /tmp/data/src/. ~/ && chmod +x ~/bcp_import.sh && ~/bcp_import.sh {{ti.xcom_pull(task_ids="get_parameters",key="EntityOutputDir")}} {{ti.xcom_pull(task_ids="get_parameters",key="BcpImportParameters")}} \"{{ti.xcom_pull(task_ids="get_parameters",key="Schema")}}.MARS_UNIVERSAL_PETCARE_MATERIALS\" "1" ',
+                                 bash_command='/utils/bcp_import.sh {{ti.xcom_pull(task_ids="get_parameters",key="EntityOutputDir")}} {{ti.xcom_pull(task_ids="get_parameters",key="BcpImportParameters")}} \"{{ti.xcom_pull(task_ids="get_parameters",key="Schema")}}.MARS_UNIVERSAL_PETCARE_MATERIALS\" "1" ',
                                 )
     
     cleanup = BashOperator(
         task_id='cleanup',
         trigger_rule=TriggerRule.ALL_DONE,
-        bash_command='cp -r /tmp/data/src/. ~/ && chmod +x ~/hdfs_delete_old_files.sh && ~/hdfs_delete_old_files.sh {{ti.xcom_pull(task_ids="get_parameters",key="MaintenancePath")}} {{params.days_to_keep_old_files}} ',
+        bash_command='/utils/hdfs_delete_old_files.sh {{ti.xcom_pull(task_ids="get_parameters",key="MaintenancePath")}} {{params.days_to_keep_old_files}} ',
         params={'days_to_keep_old_files': DAYS_TO_KEEP_OLD_FILES},
     )
     

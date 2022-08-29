@@ -15,7 +15,7 @@ with DAG(
 
     delete_old_files = BashOperator(
         task_id='delete_old_files',
-        bash_command="cp -r /tmp/data/src/. ~/ && chmod +x ~/hdfs_delete_old_files.sh && ~/hdfs_delete_old_files.sh /JUPITER/RAW/#MAINTENANCE/ 3 ",
+        bash_command="/utils/hdfs_delete_old_files.sh /JUPITER/RAW/#MAINTENANCE/ 3 ",
             )
 
     

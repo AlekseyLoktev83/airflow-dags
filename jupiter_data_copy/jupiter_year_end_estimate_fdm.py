@@ -213,7 +213,7 @@ with DAG(
     cleanup = BashOperator(
         task_id='cleanup',
         trigger_rule=TriggerRule.ALL_DONE,
-        bash_command='cp -r /tmp/data/src/. ~/ && chmod +x ~/hdfs_delete_old_files.sh && ~/hdfs_delete_old_files.sh {{ti.xcom_pull(task_ids="get_parameters",key="MaintenancePath")}} {{params.days_to_keep_old_files}} ',
+        bash_command='/utils/hdfs_delete_old_files.sh {{ti.xcom_pull(task_ids="get_parameters",key="MaintenancePath")}} {{params.days_to_keep_old_files}} ',
         params={'days_to_keep_old_files': DAYS_TO_KEEP_OLD_FILES},
     )
     

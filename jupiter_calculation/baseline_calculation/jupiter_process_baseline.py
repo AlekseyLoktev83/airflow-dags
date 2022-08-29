@@ -147,7 +147,7 @@ def generate_baseline_upload_script(parameters:dict):
         parameters["CurrentUploadDate"], parameters["LastUploadDate"], StringIO(db_schema_text))
     entity_json = json.loads(entities_df.to_json(orient="records"))[0]
 
-    script = 'cp -r /tmp/data/src/. ~/ && chmod +x ~/exec_query.sh && ~/exec_query.sh "{}" {}{}/{}.csv "{}" {} {} "{}" '.format(entity_json["Extraction"].replace("\'\'", "\'\\'").replace(
+    script = '/utils/exec_query.sh "{}" {}{}/{}.csv "{}" {} {} "{}" '.format(entity_json["Extraction"].replace("\'\'", "\'\\'").replace(
             "\n", " "), parameters["UploadPath"], entity_json["EntityName"], entity_json["EntityName"], parameters["BcpParameters"], BCP_SEPARATOR, entity_json["Schema"], entity_json["Columns"].replace(",", separator_convert_hex_to_string(BCP_SEPARATOR)))
 
     return script  

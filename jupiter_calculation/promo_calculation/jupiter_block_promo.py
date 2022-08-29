@@ -138,7 +138,7 @@ with DAG(
     trunc_temp_blocked_promo = truncate_temp_blocked_promo(parameters)
     block_promo = BashOperator(task_id="block_promo",
                                  do_xcom_push=True,
-                                 bash_command='cp -r /tmp/data/src/. ~/ && chmod +x ~/bcp_import.sh && ~/bcp_import.sh {{ti.xcom_pull(task_ids="get_parameters",key="BlockedPromoOutputPath")}}{{params.OUT_DIR}} {{ti.xcom_pull(task_ids="get_parameters",key="BcpImportParameters")}} \"{{ti.xcom_pull(task_ids="get_parameters",key="Schema")}}.TEMP_BLOCKED_PROMO\" "1" ',
+                                 bash_command='/utils/bcp_import.sh {{ti.xcom_pull(task_ids="get_parameters",key="BlockedPromoOutputPath")}}{{params.OUT_DIR}} {{ti.xcom_pull(task_ids="get_parameters",key="BcpImportParameters")}} \"{{ti.xcom_pull(task_ids="get_parameters",key="Schema")}}.TEMP_BLOCKED_PROMO\" "1" ',
                                  params={'OUT_DIR':BLOCKED_PROMO_OUTPUT_DIR},  
                                 )
     up_blocked_promo_table=update_blocked_promo_table(parameters)

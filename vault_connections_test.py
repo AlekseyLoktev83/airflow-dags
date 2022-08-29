@@ -22,6 +22,6 @@ with DAG('vault_connections_test', start_date=datetime(2020, 1, 1), schedule_int
      download_schema = BashOperator(
         task_id='exec_query',
 #           bash_command='echo "{{ ti.xcom_pull(task_ids="test-task") }}"',
-        bash_command='cp -r /tmp/data/src/. ~/ && chmod +x ~/exec_query.sh && ~/exec_query.sh "select * from Country;" /user/smartadmin/schema/query_out.csv "{{ti.xcom_pull(task_ids="test-task")}}" "Schema,TableName,FieldName,Position,FieldType,Size,IsNull,UpdateDate,Scale"',
+        bash_command='/utils/exec_query.sh "select * from Country;" /user/smartadmin/schema/query_out.csv "{{ti.xcom_pull(task_ids="test-task")}}" "Schema,TableName,FieldName,Position,FieldType,Size,IsNull,UpdateDate,Scale"',
             )
      test_task >> download_schema

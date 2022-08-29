@@ -132,7 +132,7 @@ def generate_bcp_import_script(parameters:dict, entity):
     table_name = entity['TableName']
     src_path = entity['SrcPath']
     bcp_import_parameters=parameters['BcpImportParameters']
-    script = f'cp -r /tmp/data/src/. ~/ && chmod +x ~/bcp_import.sh && ~/bcp_import.sh {src_path} {bcp_import_parameters} \"{table_name}\" "1" '
+    script = f'/utils/bcp_import.sh {src_path} {bcp_import_parameters} \"{table_name}\" "1" '
     print(script)
 
     return script

@@ -133,7 +133,7 @@ with DAG(
     truncate_rolling_volumes = truncate_rolling_volumes(parameters)
     upload_rolling_volumes = BashOperator(task_id="upload_rolling_volumes",
                                  do_xcom_push=True,
-                                 bash_command='cp -r /tmp/data/src/. ~/ && chmod +x ~/bcp_import.sh && ~/bcp_import.sh {{ti.xcom_pull(task_ids="get_parameters",key="RollingVolumesOutputPath")}} {{ti.xcom_pull(task_ids="get_parameters",key="BcpImportParameters")}} \"{{ti.xcom_pull(task_ids="get_parameters",key="Schema")}}.ROLLING_VOLUMES_FDM\" "1" ',
+                                 bash_command='/utils/bcp_import.sh {{ti.xcom_pull(task_ids="get_parameters",key="RollingVolumesOutputPath")}} {{ti.xcom_pull(task_ids="get_parameters",key="BcpImportParameters")}} \"{{ti.xcom_pull(task_ids="get_parameters",key="Schema")}}.ROLLING_VOLUMES_FDM\" "1" ',
                                 )
     fill=fill_rolling_volumes(parameters)
     
