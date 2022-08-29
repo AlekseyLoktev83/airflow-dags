@@ -166,7 +166,7 @@ def update_output_monitoring_success(parameters:dict):
     
 copy_output_data_to_db = BashOperator(task_id="copy_output_data_to_db",
                                  do_xcom_push=True,
-                                 bash_command='cp -r /tmp/data/src/. ~/ && chmod +x ~/bcp_import.sh && ~/bcp_import.sh {{ti.xcom_pull(task_ids="get_parameters",key="EntityOutputDir")}} {{ti.xcom_pull(task_ids="get_parameters",key="BcpImportParameters")}} \"{{ti.xcom_pull(task_ids="get_parameters",key="Schema")}}.YEAR_END_ESTIMATE_FDM\" "1" ',
+                                 bash_command='bcp_import.sh {{ti.xcom_pull(task_ids="get_parameters",key="EntityOutputDir")}} {{ti.xcom_pull(task_ids="get_parameters",key="BcpImportParameters")}} \"{{ti.xcom_pull(task_ids="get_parameters",key="Schema")}}.YEAR_END_ESTIMATE_FDM\" "1" ',
                                 )
 
 @task
