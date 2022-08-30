@@ -16,7 +16,7 @@ from airflow.utils.task_group import TaskGroup
 from airflow.hooks.base_hook import BaseHook
 from airflow.providers.hashicorp.hooks.vault import VaultHook
 from airflow.providers.http.operators.http import SimpleHttpOperator
-from cloud_scripts.trigger_dagrun import TriggerDagRunOperator as CustomTriggerDagRunOperator
+# from cloud_scripts.trigger_dagrun import TriggerDagRunOperator as CustomTriggerDagRunOperator
 
 import uuid
 from io import StringIO
@@ -177,7 +177,7 @@ with DAG(
     
     create_dag_config_copy_from_adls = create_dag_config_copy_from_adls(parameters, create_dag_config_copy_from_db, get_clients_to_copy)
     
-    trigger_jupiter_client_promo_copy_from_adls = CustomTriggerDagRunOperator.partial(task_id="trigger_jupiter_client_promo_copy_from_adls",
+    trigger_jupiter_client_promo_copy_from_adls = TriggerDagRunOperator.partial(task_id="trigger_jupiter_client_promo_copy_from_adls",
                                                                     wait_for_completion = True,
                                                                      trigger_dag_id="jupiter_client_promo_copy",
                                                                     ).expand(conf=create_dag_config_copy_from_adls)
