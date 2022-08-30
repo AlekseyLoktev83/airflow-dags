@@ -12,7 +12,7 @@ from airflow.operators.bash import BashOperator
 from airflow.operators.dummy import DummyOperator
 from airflow.operators.python import PythonOperator, BranchPythonOperator
 from airflow.operators.trigger_dagrun import TriggerDagRunOperator
-from cloud_scripts.trigger_dagrun import TriggerDagRunOperator as CustomTriggerDagRunOperator
+# from cloud_scripts.trigger_dagrun import TriggerDagRunOperator as CustomTriggerDagRunOperator
 from airflow.utils.task_group import TaskGroup
 from airflow.hooks.base_hook import BaseHook
 from airflow.providers.hashicorp.hooks.vault import VaultHook
@@ -127,7 +127,7 @@ with DAG(
     child_dag_config = create_child_dag_config(parameters)
     unprocessed_baseline_files = get_unprocessed_baseline_files(parameters,child_dag_config)
     
-    trigger_jupiter_process_baseline = CustomTriggerDagRunOperator.partial(task_id="trigger_jupiter_process_baseline",
+    trigger_jupiter_process_baseline = TriggerDagRunOperator.partial(task_id="trigger_jupiter_process_baseline",
                                                                     wait_for_completion = True,
                                                                      trigger_dag_id="jupiter_process_baseline",
                                                                     ).expand(conf=unprocessed_baseline_files)
