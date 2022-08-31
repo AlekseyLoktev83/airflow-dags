@@ -35,6 +35,10 @@ def gen_input_list():
 def process_item(item):
   print(f'item={item}')
 
+@task
+def process_item2(item):
+  print(f'item={item}')  
+
 with DAG(
     dag_id='parallel_task_check',
     schedule_interval=None,
@@ -44,4 +48,4 @@ with DAG(
     render_template_as_native_obj=True,
     max_active_tasks=32,
 ) as dag:
-  process_item.expand(item=gen_input_list())
+  process_item2.expand(item = process_item.expand(item=gen_input_list()))
