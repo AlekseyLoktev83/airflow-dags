@@ -34,6 +34,7 @@ def gen_input_list():
 @task
 def process_item(item):
   print(f'item={item}')
+  return item
 
 @task
 def process_item2(item):
