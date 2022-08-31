@@ -15,10 +15,14 @@ dag = DAG(
 )
 
 def sample_select():
-    odbc_hook = OdbcHook("odbc_jupiter") 
+#     odbc_hook = OdbcHook("odbc_jupiter_secret") 
+    db_conn = BaseHook.get_connection("odbc_jupiter_secret")
+    bcp_parameters = '-S {} -d {} -U {} -P {}'.format(db_conn.host, db_conn.schema, db_conn.login, db_conn.password)
+    
+    return bcp_parameters
 #     rec = odbc_hook.get_records("SELECT * from Country;")
-    df =  odbc_hook.get_pandas_df("SELECT * from Jupiter.Promo;")
-    print(df.head(3).to_markdown())
+#     df =  odbc_hook.get_pandas_df("SELECT * from Jupiter.Promo;")
+#     print(df.head(3).to_markdown())
 #     print(rec)
 #     cnxn = odbc_hook.get_conn()
 
