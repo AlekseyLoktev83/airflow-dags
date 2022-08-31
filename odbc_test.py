@@ -4,6 +4,7 @@ from airflow.providers.apache.hdfs.hooks.webhdfs import WebHDFSHook
 from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
 from airflow.utils.dates import days_ago
+from airflow.hooks.base_hook import BaseHook
 
 dag = DAG(
     dag_id="odbc_example",
