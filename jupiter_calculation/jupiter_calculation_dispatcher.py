@@ -18,7 +18,6 @@ with DAG(
     catchup=False,
     schedule_interval=None,
     tags=TAGS,
-    dagrun_timeout=timedelta(minutes=60),
 ) as dag:
     
     handler_id=generate_handler_id()
