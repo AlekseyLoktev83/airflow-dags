@@ -8,7 +8,7 @@ from airflow.utils.task_group import TaskGroup
 from airflow.decorators import dag, task
 import uuid
 
-@ask
+@task
 def gen_file_name():
     return str(uuid.uuid4())
 
