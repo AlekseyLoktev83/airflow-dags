@@ -26,6 +26,6 @@ with DAG(
   
   create_file = BashOperator(
         task_id='create_file',
-        bash_command="touch /tmp/data/src/check{{gen_file_name}} ",
+        bash_command="touch /tmp/data/src/check{{ti.xcom_pull(task_ids='gen_file_name')}} ",
       )  
   gen_file_name >> list_dir >> create_file
