@@ -149,7 +149,11 @@ def generate_upload_script(prev_task, src_dir, src_file, upload_path, bcp_parame
 
     return entities_json
 
-
+def chunks(lst, n):
+    """Yield successive n-sized chunks from lst. """
+    for i in range(0, len(lst), n):
+        yield lst[i:i + n]
+        
 @task
 def generate_bcp_script(upload_path, bcp_parameters, entities):
     scripts = []
@@ -157,8 +161,15 @@ def generate_bcp_script(upload_path, bcp_parameters, entities):
         script = '/utils/exec_query.sh "{}" {}{}/{}.csv "{}" {} {} "{}" '.format(entity["Extraction"].replace("\'\'", "\'\\'").replace(
             "\n", " "), upload_path, entity["EntityName"], entity["EntityName"], bcp_parameters, BCP_SEPARATOR, entity["Schema"], entity["Columns"].replace(",", separator_convert_hex_to_string(BCP_SEPARATOR)))
         scripts.append(script)
+        
+    merged_scripts=list(chunks(scripts,4))
+    
+    result = []
+    for s in merged_scripts:
+        combined = ';'.join(s)
+        result.append(combined)
 
-    return scripts
+    return result
 
 
 @task
