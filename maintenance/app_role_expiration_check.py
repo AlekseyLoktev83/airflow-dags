@@ -31,7 +31,7 @@ VAULT_CONNECTION_NAME = 'vault_default'
 def get_app_role_info():
     vault_hook = VaultHook(VAULT_CONNECTION_NAME)
     conn = vault_hook.get_conn()
-    resp = conn.auth.approle.read_secret_id(role_name='airflow-role', secret_id=conn.secret_id)
+    resp = conn.auth.approle.read_secret_id(role_name='airflow-role', secret_id=vault_hook.connection.password)
     print(str(resp))
 
 
