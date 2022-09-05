@@ -29,9 +29,12 @@ import csv
 VAULT_CONNECTION_NAME = 'vault_default'
 MIN_DAYS_TO_NOTIFY = 27
 
-
-def _check_approle_expiration():
+@task
+def get_email(**kwargs):
     email_to=Variable.get("EmailTo")
+    return email_to
+    
+def _check_approle_expiration():
     
     vault_hook = VaultHook(VAULT_CONNECTION_NAME)
     conn = vault_hook.get_conn()
@@ -55,15 +58,19 @@ with DAG(
     tags=["maintenance"],
     render_template_as_native_obj=True,
 ) as dag:
+    get_email=get_email()
+    
     check_approle_expiration = ShortCircuitOperator(
         task_id='check_approle_expiration',
         python_callable=_check_approle_expiration,
            )
     
     
-#     send_email = EmailOperator( 
-#           task_id='send_email', 
-#           to='{{ti.xcom_pull(task_ids="get_parameters")["EmailTo"]}}', 
-#           subject='Rolling volumes notification', 
-#           html_content='<h2>{{ti.xcom_pull(task_ids="get_parameters")["Message"]}}</h2>',
-#     )
+    send_email = EmailOperator( 
+          task_id='send_email', 
+          to='{{ti.xcom_pull(task_ids="get_email")}}', 
+          subject='Jupiter. Hashicorp Vault AppRole secret expitation alert!', 
+          html_content='<h2>Hashicorp Vault Secret id will be expired soon. Please update it.</h2>',
+    )
+    
+    get_email >> check_approle_expiration >> send_email
