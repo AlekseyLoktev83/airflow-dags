@@ -52,7 +52,7 @@ def _check_approle_expiration():
 
 with DAG(
     dag_id='app_role_expiration_check',
-    schedule_interval=None,
+    schedule_interval='0 6 * * *',
     start_date=pendulum.datetime(2021, 1, 1, tz="UTC"),
     catchup=False,
     tags=["maintenance"],
