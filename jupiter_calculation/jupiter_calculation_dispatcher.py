@@ -53,7 +53,7 @@ with DAG(
     trigger_jupiter_all_parameters_calc = TriggerDagRunOperator(
         task_id="trigger_jupiter_all_parameters_calc",
         trigger_dag_id="jupiter_all_parameters_calc",  
-        conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":"{{dag_run.conf.get('schema')}}","parent_handler_id":"{{ti.xcom_pull(task_ids='generate_handler_id')}}"},
+        conf={"parent_run_id":"{{dag_run.conf.get('parent_run_id')}}","parent_process_date":"{{ds}}","schema":"{{dag_run.conf.get('schema')}}","parent_handler_id":"{{ti.xcom_pull(task_ids='generate_handler_id')}}"},
         wait_for_completion = True,
     )
 
