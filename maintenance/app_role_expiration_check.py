@@ -27,7 +27,7 @@ import csv
 
 
 VAULT_CONNECTION_NAME = 'vault_default'
-MIN_DAYS_TO_NOTIFY = 27
+MIN_DAYS_TO_NOTIFY = 28
 
 @task
 def get_email(**kwargs):
