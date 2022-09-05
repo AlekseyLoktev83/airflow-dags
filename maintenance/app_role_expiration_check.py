@@ -29,7 +29,7 @@ VAULT_CONNECTION_NAME = 'vault_default'
 
 @task
 def get_app_role_info():
-    vault_hook = VaultHook(VAULT_CONNECTION_NAME,mount_point='auth')
+    vault_hook = VaultHook(VAULT_CONNECTION_NAME)
     conn = vault_hook.get_conn()
     resp = conn.auth.approle.read_role_id(
     role_name='airflow-role',
