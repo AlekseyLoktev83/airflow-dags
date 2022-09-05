@@ -7,10 +7,11 @@ from airflow.utils.trigger_rule import TriggerRule
 from airflow.models import Variable
 from airflow.operators.bash import BashOperator
 from airflow.operators.dummy import DummyOperator
-from airflow.operators.python import PythonOperator, BranchPythonOperator
+from airflow.operators.python import PythonOperator, BranchPythonOperator, ShortCircuitOperator
 from airflow.utils.task_group import TaskGroup
 from airflow.hooks.base_hook import BaseHook
 from airflow.providers.hashicorp.hooks.vault import VaultHook
+from airflow.operators.email import EmailOperator
 
 import uuid
 from io import StringIO
@@ -26,13 +27,23 @@ import csv
 
 
 VAULT_CONNECTION_NAME = 'vault_default'
+MIN_DAYS_TO_NOTIFY = 28
 
-@task
-def get_app_role_info():
+
+def _check_approle_expiration():
+    email_to=Variable.get("EmailTo")
+    
     vault_hook = VaultHook(VAULT_CONNECTION_NAME)
     conn = vault_hook.get_conn()
     resp = conn.auth.approle.read_secret_id(role_name='airflow-role', secret_id=vault_hook.connection.password)
     print(str(resp))
+    
+    expiration_time = pendulum.parse(resp['data']['expiration_time'])
+    today = pendulum.now()
+    diff = (expiration_time - today).days
+    
+    return days <= MIN_DAYS_TO_NOTIFY
+    
 
 
 with DAG(
@@ -43,4 +54,16 @@ with DAG(
     tags=["maintenance"],
     render_template_as_native_obj=True,
 ) as dag:
-    get_app_role_info()
+    check_approle_expiration = ShortCircuitOperator(
+        task_id='check_rollingday',
+        python_callable=_check_approle_expiration,
+        op_kwargs={'rolling_day': parameters["RollingDay"]},
+    )
+    
+    
+#     send_email = EmailOperator( 
+#           task_id='send_email', 
+#           to='{{ti.xcom_pull(task_ids="get_parameters")["EmailTo"]}}', 
+#           subject='Rolling volumes notification', 
+#           html_content='<h2>{{ti.xcom_pull(task_ids="get_parameters")["Message"]}}</h2>',
+#     )
