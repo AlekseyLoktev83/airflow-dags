@@ -31,7 +31,7 @@ VAULT_CONNECTION_NAME = 'vault_default'
 def get_app_role_info():
     vault_hook = VaultHook(VAULT_CONNECTION_NAME)
     conn = vault_hook.get_conn()
-    conn.secrets.kv.v1.get_secret(secret_path='auth/approle/role/airflow-role/secret-id/lookup')
+    conn.secrets.kv.get_secret(secret_path='auth/approle/role/airflow-role/secret-id/lookup')
 
 
 with DAG(
