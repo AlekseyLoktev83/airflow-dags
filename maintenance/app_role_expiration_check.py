@@ -57,8 +57,7 @@ with DAG(
     check_approle_expiration = ShortCircuitOperator(
         task_id='check_rollingday',
         python_callable=_check_approle_expiration,
-        op_kwargs={'rolling_day': parameters["RollingDay"]},
-    )
+           )
     
     
 #     send_email = EmailOperator( 
