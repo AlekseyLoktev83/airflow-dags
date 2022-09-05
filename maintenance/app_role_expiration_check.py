@@ -27,7 +27,7 @@ import csv
 
 
 VAULT_CONNECTION_NAME = 'vault_default'
-MIN_DAYS_TO_NOTIFY = 29
+MIN_DAYS_TO_NOTIFY = 27
 
 
 def _check_approle_expiration():
@@ -41,6 +41,7 @@ def _check_approle_expiration():
     expiration_time = pendulum.parse(resp['data']['expiration_time'])
     today = pendulum.now()
     diff = (expiration_time - today).days
+    print(diff)
     
     return diff <= MIN_DAYS_TO_NOTIFY
     
