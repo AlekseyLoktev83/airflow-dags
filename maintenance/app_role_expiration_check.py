@@ -42,7 +42,7 @@ def _check_approle_expiration():
     today = pendulum.now()
     diff = (expiration_time - today).days
     
-    return days <= MIN_DAYS_TO_NOTIFY
+    return diff <= MIN_DAYS_TO_NOTIFY
     
 
 
@@ -55,7 +55,7 @@ with DAG(
     render_template_as_native_obj=True,
 ) as dag:
     check_approle_expiration = ShortCircuitOperator(
-        task_id='check_rollingday',
+        task_id='check_approle_expiration',
         python_callable=_check_approle_expiration,
            )
     
