@@ -123,7 +123,9 @@ def copy_hdfs_to_sftp(parameters:dict):
     conn = hdfs_hook.get_conn()
     conn.download(dst_path, tmp_path, overwrite=True)
     
-    src_file_path=glob.glob(f'{tmp_path}*.csv/*.csv')[0]
+    files=glob.glob(f'{tmp_path}*.csv/*.csv')[0]
+    files = [f for f in files if os.path.isfile(f)]
+    src_file_path = files[0]
     print(src_file_path)
     
     with ssh_hook.get_conn() as ssh_client:
