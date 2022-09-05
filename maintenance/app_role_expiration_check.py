@@ -27,7 +27,7 @@ import csv
 
 
 VAULT_CONNECTION_NAME = 'vault_default'
-MIN_DAYS_TO_NOTIFY = 28
+MIN_DAYS_TO_NOTIFY = 29
 
 
 def _check_approle_expiration():
