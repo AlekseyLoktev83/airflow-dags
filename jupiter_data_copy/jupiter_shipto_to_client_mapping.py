@@ -132,37 +132,6 @@ def save_parameters(parameters:dict):
                                                                                             
     return [args]
 
-def _update_output_monitoring(parameters:dict,prev_task_result):
-    monitoring_file_path = f'{parameters["MaintenancePathPrefix"]}{MONITORING_FILE}'
-    entity_path = f'{parameters["OutputPath"]}/{parameters["DagId"]}/YEAR_END_ESTIMATE_FDM.CSV'
-    end_date = pendulum.now()
-    start_date = pendulum.parse(parameters["StartDate"])
-    duration = end_date.diff(start_date).in_seconds()
-
-    temp_file_path = f'/tmp/{MONITORING_FILE}'
-    df = pd.DataFrame([{'PipelineRunId': parameters["RunId"],
-                        'EntityName':'YEAR_END_ESTIMATE_FDM.CSV',
-                        'StartDate': pendulum.now(),
-                        'Status': STATUS_COMPLETE if prev_task_result else STATUS_FAILURE,
-                        'TargetPath': entity_path,
-                        'TargetFormat':'CSV',
-                        'Duration':duration, 
-                        }])
-    df.to_csv(temp_file_path, index=False, sep=CSV_SEPARATOR)
-
-    hdfs_hook = WebHDFSHook(HDFS_CONNECTION_NAME)
-    conn = hdfs_hook.get_conn()
-    conn.upload(monitoring_file_path, temp_file_path, overwrite=True)
-
-    return True
-
-@task(task_id="update_output_monitoring_failure",trigger_rule=TriggerRule.ONE_FAILED)
-def update_output_monitoring_failure(parameters:dict):
-    _update_output_monitoring(parameters,False)
-
-@task(task_id="update_output_monitoring_success")
-def update_output_monitoring_success(parameters:dict):
-    _update_output_monitoring(parameters,True)
     
 @task
 def truncate_table(parameters:dict):
@@ -174,7 +143,7 @@ def truncate_table(parameters:dict):
     return result
 
 with DAG(
-    dag_id='jupiter_year_end_estimate_fdm',
+    dag_id='jupiter_shipto_to_client_mapping',
     schedule_interval=None,
     start_date=pendulum.datetime(2021, 1, 1, tz="UTC"),
     catchup=False,
@@ -188,7 +157,7 @@ with DAG(
     build_model = DataprocCreatePysparkJobOperator(
         task_id='build_model',
         cluster_id='c9qc9m3jccl8v7vigq10',
-        main_python_file_uri='hdfs:///SRC/JUPITER/YEAR_END_ESTIMATE/JUPITER_YEAR_END_ESTIMATE_FDM.py',
+        main_python_file_uri='hdfs:///SRC/JUPITER/SHIPTO_TO_CLIENT_MAPPING/SHIPTO_TO_CLIENT_MAPPING.py',
         python_file_uris=[
             'hdfs:///SRC/SHARED/EXTRACT_SETTING.py',
             'hdfs:///SRC/SHARED/SUPPORT_FUNCTIONS.py',
@@ -205,11 +174,7 @@ with DAG(
         exclude_packages=['com.amazonaws:amazon-kinesis-client'],
     )
     
-    copy_output_data_to_db = BashOperator(task_id="copy_output_data_to_db",
-                                 do_xcom_push=True,
-                                 bash_command='/utils/bcp_import.sh {{ti.xcom_pull(task_ids="get_parameters",key="EntityOutputDir")}} {{ti.xcom_pull(task_ids="get_parameters",key="BcpImportParameters")}} \"{{ti.xcom_pull(task_ids="get_parameters",key="Schema")}}.YEAR_END_ESTIMATE_FDM\" "1" ',
-                                )
-    
+   
     cleanup = BashOperator(
         task_id='cleanup',
         trigger_rule=TriggerRule.ALL_DONE,
@@ -217,7 +182,4 @@ with DAG(
         params={'days_to_keep_old_files': DAYS_TO_KEEP_OLD_FILES},
     )
     
-    mon_success = update_output_monitoring_success(parameters)
-    mon_failure = update_output_monitoring_failure(parameters)
-    
-    build_model >> truncate_table >> copy_output_data_to_db >> [mon_success, mon_failure] >> cleanup
+    build_model >> cleanup
