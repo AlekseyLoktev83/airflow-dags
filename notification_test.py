@@ -22,7 +22,7 @@ def task1():
 def task2():
   print(2)  
 
-with DAG('test-task',
+with DAG('notification_test',
          start_date=datetime(2020, 1, 1),
          schedule_interval=None,
          email =['aleksey.loktev@smartcom.software'],
