@@ -31,7 +31,7 @@ with DAG(
     create_hive_query_from_file = DataprocCreateHiveJobOperator(
         task_id='create_hive_query_from_file',
         cluster_id='c9qc9m3jccl8v7vigq10',
-        query='SELECT * FROM monitoring_output',
+        query='insert into monitoring_output select * from  monitoring_output',
 #         script_variables={
 #             'CITIES_URI': 's3a://data-proc-public/jobs/sources/hive-001/cities/',
 #             'COUNTRY_CODE': 'RU',
