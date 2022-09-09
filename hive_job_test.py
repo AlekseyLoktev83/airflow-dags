@@ -24,6 +24,7 @@ with DAG(
 ) as dag:
     create_hive_query = DataprocCreateHiveJobOperator(
         task_id='create_hive_query',
+        cluster_id='c9qc9m3jccl8v7vigq10',
         query='SELECT 1;',
     )
 
