@@ -75,6 +75,7 @@ def get_parameters(**kwargs):
     
     db_conn = BaseHook.get_connection(MSSQL_CONNECTION_NAME)
     bcp_parameters = '-S {} -d {} -U {} -P {}'.format(db_conn.host, db_conn.schema, db_conn.login, db_conn.password)
+    cluster_id = Variable.get("JupiterDataprocClusterId")
 
     parameters = {"RawPath": raw_path,
                   "ProcessPath": process_path,
@@ -94,6 +95,7 @@ def get_parameters(**kwargs):
                   "ParentRunId":parent_run_id,
                   "FileName":file_name,
                   "CreateDate":create_date,
+                  "JupiterDataprocClusterId":cluster_id,
                   }
     print(parameters)
     return parameters
@@ -130,7 +132,7 @@ with DAG(
     
     pyspark_job_qc = DataprocCreatePysparkJobOperator(
         task_id='input_baseline_processing',
-        cluster_id='c9qc9m3jccl8v7vigq10',
+        cluster_id=parameters['JupiterDataprocClusterId'],
         main_python_file_uri='hdfs:///SRC/JUPITER/PROMO_PARAMETERS_CALCULATION/INPUT_BASELINE_PROCESSING.py',
         python_file_uris=[
             'hdfs:///SRC/SHARED/EXTRACT_SETTING.py',

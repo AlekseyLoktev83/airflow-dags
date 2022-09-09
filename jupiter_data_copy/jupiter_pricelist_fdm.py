@@ -86,6 +86,7 @@ def get_parameters(**kwargs):
     dag = kwargs['dag']
     
     entity_output_dir = f'{output_path}/{dag.dag_id}/PRICELIST_FDM.CSV/*.csv'
+    cluster_id = Variable.get("JupiterDataprocClusterId")
     
     parameters = {"RawPath": raw_path,
                   "ProcessPath": process_path,
@@ -110,6 +111,7 @@ def get_parameters(**kwargs):
                   "StartDate":pendulum.now().isoformat(),
                   "BcpImportParameters":bcp_import_parameters,
                   "EntityOutputDir":entity_output_dir,
+                  "JupiterDataprocClusterId":cluster_id,
                   }
     print(parameters)
     return parameters
@@ -188,7 +190,7 @@ with DAG(
     truncate_table = truncate_table(parameters)
     build_model = DataprocCreatePysparkJobOperator(
         task_id='build_model',
-        cluster_id='c9qc9m3jccl8v7vigq10',
+        cluster_id=parameters['JupiterDataprocClusterId'],
         main_python_file_uri='hdfs:///SRC/JUPITER/PRICELIST/JUPITER_PRICELIST_FDM.py',
         python_file_uris=[
             'hdfs:///SRC/SHARED/EXTRACT_SETTING.py',

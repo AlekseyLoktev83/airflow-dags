@@ -82,7 +82,7 @@ def get_parameters(**kwargs):
     db_conn = BaseHook.get_connection(MSSQL_CONNECTION_NAME)
     bcp_parameters = '-S {} -d {} -U {} -P {}'.format(db_conn.host, db_conn.schema, db_conn.login, db_conn.password)
     dag = kwargs['dag']
-    
+    cluster_id = Variable.get("JupiterDataprocClusterId")
     parameters = {"RawPath": raw_path,
                   "ProcessPath": process_path,
                   "OutputPath": output_path,
@@ -104,6 +104,7 @@ def get_parameters(**kwargs):
                   "DagId":dag.dag_id,
                   "BudgetYear":budget_year,
                   "ScenarioList":scenario_list,
+                  "JupiterDataprocClusterId":cluster_id,
                   }
     print(parameters)
     return parameters
@@ -147,7 +148,7 @@ with DAG(
     
     build_model = DataprocCreatePysparkJobOperator(
         task_id='build_model',
-        cluster_id='c9qc9m3jccl8v7vigq10',
+        cluster_id=parameters['JupiterDataprocClusterId'],
         main_python_file_uri='hdfs:///SRC/JUPITER/UPLOAD_FROM_SCENARIO/MERGE_SCENARIO_DATA.py',
         python_file_uris=[
             'hdfs:///SRC/SHARED/EXTRACT_SETTING.py',

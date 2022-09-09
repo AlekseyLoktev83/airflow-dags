@@ -78,6 +78,7 @@ def get_parameters(**kwargs):
     bcp_parameters = '-S {} -d {} -U {} -P {}'.format(db_conn.host, db_conn.schema, db_conn.login, db_conn.password)
     bcp_import_parameters = f'\"DRIVER=ODBC Driver 18 for SQL Server;SERVER={db_conn.host};DATABASE={db_conn.schema};UID={db_conn.login};PWD={db_conn.password};Encrypt=no;\"'
     
+    cluster_id = Variable.get("JupiterDataprocClusterId")
     parameters = {"RawPath": raw_path,
                   "ProcessPath": process_path,
                   "OutputPath": output_path,
@@ -97,6 +98,7 @@ def get_parameters(**kwargs):
                   "FileName":file_name,
                   "CreateDate":create_date,
                   "BcpImportParameters":bcp_import_parameters,
+                  "JupiterDataprocClusterId":cluster_id,
                   }
     print(parameters)
     return parameters
@@ -151,7 +153,7 @@ with DAG(
     
     parameters_calculation = DataprocCreatePysparkJobOperator(
         task_id='parameters_calculation',
-        cluster_id='c9qc9m3jccl8v7vigq10',
+        cluster_id=parameters['JupiterDataprocClusterId'],
         main_python_file_uri='hdfs:///SRC/JUPITER/PROMO_PARAMETERS_CALCULATION/PARAMETERS_CALCULATION.py	',
         python_file_uris=[
             'hdfs:///SRC/JUPITER/PROMO_PARAMETERS_CALCULATION/PLAN_PARAMETERS_CALCULATION.py',
