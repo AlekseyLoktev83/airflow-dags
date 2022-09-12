@@ -13,5 +13,5 @@ import time
 with DAG('bash_seq_test', start_date=datetime(2022, 1, 1), schedule_interval=None) as dag:
   ping = BashOperator(
         task_id='ping',
-        bash_command="echo 1;echo 2;echo 3 ",
+        bash_command="echo 1;dsfdsfsd;echo 3 ",
             )
