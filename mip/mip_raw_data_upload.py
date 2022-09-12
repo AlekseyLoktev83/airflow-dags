@@ -116,7 +116,7 @@ def copy_data_db_to_hdfs(query, dst_dir, dst_file):
 
     df = odbc_hook.get_pandas_df(query)
     df.to_csv(f'/tmp/{dst_file}', index=False, sep=CSV_SEPARATOR)
-    conn.upload(dst_path, f'/tmp/{dst_file}')
+    conn.upload(dst_path, f'/tmp/{dst_file}',overwrite=True)
 
     return True
 
@@ -140,7 +140,7 @@ def generate_upload_script(prev_task, src_dir, src_file, upload_path, bcp_parame
 
     del entities_df['Extraction']
     entities_df.to_csv(tmp_dst_path, index=False, sep=CSV_SEPARATOR)
-    conn.upload(dst_path, tmp_dst_path)
+    conn.upload(dst_path, tmp_dst_path,overwrite=True)
 
     return entities_json
 
