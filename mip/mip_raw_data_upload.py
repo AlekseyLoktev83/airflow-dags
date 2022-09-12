@@ -66,14 +66,14 @@ def get_parameters(**kwargs):
         parent_run_id) if parent_run_id else urllib.parse.quote_plus(kwargs['run_id'])
     upload_date = kwargs['logical_date'].strftime("%Y-%m-%d %H:%M:%S")
 
-    raw_path = Variable.get("RawPath")
-    process_path = Variable.get("ProcessPath")
-    output_path = Variable.get("OutputPath")
-    white_list = Variable.get("WhiteList", default_var=None)
-    black_list = Variable.get("BlackList", default_var=None)
+    raw_path = Variable.get("RawPath#MIP")
+    process_path = Variable.get("ProcessPath#MIP")
+    output_path = Variable.get("OutputPath#MIP")
+    white_list = Variable.get("WhiteList#MIP", default_var=None)
+    black_list = Variable.get("BlackList#MIP", default_var=None)
     upload_path = f'{raw_path}/{execution_date}/'
-    system_name = Variable.get("SystemName")
-    last_upload_date = Variable.get("LastUploadDate")
+    system_name = Variable.get("SystemName#MIP")
+    last_upload_date = Variable.get("LastUploadDate#MIP")
 
     db_conn = BaseHook.get_connection(MSSQL_CONNECTION_NAME)
     bcp_parameters = '-S {} -d {} -U {} -P {}'.format(
@@ -276,7 +276,7 @@ def update_last_upload_date(last_upload_date):
     vault_hook = VaultHook(VAULT_CONNECTION_NAME)
     conn = vault_hook.get_conn()
     conn.secrets.kv.v1.create_or_update_secret(
-        path="variables/LastUploadDate", secret={"value": last_upload_date})
+        path="variables/LastUploadDate#MIP", secret={"value": last_upload_date})
 
 
 with DAG(
