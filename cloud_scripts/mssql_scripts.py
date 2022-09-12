@@ -145,7 +145,7 @@ def get_first(odbc_hook, sql, parameters=None):
             row = cur.fetchone()
             return dict(zip(columns, row))
         
-def mip_generate_table_select_query(current_upload_date, last_upload_date, actual_schema_file, delta_tables = []):
+def mip_generate_table_select_query(current_upload_date, last_upload_date, actual_schema_file):
     df = pd.read_csv(actual_schema_file, keep_default_na=False,sep=CSV_SEPARATOR)
     rows = df.to_dict('records')
     grouped_rows = {i: list(j) for (i, j) in groupby(
@@ -155,6 +155,8 @@ def mip_generate_table_select_query(current_upload_date, last_upload_date, actua
     for table, columns in grouped_rows.items():
         print(table)
         print()
+        method = METHOD_FULL
+        
         fields_list = []
         column_name_list = []
         for column in columns:
@@ -177,7 +179,10 @@ def mip_generate_table_select_query(current_upload_date, last_upload_date, actua
             else:
                 fields_list.append("[{field_name}]".format(
                     field_name=column["FieldName"]))
-
+                
+            if column["FieldName"] == 'STAMP':   
+                method = METHOD_DELTA
+                
             column_name_list.append(column["FieldName"])        
 
         fields = ",".join(fields_list)
@@ -187,10 +192,7 @@ def mip_generate_table_select_query(current_upload_date, last_upload_date, actua
 
 
 
-        method = METHOD_FULL
-        if table[1] in delta_tables:
-            method = METHOD_DELTA
-
+        if method == METHOD_DELTA:
             script = "SELECT {fields} , (SELECT count(*) FROM {schema}.[{table_name}] WHERE LastModifiedDate BETWEEN CONVERT(nvarchar(20),'{last_modified_date}', 120) AND CONVERT(nvarchar(20),'{current_upload_date}', 120)) [#QCCount] FROM {schema}.[{table_name}] t WHERE t.LastModifiedDate BETWEEN CONVERT(nvarchar(20),'{last_modified_date}', 120) AND CONVERT(nvarchar(20),'{current_upload_date}', 120)".format(
                 fields=fields, schema=table[0], table_name=table[1], last_modified_date=last_upload_date, current_upload_date=current_upload_date)
         else:
