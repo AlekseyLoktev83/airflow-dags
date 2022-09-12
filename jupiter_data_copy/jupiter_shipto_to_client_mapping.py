@@ -135,15 +135,6 @@ def save_parameters(parameters:dict):
                                                                                             
     return [args]
 
-    
-@task
-def truncate_table(parameters:dict):
-    odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
-    schema = parameters["Schema"]
-    result = odbc_hook.run(sql=f"""truncate table [{schema}].[YEAR_END_ESTIMATE_FDM]""")
-    print(result)
-
-    return result
 
 with DAG(
     dag_id='jupiter_shipto_to_client_mapping',
@@ -156,7 +147,6 @@ with DAG(
 # Get dag parameters from vault    
     parameters = get_parameters()
     save_params = save_parameters(parameters)
-    truncate_table = truncate_table(parameters)
     build_model = DataprocCreatePysparkJobOperator(
         task_id='build_model',
         cluster_id=parameters['JupiterDataprocClusterId'],
