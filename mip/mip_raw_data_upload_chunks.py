@@ -149,7 +149,7 @@ def chunks(lst, n):
     for i in range(0, len(lst), n):
         yield lst[i:i + n]
 
-@task
+@task(execution_timeout=datetime.timedelta(minutes=30), retries=3)
 def generate_bcp_script(upload_path, bcp_parameters, entities):
     scripts = []
     for entity in entities:
@@ -157,7 +157,7 @@ def generate_bcp_script(upload_path, bcp_parameters, entities):
             "\n", " "), upload_path, entity["Schema"], entity["EntityName"], entity["Method"], entity["EntityName"], bcp_parameters, BCP_SEPARATOR, entity["Schema"], entity["Columns"].replace(",", separator_convert_hex_to_string(BCP_SEPARATOR)))
         scripts.append(script)
 
-    merged_scripts=list(chunks(scripts,5))
+    merged_scripts=list(chunks(scripts,10))
     
     result = []
     for s in merged_scripts:
