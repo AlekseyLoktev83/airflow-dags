@@ -149,7 +149,7 @@ def chunks(lst, n):
     for i in range(0, len(lst), n):
         yield lst[i:i + n]
 
-@task(execution_timeout=datetime.timedelta(minutes=30), retries=3)
+@task
 def generate_bcp_script(upload_path, bcp_parameters, entities):
     scripts = []
     for entity in entities:
@@ -311,7 +311,7 @@ with DAG(
     start_mon_detail = start_monitoring_detail(dst_dir=parameters["MaintenancePathPrefix"], upload_path=parameters["UploadPath"], runid=parameters["RunId"], entities=generate_upload_script(
         start_mon, parameters["MaintenancePathPrefix"], RAW_SCHEMA_FILE, parameters["UploadPath"], parameters["BcpParameters"], parameters["CurrentUploadDate"], parameters["LastUploadDate"]))
 # Upload entities from sql to hdfs in parallel
-    upload_tables = BashOperator.partial(task_id="upload_tables", do_xcom_push=True).expand(
+    upload_tables = BashOperator.partial(task_id="upload_tables", do_xcom_push=True,execution_timeout=datetime.timedelta(minutes=30), retries=3).expand(
         bash_command=generate_bcp_script(
             upload_path=parameters["UploadPath"], bcp_parameters=parameters["BcpParameters"], entities=start_mon_detail),
     )
