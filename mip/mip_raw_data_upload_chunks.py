@@ -220,6 +220,7 @@ def start_monitoring_detail(dst_dir, upload_path, runid, entities):
 def end_monitoring_detail(dst_dir, entities):
     hdfs_hook = WebHDFSHook(HDFS_CONNECTION_NAME)
     conn = hdfs_hook.get_conn()
+    print(str(entities))
 
     result = []
     for ent in list(entities):
