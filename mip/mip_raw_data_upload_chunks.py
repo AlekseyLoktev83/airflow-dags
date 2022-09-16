@@ -153,7 +153,7 @@ def chunks(lst, n):
 def generate_bcp_script(upload_path, bcp_parameters, entities):
     scripts = []
     for entity in entities:
-        script = '/utils/exec_query.sh "{}" {}{}/{}/{}/{}.csv "{}" {} {} "{}" '.format(entity["Extraction"].replace("\'\'", "\'\\'").replace(
+        script = 'cp -r /tmp/data/src/. ~/ && chmod +x ~/exec_query.sh && ~/exec_query.sh "{}" {}{}/{}/{}/{}.csv "{}" {} {} "{}" 1 '.format(entity["Extraction"].replace("\'\'", "\'\\'").replace(
             "\n", " "), upload_path, entity["Schema"], entity["EntityName"], entity["Method"], entity["EntityName"], bcp_parameters, BCP_SEPARATOR, entity["Schema"], entity["Columns"].replace(",", separator_convert_hex_to_string(BCP_SEPARATOR)))
         scripts.append(script)
 
