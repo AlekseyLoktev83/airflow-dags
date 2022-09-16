@@ -157,7 +157,7 @@ def generate_bcp_script(upload_path, bcp_parameters, entities):
             "\n", " "), upload_path, entity["Schema"], entity["EntityName"], entity["Method"], entity["EntityName"], bcp_parameters, BCP_SEPARATOR, entity["Schema"], entity["Columns"].replace(",", separator_convert_hex_to_string(BCP_SEPARATOR)))
         scripts.append(script)
 
-    merged_scripts=list(chunks(scripts,10))
+    merged_scripts=list(chunks(scripts,3))
     
     result = []
     for s in merged_scripts:
