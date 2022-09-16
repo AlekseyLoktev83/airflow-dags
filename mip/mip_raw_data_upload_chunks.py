@@ -162,7 +162,7 @@ def generate_bcp_script(upload_path, bcp_parameters, entities):
     result = []
     for s in merged_scripts:
         combined = ';'.join(s)
-        combined+=';cat /tmp/result/*| |tr "\n" ";" '
+        combined+=';cat /tmp/result/*|tr "\n" ";" '
         result.append(combined)
 
     return result
