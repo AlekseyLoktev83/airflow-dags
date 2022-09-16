@@ -162,7 +162,7 @@ def generate_bcp_script(upload_path, bcp_parameters, entities):
     result = []
     for s in merged_scripts:
         combined = ';'.join(s)
-        combined+=';cat /tmp/result/*|tr -d "\n" '
+        combined+=';cat /tmp/result/*| |tr "\n" ";" '
         result.append(combined)
 
     return result
@@ -221,9 +221,11 @@ def end_monitoring_detail(dst_dir, entities):
     hdfs_hook = WebHDFSHook(HDFS_CONNECTION_NAME)
     conn = hdfs_hook.get_conn()
     print(str(list(entities)))
-
+    merged_entities = []
+    for e1 in [list(filter(None,e.split(';'))) for e in list(entities)]:
+        merged_entities+=e1
     result = []
-    for ent in list(entities):
+    for ent in merged_entities:
 
         prev_tast_output = json.loads(ent)
         schema = prev_tast_output["Schema"]
