@@ -13,6 +13,7 @@ from airflow.operators.dummy import DummyOperator
 from airflow.operators.python import PythonOperator, BranchPythonOperator
 from airflow.utils.task_group import TaskGroup
 from airflow.hooks.base_hook import BaseHook
+from airflow.providers.hashicorp.hooks.vault import VaultHook
 import uuid
 from io import StringIO
 import urllib.parse
@@ -44,30 +45,12 @@ def separator_convert_hex_to_string(sep):
     return sep_map.get(sep, sep)
 
 @task(multiple_outputs=True)
-def get_parameters(**kwargs):
-    ti = kwargs['ti']
-    ds = kwargs['ds']
-    execution_date = kwargs['execution_date'].strftime("%Y/%m/%d")
-    run_id = urllib.parse.quote_plus(kwargs['run_id'])
-    
-    raw_path = Variable.get("RawPath")
-    white_list = Variable.get("WhiteList")
-    upload_path = f'{raw_path}/{execution_date}/'
-    system_name = Variable.get("SystemName")
-    
-    db_conn = BaseHook.get_connection(MSSQL_CONNECTION_NAME)
-    bcp_parameters = '-S {} -d {} -U {} -P {}'.format(db_conn.host, db_conn.schema, db_conn.login, db_conn.password)
-    
-    parameters = {"RawPath": raw_path,
-                  "WhiteList": white_list,
-                  "MaintenancePath":"{}{}{}_{}_".format(raw_path,"/#MAINTENANCE/",ds,run_id),
-                  "BcpParameters": bcp_parameters,
-                  "UploadPath": upload_path,
-                  "RunId":run_id,
-                  "SystemName":system_name,
-                  }
-    print(parameters)
-    return parameters
+def get_and_update_var(**kwargs):
+    var1 = Variable.get("var1")
+    vault_hook = VaultHook()
+    conn = vault_hook.get_conn()
+    conn.secrets.kv.v1.create_or_update_secret(
+        path="variables/var1", secret={"value": "VAR_NEW"})
 
 with DAG(
     dag_id='vault_write_variable',
@@ -77,9 +60,4 @@ with DAG(
     tags=["jupiter", "dev"],
     render_template_as_native_obj=True,
 ) as dag:
-# Get dag parameters from vault    
-    parameters = get_parameters()
-
-    
-    
-
+    get_and_update_var()
