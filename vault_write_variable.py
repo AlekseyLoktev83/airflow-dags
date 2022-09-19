@@ -50,7 +50,7 @@ def get_and_update_var(**kwargs):
     vault_hook = VaultHook()
     conn = vault_hook.get_conn()
     conn.secrets.kv.v1.create_or_update_secret(
-        path="variables/var1", secret={"value": "VAR_NEW"})
+        path="variables/var1", secret={"value": "VAR_NEW2"})
 
 with DAG(
     dag_id='vault_write_variable',
