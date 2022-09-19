@@ -44,7 +44,7 @@ def separator_convert_hex_to_string(sep):
     sep_map = {'0x01':'\x01'}
     return sep_map.get(sep, sep)
 
-@task(multiple_outputs=True)
+@task
 def get_and_update_var(**kwargs):
     var1 = Variable.get("var1")
     vault_hook = VaultHook()
