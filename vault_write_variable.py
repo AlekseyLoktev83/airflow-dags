@@ -60,7 +60,7 @@ with DAG(
     tags=["jupiter", "dev"],
     render_template_as_native_obj=True,
 ) as dag:
-# Get dag parameters from vault    get_and_update_varget_parameters()
+    get_and_update_var()
 
     
     
