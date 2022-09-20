@@ -49,7 +49,7 @@ def get_and_update_var(**kwargs):
     var1 = Variable.get("var1")
     vault_hook = VaultHook()
     conn = vault_hook.get_conn()
-    conn.secrets.kv.v1.create_or_update_secret(
+    conn.secrets.kv.v2.create_or_update_secret(
         path="variables/var1", secret={"value": "VAR_NEW2"})
 
 with DAG(
