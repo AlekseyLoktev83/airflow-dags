@@ -275,7 +275,7 @@ def end_monitoring_failure(dst_dir):
 def update_last_upload_date(last_upload_date):
     vault_hook = VaultHook(VAULT_CONNECTION_NAME)
     conn = vault_hook.get_conn()
-    conn.secrets.kv.v1.create_or_update_secret(
+    conn.secrets.kv.v2.create_or_update_secret(
         path="variables/LastUploadDate", secret={"value": last_upload_date})
 
 
