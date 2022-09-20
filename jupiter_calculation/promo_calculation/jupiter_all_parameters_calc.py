@@ -73,6 +73,7 @@ def get_parameters(**kwargs):
     upload_path = f'{raw_path}/{execution_date}/'
     system_name = Variable.get("SystemName")
     last_upload_date = Variable.get("LastUploadDate")
+    handler_id = parent_handler_id if parent_handler_id else str(uuid.uuid4())
     
     db_conn = BaseHook.get_connection(MSSQL_CONNECTION_NAME)
     bcp_parameters = '-S {} -d {} -U {} -P {}'.format(db_conn.host, db_conn.schema, db_conn.login, db_conn.password)
@@ -99,6 +100,7 @@ def get_parameters(**kwargs):
                   "CreateDate":create_date,
                   "BcpImportParameters":bcp_import_parameters,
                   "JupiterDataprocClusterId":cluster_id,
+                  "HandlerId":handler_id,
                   }
     print(parameters)
     return parameters
@@ -125,7 +127,7 @@ def save_parameters(parameters:dict):
     conn.upload(parameters_file_path,temp_file_path,overwrite=True)
     
     
-    args = json.dumps({"MaintenancePathPrefix":parameters["MaintenancePathPrefix"],"ProcessDate":parameters["ProcessDate"],"Schema":parameters["Schema"]})
+    args = json.dumps({"MaintenancePathPrefix":parameters["MaintenancePathPrefix"],"ProcessDate":parameters["ProcessDate"],"Schema":parameters["Schema"],"HandlerId":parameters["HandlerId"]})
                                                                             
                                                                                             
     return [args]
