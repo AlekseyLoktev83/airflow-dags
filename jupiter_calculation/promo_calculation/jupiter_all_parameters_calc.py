@@ -73,6 +73,8 @@ def get_parameters(**kwargs):
     upload_path = f'{raw_path}/{execution_date}/'
     system_name = Variable.get("SystemName")
     last_upload_date = Variable.get("LastUploadDate")
+    
+    parent_handler_id = dag_run.conf.get('parent_handler_id')
     handler_id = parent_handler_id if parent_handler_id else str(uuid.uuid4())
     
     db_conn = BaseHook.get_connection(MSSQL_CONNECTION_NAME)
