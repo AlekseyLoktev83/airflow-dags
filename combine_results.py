@@ -34,7 +34,7 @@ with DAG(dag_id="combine_results",
        bash_command=make_list2,
     )
     
-    combine(input=[XComArg(echo_op1),XComArg(echo_op2)])
+#     combine(input=[XComArg(echo_op1),XComArg(echo_op2)])
     
     
 #     consumer.expand(arg=make_list())
