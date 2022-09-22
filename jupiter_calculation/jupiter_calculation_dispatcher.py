@@ -9,8 +9,11 @@ import uuid
 TAGS=["jupiter", "dev"]
 
 @task(task_id='generate_handler_id')
-def generate_handler_id():
-    return str(uuid.uuid4())
+def generate_handler_id(**kwargs):
+    dag_run = kwargs['dag_run']
+    parent_handler_id = dag_run.conf.get('parent_handler_id')
+    handler_id = parent_handler_id if parent_handler_id else str(uuid.uuid4())
+    return handler_id
 
 with DAG(
     dag_id="jupiter_calculation_dispatcher",
