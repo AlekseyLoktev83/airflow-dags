@@ -16,7 +16,9 @@ def make_list2():
 
 @task
 def combine(*input):
-    print(list(input))
+    for i in input:
+         print(list(i))
+
 
 
 with DAG(dag_id="combine_results", 
