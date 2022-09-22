@@ -8,11 +8,11 @@ from airflow.decorators import dag, task
 
 @task
 def make_list1():
-    return 'echo 1 '
+    return ['echo 1 ','echo 2 ']
   
 @task
 def make_list2():
-    return 'echo 2 '  
+    return ['echo 3 ','echo 4 ']
 
 @task
 def combine(input):
