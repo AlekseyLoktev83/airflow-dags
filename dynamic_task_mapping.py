@@ -8,7 +8,7 @@ from airflow.decorators import dag, task
 
 @task
 def make_list():
-    return ["echo DS1","echo DS2","echo DS3"]
+    return [f'sleep 60; echo {x}; ' for x in list(range(200))]
 
 
 @task
