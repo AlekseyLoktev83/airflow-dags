@@ -47,6 +47,8 @@ STATUS_PROCESS = 'PROCESS'
 DAYS_TO_KEEP_OLD_FILES = 2
 CSV_SEPARATOR = '\u0001'
 
+UPLOAD_STAGE_COUNT = 6
+
 
 def separator_convert_hex_to_string(sep):
     sep_map = {'0x01': '\x01'}
@@ -144,6 +146,9 @@ def generate_upload_script(prev_task, src_dir, src_file, upload_path, bcp_parame
 
     return entities_json
 
+def get_sub_lists(lst,n):
+    subListLength = len(lst) // n 
+    return [lst[i:i + subListLength] for i in range(0, len(lst), subListLength)]
 
 @task
 def generate_bcp_script(upload_path, bcp_parameters, entities):
@@ -152,8 +157,8 @@ def generate_bcp_script(upload_path, bcp_parameters, entities):
         script = '/utils/exec_query.sh "{}" {}{}/{}/{}/{}.csv "{}" {} {} "{}" '.format(entity["Extraction"].replace("\'\'", "\'\\'").replace(
             "\n", " "), upload_path, entity["Schema"], entity["EntityName"], entity["Method"], entity["EntityName"], bcp_parameters, BCP_SEPARATOR, entity["Schema"], entity["Columns"].replace(",", separator_convert_hex_to_string(BCP_SEPARATOR)))
         scripts.append(script)
-
-    return scripts
+    
+    return get_sub_lists(scripts,UPLOAD_STAGE_COUNT)
 
 
 @task
@@ -300,13 +305,34 @@ with DAG(
     start_mon_detail = start_monitoring_detail(dst_dir=parameters["MaintenancePathPrefix"], upload_path=parameters["UploadPath"], runid=parameters["RunId"], entities=generate_upload_script(
         start_mon, parameters["MaintenancePathPrefix"], RAW_SCHEMA_FILE, parameters["UploadPath"], parameters["BcpParameters"], parameters["CurrentUploadDate"], parameters["LastUploadDate"]))
 # Upload entities from sql to hdfs in parallel
-    upload_tables = BashOperator.partial(task_id="upload_tables", do_xcom_push=True,execution_timeout=datetime.timedelta(minutes=120), retries=3).expand(
+    upload_tables1 = BashOperator.partial(task_id="upload_tables1", do_xcom_push=True,execution_timeout=datetime.timedelta(minutes=120), retries=3).expand(
         bash_command=generate_bcp_script(
-            upload_path=parameters["UploadPath"], bcp_parameters=parameters["BcpParameters"], entities=start_mon_detail),
+            upload_path=parameters["UploadPath"], bcp_parameters=parameters["BcpParameters"], entities=start_mon_detail)[0],
     )
+    upload_tables2 = BashOperator.partial(task_id="upload_tables2", do_xcom_push=True,execution_timeout=datetime.timedelta(minutes=120), retries=3).expand(
+        bash_command=generate_bcp_script(
+            upload_path=parameters["UploadPath"], bcp_parameters=parameters["BcpParameters"], entities=start_mon_detail)[1],
+    )
+    upload_tables3 = BashOperator.partial(task_id="upload_tables3", do_xcom_push=True,execution_timeout=datetime.timedelta(minutes=120), retries=3).expand(
+        bash_command=generate_bcp_script(
+            upload_path=parameters["UploadPath"], bcp_parameters=parameters["BcpParameters"], entities=start_mon_detail)[2],
+    )
+    upload_tables4 = BashOperator.partial(task_id="upload_tables4", do_xcom_push=True,execution_timeout=datetime.timedelta(minutes=120), retries=3).expand(
+        bash_command=generate_bcp_script(
+            upload_path=parameters["UploadPath"], bcp_parameters=parameters["BcpParameters"], entities=start_mon_detail)[3],
+    )
+    upload_tables5 = BashOperator.partial(task_id="upload_tables5", do_xcom_push=True,execution_timeout=datetime.timedelta(minutes=120), retries=3).expand(
+        bash_command=generate_bcp_script(
+            upload_path=parameters["UploadPath"], bcp_parameters=parameters["BcpParameters"], entities=start_mon_detail)[4],
+    )
+    upload_tables6 = BashOperator.partial(task_id="upload_tables6", do_xcom_push=True,execution_timeout=datetime.timedelta(minutes=120), retries=3).expand(
+        bash_command=generate_bcp_script(
+            upload_path=parameters["UploadPath"], bcp_parameters=parameters["BcpParameters"], entities=start_mon_detail)[5],
+    )    
+    
 #     Check entities upload results and update monitoring files
     end_mon_detail = end_monitoring_detail(
-        dst_dir=parameters["MaintenancePathPrefix"], entities=XComArg(upload_tables))
+        dst_dir=parameters["MaintenancePathPrefix"], entities=XComArg(upload_tables6))
     upload_result = get_upload_result(
         dst_dir=parameters["MaintenancePathPrefix"], input=end_mon_detail)
 
