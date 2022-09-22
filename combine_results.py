@@ -27,10 +27,10 @@ with DAG(dag_id="combine_results",
     make_list1 = make_list1()
     make_list2 = make_list2()
    
-    echo_op1=BashOperator.partial(task_id="echo_op1", do_xcom_push=False).expand(
+    echo_op1=BashOperator.partial(task_id="echo_op1", do_xcom_push=True).expand(
        bash_command=make_list1,
     )
-    echo_op2=BashOperator.partial(task_id="echo_op2", do_xcom_push=False).expand(
+    echo_op2=BashOperator.partial(task_id="echo_op2", do_xcom_push=True).expand(
        bash_command=make_list2,
     )
     
