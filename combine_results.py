@@ -15,7 +15,7 @@ def make_list2():
     return ['echo 3 ','echo 4 ']
 
 @task
-def combine(input):
+def combine(*input):
     print(list(input))
 
 
@@ -34,7 +34,7 @@ with DAG(dag_id="combine_results",
        bash_command=make_list2,
     )
     
-#     combine(input=[XComArg(echo_op1),XComArg(echo_op2)])
+    combine(XComArg(echo_op1),XComArg(echo_op2))
     
     
 #     consumer.expand(arg=make_list())
