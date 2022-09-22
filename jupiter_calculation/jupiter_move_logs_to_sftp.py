@@ -80,8 +80,11 @@ def get_parameters(**kwargs):
     system_name = Variable.get("SystemName")
     last_upload_date = Variable.get("LastUploadDate")
     
+    parent_handler_id = dag_run.conf.get('parent_handler_id')
+    handler_id = parent_handler_id if parent_handler_id else str(uuid.uuid4())
+    
     logs_sftp_path = Variable.get("LogsSftpPath")
-    logs_process_path = f'{process_path}/Logs/{run_id}.csv'
+    logs_process_path = f'{process_path}/Logs/{handler_id}.csv'
     
     db_conn = BaseHook.get_connection(MSSQL_CONNECTION_NAME)
     bcp_parameters = '-S {} -d {} -U {} -P {}'.format(db_conn.host, db_conn.schema, db_conn.login, db_conn.password)
@@ -103,6 +106,7 @@ def get_parameters(**kwargs):
                   "Schema":schema,
                   "LogsSftpPath":logs_sftp_path,
                   "LogsProcessPath":logs_process_path,
+                  "HandlerId":handler_id,
                   }
     print(parameters)
     return parameters
@@ -111,7 +115,7 @@ def get_parameters(**kwargs):
 def copy_hdfs_to_sftp(parameters:dict):
     logs_sftp_path=parameters["LogsSftpPath"]
     logs_process_path=parameters["LogsProcessPath"]
-    file_name=f'{parameters["RunId"]}.txt'
+    file_name=f'{parameters["HandlerId"]}.txt'
     
     tmp_path=f'/tmp/'
     sftp_path=f'{logs_sftp_path}/{file_name}'
