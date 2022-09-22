@@ -349,6 +349,8 @@ with DAG(
         bash_command='/utils/hdfs_delete_old_files.sh {{ti.xcom_pull(task_ids="get_parameters",key="MaintenancePath")}} {{params.days_to_keep_old_files}} ',
         params={'days_to_keep_old_files': DAYS_TO_KEEP_OLD_FILES},
     )
+    
+    upload_tables1 >> upload_tables2 >> upload_tables3 >> upload_tables4 >> upload_tables5 >> upload_tables6
 
     branch_task >> end_monitoring_success(dst_dir=parameters["MaintenancePathPrefix"]) >> update_last_upload_date(
         last_upload_date=parameters["CurrentUploadDate"]) >> cleanup
