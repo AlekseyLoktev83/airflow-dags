@@ -4,6 +4,7 @@ from airflow import DAG
 from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from airflow.operators.bash import BashOperator
 from airflow.utils.trigger_rule import TriggerRule
+from airflow.decorators import dag, task
 import uuid
 
 SCHEMA = "Jupiter"
