@@ -160,6 +160,10 @@ def generate_bcp_script(upload_path, bcp_parameters, entities):
     
     return get_sub_lists(scripts,UPLOAD_STAGE_COUNT)
 
+@task
+def get_bcp_sub_list(lst: list, index):
+    return lst[index]
+
 
 @task
 def start_monitoring(prev_task, dst_dir, system_name, runid):
@@ -305,29 +309,26 @@ with DAG(
     start_mon_detail = start_monitoring_detail(dst_dir=parameters["MaintenancePathPrefix"], upload_path=parameters["UploadPath"], runid=parameters["RunId"], entities=generate_upload_script(
         start_mon, parameters["MaintenancePathPrefix"], RAW_SCHEMA_FILE, parameters["UploadPath"], parameters["BcpParameters"], parameters["CurrentUploadDate"], parameters["LastUploadDate"]))
 # Upload entities from sql to hdfs in parallel
+    bcp_script_list = generate_bcp_script(
+            upload_path=parameters["UploadPath"], bcp_parameters=parameters["BcpParameters"], entities=start_mon_detail)
+    
     upload_tables1 = BashOperator.partial(task_id="upload_tables1", do_xcom_push=True,execution_timeout=datetime.timedelta(minutes=120), retries=3).expand(
-        bash_command=generate_bcp_script(
-            upload_path=parameters["UploadPath"], bcp_parameters=parameters["BcpParameters"], entities=start_mon_detail)[0],
+        bash_command=get_bcp_sub_list( bcp_script_list, 0),
     )
     upload_tables2 = BashOperator.partial(task_id="upload_tables2", do_xcom_push=True,execution_timeout=datetime.timedelta(minutes=120), retries=3).expand(
-        bash_command=generate_bcp_script(
-            upload_path=parameters["UploadPath"], bcp_parameters=parameters["BcpParameters"], entities=start_mon_detail)[1],
+        bash_command=get_bcp_sub_list( bcp_script_list, 1),
     )
     upload_tables3 = BashOperator.partial(task_id="upload_tables3", do_xcom_push=True,execution_timeout=datetime.timedelta(minutes=120), retries=3).expand(
-        bash_command=generate_bcp_script(
-            upload_path=parameters["UploadPath"], bcp_parameters=parameters["BcpParameters"], entities=start_mon_detail)[2],
+        bash_command=get_bcp_sub_list( bcp_script_list, 2),
     )
     upload_tables4 = BashOperator.partial(task_id="upload_tables4", do_xcom_push=True,execution_timeout=datetime.timedelta(minutes=120), retries=3).expand(
-        bash_command=generate_bcp_script(
-            upload_path=parameters["UploadPath"], bcp_parameters=parameters["BcpParameters"], entities=start_mon_detail)[3],
+        bash_command=get_bcp_sub_list( bcp_script_list, 3),
     )
     upload_tables5 = BashOperator.partial(task_id="upload_tables5", do_xcom_push=True,execution_timeout=datetime.timedelta(minutes=120), retries=3).expand(
-        bash_command=generate_bcp_script(
-            upload_path=parameters["UploadPath"], bcp_parameters=parameters["BcpParameters"], entities=start_mon_detail)[4],
+        bash_command=get_bcp_sub_list( bcp_script_list, 4),
     )
     upload_tables6 = BashOperator.partial(task_id="upload_tables6", do_xcom_push=True,execution_timeout=datetime.timedelta(minutes=120), retries=3).expand(
-        bash_command=generate_bcp_script(
-            upload_path=parameters["UploadPath"], bcp_parameters=parameters["BcpParameters"], entities=start_mon_detail)[5],
+        bash_command=get_bcp_sub_list( bcp_script_list, 5),
     )    
     
 #     Check entities upload results and update monitoring files
