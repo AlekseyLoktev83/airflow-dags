@@ -286,6 +286,7 @@ with DAG(
     catchup=False,
     tags=["mip", "dev"],
     render_template_as_native_obj=True,
+    max_active_tasks=5,
 ) as dag:
     # Get dag parameters from vault
     parameters = get_parameters()
