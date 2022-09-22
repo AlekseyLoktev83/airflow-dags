@@ -1,7 +1,7 @@
 import json
 import pendulum
 from datetime import datetime
-from airflow import DAG
+from airflow import DAG, XComArg
 from airflow.operators.bash import BashOperator
 from airflow.operators.python import PythonOperator
 from airflow.decorators import dag, task
