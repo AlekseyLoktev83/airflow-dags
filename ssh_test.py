@@ -36,6 +36,28 @@ def copy_sftp_to_hdfs():
 
     return True
 
+@task
+def copy_hdfs_to_sftp():
+    local_filepath="/tmp/YA_DATAMART4.csv"
+    remote_filepath="/D:/TPM_Dev1/Storage/HandlerLogs/YA_DATAMART4.csv"
+    dst_path = '/JUPITER/RAW/SOURCES/BASELINE/YA_DATAMART4.csv'
+    
+    hdfs_hook = WebHDFSHook(HDFS_CONNECTION_NAME)
+    conn = hdfs_hook.get_conn()
+    conn.download(dst_path, local_filepath)
+    
+    ssh_hook=SSHHook(SSH_CONNECTION_NAME)
+    
+    
+    with ssh_hook.get_conn() as ssh_client:
+     sftp_client = ssh_client.open_sftp()
+     sftp_client.put(local_filepath, remote_filepath)
+    
+    
+
+
+    return True
+
 with DAG(
     dag_id='ssh_test',
     schedule_interval=None,
@@ -51,6 +73,6 @@ with DAG(
 #                            remote_filepath="/home/smartadmin/YA_DATAMART4.csv",
 #                            create_intermediate_dirs=True,
 #                           )
-   copy_sftp_to_hdfs()
+   copy_hdfs_to_sftp()
 
 
