@@ -39,7 +39,7 @@ def get_parameters(**kwargs):
     ds = kwargs['ds']
     dag_run = kwargs['dag_run']
     hdfs_atlas_conn = BaseHook.get_connection(HDFS_ATLAS_CONNECTION_NAME)
-    return hdfs_atlas_conn
+    return str(hdfs_atlas_conn)
 #     hdfs_atlas_parameters = '-S {} -d {} -U {} -P {}'.format(
 #         hdfs_atlas_conn.host, hdfs_atlas_conn.schema, db_conn.login, db_conn.password)
 
