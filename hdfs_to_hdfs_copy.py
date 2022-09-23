@@ -40,7 +40,7 @@ def get_parameters(**kwargs):
     dag_run = kwargs['dag_run']
     hdfs_atlas_conn = BaseHook.get_connection(HDFS_ATLAS_CONNECTION_NAME)
     print(hdfs_atlas_conn.host)
-    return str(hdfs_atlas_conn)
+    return str(hdfs_atlas_conn.host)
 #     hdfs_atlas_parameters = '-S {} -d {} -U {} -P {}'.format(
 #         hdfs_atlas_conn.host, hdfs_atlas_conn.schema, db_conn.login, db_conn.password)
 
@@ -74,3 +74,9 @@ with DAG(
 ) as dag:
     # Get dag parameters from vault
     parameters = get_parameters()
+    
+    hdfs_to_hdfs = BashOperator(
+        task_id='hdfs_to_hdfs',
+        bash_command='hadoop dfs -ls hdfs://airflow@rc1b-dataproc-m-9cq245wo3unikye2.mdb.yandexcloud.net/ATLAS ',
+        params={'days_to_keep_old_files': DAYS_TO_KEEP_OLD_FILES},
+    )
