@@ -78,5 +78,4 @@ with DAG(
     hdfs_to_hdfs = BashOperator(
         task_id='hdfs_to_hdfs',
         bash_command='hadoop dfs -ls hdfs://airflow@rc1b-dataproc-m-9cq245wo3unikye2.mdb.yandexcloud.net/ATLAS ',
-        params={'days_to_keep_old_files': DAYS_TO_KEEP_OLD_FILES},
     )
