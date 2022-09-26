@@ -78,7 +78,6 @@ def get_parameters(**kwargs):
 
     db_conn = BaseHook.get_connection(MSSQL_CONNECTION_NAME)
     bcp_parameters =  base64.b64encode(('-S {} -d {} -U {} -P {}'.format(db_conn.host, db_conn.schema, db_conn.login,db_conn.password)).encode()).decode()
-        db_conn.host, db_conn.schema, db_conn.login, db_conn.password)
 
     parameters = {"RawPath": raw_path,
                   "ProcessPath": process_path,
