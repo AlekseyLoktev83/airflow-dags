@@ -33,7 +33,7 @@ with DAG(
     trigger_jupiter_calculation_dispatcher = TriggerDagRunOperator(
         task_id="trigger_jupiter_calculation_dispatcher",
         trigger_dag_id="jupiter_calculation_dispatcher",  
-        conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":SCHEMA,"parent_handler_id":"{{ti.xcom_pull(task_ids='generate_handler_id')}}"},
+        conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":SCHEMA,"parent_handler_id":"{{generate_handler_id}}"},
         wait_for_completion = True,
     )
     
@@ -77,7 +77,7 @@ with DAG(
     trigger_jupiter_error_move_logs_to_sftp = TriggerDagRunOperator(
         task_id="trigger_jupiter_error_move_logs_to_sftp",
         trigger_dag_id="jupiter_move_logs_to_sftp",  
-        conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":SCHEMA,"parent_handler_id":"{{ti.xcom_pull(task_ids='generate_handler_id')}}"},
+        conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":SCHEMA,"parent_handler_id":"{{generate_handler_id}}"},
         wait_for_completion = True,
         trigger_rule=TriggerRule.ONE_FAILED
     )
