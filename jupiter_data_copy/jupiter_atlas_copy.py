@@ -6,14 +6,17 @@ from airflow.decorators import dag, task
 from airflow.utils.trigger_rule import TriggerRule
 from airflow.providers.odbc.hooks.odbc import OdbcHook
 from airflow.providers.apache.hdfs.hooks.webhdfs import WebHDFSHook
-from airflow.providers.yandex.operators.yandexcloud_dataproc import DataprocCreatePysparkJobOperator
+from cloud_scripts.custom_dataproc import  DataprocCreatePysparkJobOperator
 from airflow.models import Variable
 from airflow.operators.bash import BashOperator
 from airflow.operators.dummy import DummyOperator
 from airflow.operators.python import PythonOperator, BranchPythonOperator
+# from airflow.operators.trigger_dagrun import TriggerDagRunOperator
+from cloud_scripts.trigger_dagrun import TriggerDagRunOperator
 from airflow.utils.task_group import TaskGroup
 from airflow.hooks.base_hook import BaseHook
 from airflow.providers.hashicorp.hooks.vault import VaultHook
+from airflow.providers.http.operators.http import SimpleHttpOperator
 
 import uuid
 from io import StringIO
@@ -25,13 +28,16 @@ import json
 import pandas as pd
 import glob
 import os
-import csv
 import base64
+
+import struct
+from contextlib import closing
 
 
 MSSQL_CONNECTION_NAME = 'odbc_jupiter'
 HDFS_CONNECTION_NAME = 'webhdfs_default'
 VAULT_CONNECTION_NAME = 'vault_default'
+TAGS=["jupiter", "promo", "copy"]
 
 
 @task(multiple_outputs=True)
@@ -43,51 +49,89 @@ def get_parameters(**kwargs):
     process_date = parent_process_date if parent_process_date else ds
     execution_date = kwargs['execution_date'].strftime("%Y/%m/%d")
     parent_run_id = dag_run.conf.get('parent_run_id')
-    run_id = urllib.parse.quote_plus(
-        parent_run_id) if parent_run_id else urllib.parse.quote_plus(kwargs['run_id'])
+    run_id = urllib.parse.quote_plus(parent_run_id) if parent_run_id else urllib.parse.quote_plus(kwargs['run_id'])
+    
+    schema = dag_run.conf.get('schema')
     upload_date = kwargs['logical_date'].strftime("%Y-%m-%d %H:%M:%S")
+    file_name = dag_run.conf.get('FileName')
+    create_date = dag_run.conf.get('CreateDate')
 
     raw_path = Variable.get("RawPath")
     process_path = Variable.get("ProcessPath")
     output_path = Variable.get("OutputPath")
-    white_list = Variable.get("PromoCalculationEntites", default_var=None)
-    black_list = Variable.get("BlackList", default_var=None)
-    upload_path = f'{raw_path}/SOURCES/JUPITER/'
+    white_list = Variable.get("WhiteList",default_var=None)
+    black_list = Variable.get("BlackList",default_var=None)
+    upload_path = f'{raw_path}/{execution_date}/'
     system_name = Variable.get("SystemName")
     last_upload_date = Variable.get("LastUploadDate")
-
+    
     db_conn = BaseHook.get_connection(MSSQL_CONNECTION_NAME)
-
+    bcp_parameters =  base64.b64encode(('-S {} -d {} -U {} -P {}'.format(db_conn.host, db_conn.schema, db_conn.login,db_conn.password)).encode()).decode()
+    bcp_import_parameters =  base64.b64encode((f'DRIVER=ODBC Driver 18 for SQL Server;SERVER={db_conn.host};DATABASE={db_conn.schema};UID={db_conn.login};PWD={db_conn.password};Encrypt=no;').encode()).decode()
+    blocked_promo_output_path=f'{process_path}/BlockedPromo/'
+    
     parameters = {"RawPath": raw_path,
                   "ProcessPath": process_path,
                   "OutputPath": output_path,
                   "WhiteList": white_list,
                   "BlackList": black_list,
-                  "MaintenancePathPrefix": "{}{}{}_{}_".format(raw_path, "/#MAINTENANCE/", process_date, run_id),
+                  "MaintenancePathPrefix":"{}{}{}_{}_".format(raw_path,"/#MAINTENANCE/",process_date,run_id),
+                  "BcpParameters": bcp_parameters,
                   "UploadPath": upload_path,
-                  "RunId": run_id,
-                  "SystemName": system_name,
-                  "LastUploadDate": last_upload_date,
-                  "CurrentUploadDate": upload_date,
-                  "ProcessDate": process_date,
-                  "MaintenancePath": "{}{}".format(raw_path, "/#MAINTENANCE/"),
+                  "RunId":run_id,
+                  "SystemName":system_name,
+                  "LastUploadDate":last_upload_date,
+                  "CurrentUploadDate":upload_date,
+                  "ProcessDate":process_date,
+                  "MaintenancePath":"{}{}".format(raw_path,"/#MAINTENANCE/"),
+                  "Schema":schema,
+                  "ParentRunId":parent_run_id,
+                  "FileName":file_name,
+                  "CreateDate":create_date,
+                  "BcpImportParameters":bcp_import_parameters,
+                  "BlockedPromoOutputPath":blocked_promo_output_path,
                   }
     print(parameters)
     return parameters
 
+
+
+@task
+def generate_bcp_import_script(parameters:dict, entity):
+    schema = parameters["Schema"]
+    table_name = entity['TableName']
+    src_path = entity['SrcPath']
+    bcp_import_parameters=parameters['BcpImportParameters']
+    script = f'/utils/bcp_import.sh {src_path} {bcp_import_parameters} \"{table_name}\" "1" '
+    print(script)
+
+    return script
+
+@task
+def generate_entity_list(parameters:dict):
+    schema = parameters["Schema"]
+    output_path=parameters['OutputPath']
+    tables = [
+              {'SrcPath':f'{output_path}/Promo/Promo.CSV/*.csv','TableName':f'{schema}.TEMP_PROMO'},
+              {'SrcPath':f'{output_path}/PromoProduct/PromoProduct.CSV/*.csv','TableName':f'{schema}.TEMP_PROMOPRODUCT'},
+              {'SrcPath':f'{output_path}/PromoSupportPromo/PromoSupportPromo.CSV/*.csv','TableName':f'{schema}.TEMP_PROMOSUPPORTPROMO'},
+              {'SrcPath':f'{output_path}/ServiceInfo/ServiceInfo.CSV/*.csv','TableName':f'{schema}.ServiceInfo'},
+              {'SrcPath':f'{output_path}/ProductChangeIncident/NewProductChangeIncident.CSV/*.csv','TableName':f'{schema}.TEMP_PRODUCTCHANGEINCIDENTS'},
+              {'SrcPath':f'{output_path}/ChangesIncident/ChangesIncident.CSV/*.csv','TableName':f'{schema}.ChangesIncident'},
+             ]
+    return tables
 
 with DAG(
     dag_id='jupiter_atlas_copy',
     schedule_interval=None,
     start_date=pendulum.datetime(2021, 1, 1, tz="UTC"),
     catchup=False,
-    tags=["jupiter", "copy", "dev"],
+    tags=TAGS,
     render_template_as_native_obj=True,
 ) as dag:
-    # Get dag parameters from vault
+# Get dag parameters from vault    
     parameters = get_parameters()
-    
-    copy_entities = BashOperator(
-        task_id='copy_entities',
-        bash_command='hadoop dfs -ls hdfs://airflow@rc1b-dataproc-m-9cq245wo3unikye2.mdb.yandexcloud.net/ATLAS ',
-    )
+    upload_tables = BashOperator.partial(task_id="import_table",
+                                       do_xcom_push=True,
+                                      ).expand(bash_command=generate_bcp_import_script.partial(parameters=parameters).expand(entity=generate_entity_list(parameters)),
+                                              )
