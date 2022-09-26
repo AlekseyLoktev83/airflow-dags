@@ -28,6 +28,7 @@ import json
 import pandas as pd
 import glob
 import os
+import base64
 
 import struct
 from contextlib import closing
@@ -75,7 +76,7 @@ def get_parameters(**kwargs):
     
     db_conn = BaseHook.get_connection(MSSQL_CONNECTION_NAME)
     bcp_parameters = '-S {} -d {} -U {} -P {}'.format(db_conn.host, db_conn.schema, db_conn.login, db_conn.password)
-    bcp_import_parameters = f'\"DRIVER=ODBC Driver 18 for SQL Server;SERVER={db_conn.host};DATABASE={db_conn.schema};UID={db_conn.login};PWD={db_conn.password};Encrypt=no;\"'
+    bcp_import_parameters =  base64.b64encode((f'DRIVER=ODBC Driver 18 for SQL Server;SERVER={db_conn.host};DATABASE={db_conn.schema};UID={db_conn.login};PWD={db_conn.password};Encrypt=no;').encode()).decode()
     blocked_promo_output_path=f'{process_path}/BlockedPromo/'
     
     parameters = {"RawPath": raw_path,
@@ -143,11 +144,11 @@ def generate_entity_list(parameters:dict):
     output_path=parameters['OutputPath']
     tables = [
               {'SrcPath':f'{output_path}/Promo/Promo.CSV/*.csv','TableName':f'{schema}.TEMP_PROMO'},
-              {'SrcPath':f'{output_path}/PromoProduct/PromoProduct.CSV/*.csv','TableName':f'{schema}.TEMP_PROMOPRODUCT'},
-              {'SrcPath':f'{output_path}/PromoSupportPromo/PromoSupportPromo.CSV/*.csv','TableName':f'{schema}.TEMP_PROMOSUPPORTPROMO'},
-              {'SrcPath':f'{output_path}/ServiceInfo/ServiceInfo.CSV/*.csv','TableName':f'{schema}.ServiceInfo'},
-              {'SrcPath':f'{output_path}/ProductChangeIncident/NewProductChangeIncident.CSV/*.csv','TableName':f'{schema}.TEMP_PRODUCTCHANGEINCIDENTS'},
-              {'SrcPath':f'{output_path}/ChangesIncident/ChangesIncident.CSV/*.csv','TableName':f'{schema}.ChangesIncident'},
+#               {'SrcPath':f'{output_path}/PromoProduct/PromoProduct.CSV/*.csv','TableName':f'{schema}.TEMP_PROMOPRODUCT'},
+#               {'SrcPath':f'{output_path}/PromoSupportPromo/PromoSupportPromo.CSV/*.csv','TableName':f'{schema}.TEMP_PROMOSUPPORTPROMO'},
+#               {'SrcPath':f'{output_path}/ServiceInfo/ServiceInfo.CSV/*.csv','TableName':f'{schema}.ServiceInfo'},
+#               {'SrcPath':f'{output_path}/ProductChangeIncident/NewProductChangeIncident.CSV/*.csv','TableName':f'{schema}.TEMP_PRODUCTCHANGEINCIDENTS'},
+#               {'SrcPath':f'{output_path}/ChangesIncident/ChangesIncident.CSV/*.csv','TableName':f'{schema}.ChangesIncident'},
              ]
     return tables
 
