@@ -21,7 +21,7 @@ with DAG(
 #     schedule_interval='20 7 * * *',
     tags=["jupiter", "dev","main"],
 ) as dag:
-    handler_id=generate_handler_id()
+    generate_handler_id=generate_handler_id()
     
     trigger_jupiter_start_night_processing = TriggerDagRunOperator(
         task_id="trigger_jupiter_start_night_processing",
