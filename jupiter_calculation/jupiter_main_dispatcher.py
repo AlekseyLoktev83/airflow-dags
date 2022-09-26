@@ -9,7 +9,7 @@ import uuid
 
 SCHEMA = "Jupiter"
 
-@task(task_id='generate_handler_id')
+@task
 def generate_handler_id():
     return str(uuid.uuid4())
 
