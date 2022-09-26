@@ -25,6 +25,7 @@ import json
 import pandas as pd
 import glob
 import os
+import base64
 
 
 MSSQL_CONNECTION_NAME = 'odbc_jupiter'
@@ -76,7 +77,7 @@ def get_parameters(**kwargs):
     last_upload_date = Variable.get("LastUploadDate")
     
     db_conn = BaseHook.get_connection(MSSQL_CONNECTION_NAME)
-    bcp_parameters = '-S {} -d {} -U {} -P {}'.format(db_conn.host, db_conn.schema, db_conn.login, db_conn.password)
+    bcp_parameters =  base64.b64encode(('-S {} -d {} -U {} -P {}'.format(db_conn.host, db_conn.schema, db_conn.login,db_conn.password)).encode()).decode()
    
     night_processing_value = dag_run.conf.get('night_processing_value')
     night_processing_value = night_processing_value if night_processing_value else 0

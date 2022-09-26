@@ -27,6 +27,7 @@ import json
 import pandas as pd
 import glob
 import os
+import base64
 
 import struct
 from contextlib import closing
@@ -78,8 +79,8 @@ def get_parameters(**kwargs):
     handler_id = parent_handler_id if parent_handler_id else str(uuid.uuid4())
     
     db_conn = BaseHook.get_connection(MSSQL_CONNECTION_NAME)
-    bcp_parameters = '-S {} -d {} -U {} -P {}'.format(db_conn.host, db_conn.schema, db_conn.login, db_conn.password)
-    bcp_import_parameters = f'\"DRIVER=ODBC Driver 18 for SQL Server;SERVER={db_conn.host};DATABASE={db_conn.schema};UID={db_conn.login};PWD={db_conn.password};Encrypt=no;\"'
+    bcp_parameters =  base64.b64encode(('-S {} -d {} -U {} -P {}'.format(db_conn.host, db_conn.schema, db_conn.login,db_conn.password)).encode()).decode()
+    bcp_import_parameters =  base64.b64encode((f'DRIVER=ODBC Driver 18 for SQL Server;SERVER={db_conn.host};DATABASE={db_conn.schema};UID={db_conn.login};PWD={db_conn.password};Encrypt=no;').encode()).decode()
     
     cluster_id = Variable.get("JupiterDataprocClusterId")
     parameters = {"RawPath": raw_path,

@@ -5,6 +5,7 @@ from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
 from airflow.utils.dates import days_ago
 from airflow.hooks.base_hook import BaseHook
+import base64
 
 dag = DAG(
     dag_id="odbc_example",
@@ -18,7 +19,7 @@ dag = DAG(
 def sample_select():
 #     odbc_hook = OdbcHook("odbc_jupiter_secret") 
     db_conn = BaseHook.get_connection("odbc_jupiter_secret")
-    bcp_parameters = '-S {} -d {} -U {} -P {}'.format(db_conn.host, db_conn.schema, db_conn.login, db_conn.password)
+    bcp_parameters =  base64.b64encode(('-S {} -d {} -U {} -P {}'.format(db_conn.host, db_conn.schema, db_conn.login,db_conn.password)).encode()).decode()
     
     return bcp_parameters
 #     rec = odbc_hook.get_records("SELECT * from Country;")

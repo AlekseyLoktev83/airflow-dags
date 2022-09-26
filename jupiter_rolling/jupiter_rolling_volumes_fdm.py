@@ -27,6 +27,7 @@ import json
 import pandas as pd
 import glob
 import os
+import base64
 
 import struct
 from contextlib import closing
@@ -79,7 +80,7 @@ def get_parameters(**kwargs):
     start_rolling_date = Variable.get("StartRollingDate")
     
     db_conn = BaseHook.get_connection(MSSQL_CONNECTION_NAME)
-    bcp_parameters = '-S {} -d {} -U {} -P {}'.format(db_conn.host, db_conn.schema, db_conn.login, db_conn.password)
+    bcp_parameters =  base64.b64encode(('-S {} -d {} -U {} -P {}'.format(db_conn.host, db_conn.schema, db_conn.login,db_conn.password)).encode()).decode()
     dag = kwargs['dag']
     cluster_id = Variable.get("JupiterDataprocClusterId")
     parameters = {"RawPath": raw_path,

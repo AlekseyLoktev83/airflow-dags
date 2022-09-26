@@ -28,6 +28,7 @@ import glob
 import os
 from pathlib import Path
 import glob
+import base64
 
 
 MSSQL_CONNECTION_NAME = 'odbc_jupiter'
@@ -87,7 +88,7 @@ def get_parameters(**kwargs):
     logs_process_path = f'{process_path}/Logs/{handler_id}.csv'
     
     db_conn = BaseHook.get_connection(MSSQL_CONNECTION_NAME)
-    bcp_parameters = '-S {} -d {} -U {} -P {}'.format(db_conn.host, db_conn.schema, db_conn.login, db_conn.password)
+    bcp_parameters =  base64.b64encode(('-S {} -d {} -U {} -P {}'.format(db_conn.host, db_conn.schema, db_conn.login,db_conn.password)).encode()).decode()
 
     parameters = {"RawPath": raw_path,
                   "ProcessPath": process_path,

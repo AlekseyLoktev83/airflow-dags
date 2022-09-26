@@ -31,6 +31,7 @@ import os
 import struct
 from contextlib import closing
 from pathlib import Path
+import base64
 
 
 MSSQL_CONNECTION_NAME = 'odbc_jupiter'
@@ -81,7 +82,7 @@ def get_parameters(**kwargs):
     baseline_raw_path = f'{raw_path}/SOURCES/BASELINE/'
     
     db_conn = BaseHook.get_connection(MSSQL_CONNECTION_NAME)
-    bcp_parameters = '-S {} -d {} -U {} -P {}'.format(db_conn.host, db_conn.schema, db_conn.login, db_conn.password)
+    bcp_parameters =  base64.b64encode(('-S {} -d {} -U {} -P {}'.format(db_conn.host, db_conn.schema, db_conn.login,db_conn.password)).encode()).decode()
 
     parameters = {"RawPath": raw_path,
                   "ProcessPath": process_path,
