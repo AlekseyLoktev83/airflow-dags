@@ -29,16 +29,14 @@ with DAG(
         trigger_dag_id="jupiter_move_logs_to_sftp",  
         conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":SCHEMA,"parent_handler_id":"{{ti.xcom_pull(task_ids='generate_handler_id')}}"},
         wait_for_completion = True,
-        trigger_rule=TriggerRule.ONE_FAILED
-    )
+        )
     
     trigger_jupiter_error_move_logs_to_sftp2 = TriggerDagRunOperator(
         task_id="trigger_jupiter_error_move_logs_to_sftp2",
         trigger_dag_id="jupiter_move_logs_to_sftp",  
         conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":SCHEMA,"parent_handler_id":"{{ti.xcom_pull(task_ids='generate_handler_id')}}"},
-        wait_for_completion = True,
-        trigger_rule=TriggerRule.ONE_FAILED
+        wait_for_completion = True, trigger_rule=TriggerRule.ONE_FAILED
     )
     
      
-    handler_id >>  trigger_jupiter_move_logs_to_sftp >>  trigger_jupiter_move_logs_to_sftp2
+    handler_id >>  rigger_jupiter_error_move_logs_to_sftp >>  rigger_jupiter_error_move_logs_to_sftp2
