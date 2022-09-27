@@ -40,11 +40,5 @@ with DAG(
         trigger_rule=TriggerRule.ONE_FAILED
     )
     
-    trigger_jupiter_error_move_promo_to_archive = TriggerDagRunOperator(
-        task_id="trigger_jupiter_error_move_promo_to_archive",
-        trigger_dag_id="jupiter_move_promo_to_archive",  
-        conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":SCHEMA},
-        wait_for_completion = True,
-        trigger_rule=TriggerRule.ONE_FAILED
-    )        
+     
     handler_id >>  trigger_jupiter_move_logs_to_sftp >>  trigger_jupiter_move_logs_to_sftp2
