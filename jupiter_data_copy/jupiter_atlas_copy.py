@@ -69,7 +69,7 @@ def get_parameters(**kwargs):
     db_conn = BaseHook.get_connection(MSSQL_CONNECTION_NAME)
     remote_hdfs_conn = BaseHook.get_connection(REMOTE_HDFS_CONNECTION_NAME)
     print(remote_hdfs_conn)
-    remote_hdfs_url = remote_hdfs_conn.host 
+    remote_hdfs_url = remote_hdfs_conn.get_uri() 
     
 
     parameters = {"RawPath": raw_path,
