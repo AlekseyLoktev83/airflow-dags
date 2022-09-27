@@ -71,7 +71,7 @@ def get_parameters(**kwargs):
     print(remote_hdfs_conn)
     remote_hdfs_url = remote_hdfs_conn.get_uri()
     
-    dst_dir = f'{raw_path}/SOURCES_REMOTE/HYDRATEATLAS/'}
+    dst_dir = f'{raw_path}/SOURCES_REMOTE/HYDRATEATLAS/'
     
 
     parameters = {"RawPath": raw_path,
