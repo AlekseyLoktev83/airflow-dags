@@ -107,7 +107,7 @@ def generate_distcp_script(parameters:dict, entity):
     return script
 
 @task
-def generate_entity_list(parameters:dict,prev_task):
+def generate_entity_list(prev_task,parameters:dict):
     raw_path=parameters['RawPath']
     dst_dir=parameters['DstDir'] 
     entities = [
@@ -136,6 +136,6 @@ with DAG(
     
     copy_entities = BashOperator.partial(task_id="copy_entity",
                                        do_xcom_push=True,
-                                      ).expand(bash_command=generate_distcp_script.partial(parameters=parameters).expand(entity=generate_entity_list(parameters,delete_current)),
+                                      ).expand(bash_command=generate_distcp_script.partial(parameters=parameters).expand(entity=generate_entity_list(delete_current,parameters)),
                                               )
 
