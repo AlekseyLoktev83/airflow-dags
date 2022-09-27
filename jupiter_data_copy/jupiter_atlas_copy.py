@@ -103,11 +103,11 @@ def generate_distcp_script(parameters:dict, entity):
     dst_path = entity['DstPath']
     remote_hdfs_url = parameters['RemoteHdfsUrl']
     
-    script = f'hadoop distcp -pbc {remote_hdfs_url}{src_path} hdfs://$(hdfs getconf -namenodes){dst_path} '
+    script = f'hdfs dfs -rm -r {dst_path};hadoop distcp -pbc {remote_hdfs_url}{src_path} hdfs://$(hdfs getconf -namenodes){dst_path} '
     return script
 
 @task
-def generate_entity_list(prev_task,parameters:dict):
+def generate_entity_list(parameters:dict):
     raw_path=parameters['RawPath']
     dst_dir=parameters['DstDir'] 
     entities = [
@@ -124,18 +124,10 @@ with DAG(
     render_template_as_native_obj=True,
 ) as dag:
 # Get dag parameters from vault    
-    parameters = get_parameters()
-    
-    delete_current = BashOperator(
-        task_id='delete_current',
-        bash_command='hdfs dfs -rm -r  {{ti.xcom_pull(task_ids="get_parameters",key="DstDir")}}* ',
-        do_xcom_push=True,
-    )
-    
-    parameters >> delete_current 
-    
+    parameters = get_parameters()  
+  
     copy_entities = BashOperator.partial(task_id="copy_entity",
                                        do_xcom_push=True,
-                                      ).expand(bash_command=generate_distcp_script.partial(parameters=parameters).expand(entity=generate_entity_list(delete_current,parameters)),
+                                      ).expand(bash_command=generate_distcp_script.partial(parameters=parameters).expand(entity=generate_entity_list(parameters)),
                                               )
 
