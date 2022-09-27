@@ -106,7 +106,7 @@ def generate_distcp_script(parameters:dict, entity):
     script = f'hadoop distcp -pbc {remote_hdfs_url}{src_path} hdfs://$(hdfs getconf -namenodes){dst_path} '
     return script
 
-@task
+@task(task_id='generate_entity_list')
 def generate_entity_list(parameters:dict):
     raw_path=parameters['RawPath']
     dst_dir=parameters['DstDir'] 
