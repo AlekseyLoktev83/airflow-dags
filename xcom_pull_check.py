@@ -39,4 +39,4 @@ with DAG(
     )
     
      
-    handler_id >>  rigger_jupiter_error_move_logs_to_sftp >>  rigger_jupiter_error_move_logs_to_sftp2
+    handler_id >>  trigger_jupiter_error_move_logs_to_sftp >>  trigger_jupiter_error_move_logs_to_sftp2
