@@ -100,7 +100,7 @@ def generate_distcp_script(parameters:dict, entity):
     dst_path = entity['DstPath']
     remote_hdfs_url = parameters['RemoteHdfsUrl']
     
-    script = f'hadoop distcp hdfs://{remote_hdfs_url}{src_path} hdfs://$(hdfs getconf -namenodes){dst_path} '
+    script = f'hadoop distcp {remote_hdfs_url}{src_path} hdfs://$(hdfs getconf -namenodes){dst_path} '
     return script
 
 @task
