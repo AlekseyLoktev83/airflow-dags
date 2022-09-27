@@ -105,7 +105,7 @@ def generate_distcp_script(parameters:dict, entity):
 
 @task
 def generate_entity_list(parameters:dict):
-    output_path=parameters['RawPath']
+    raw_path=parameters['RawPath']
     entities = [
               {'SrcPath':'/FILES/HYDRATEATLAS/0CUSTOMER_ATTR','DstPath':f'{raw_path}/SOURCES_REMOTE/HYDRATEATLAS/0CUSTOMER_ATTR'},
              ]
