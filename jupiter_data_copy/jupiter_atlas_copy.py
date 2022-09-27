@@ -106,8 +106,8 @@ def generate_distcp_script(parameters:dict, entity):
     script = f'hadoop distcp -pbc {remote_hdfs_url}{src_path} hdfs://$(hdfs getconf -namenodes){dst_path} '
     return script
 
-@task(task_id='generate_entity_list')
-def generate_entity_list(parameters:dict):
+@task
+def generate_entity_list(parameters:dict,prev_task):
     raw_path=parameters['RawPath']
     dst_dir=parameters['DstDir'] 
     entities = [
@@ -133,6 +133,6 @@ with DAG(
     
     copy_entities = BashOperator.partial(task_id="copy_entity",
                                        do_xcom_push=True,
-                                      ).expand(bash_command=generate_distcp_script.partial(parameters=parameters).expand(entity=generate_entity_list(parameters)),
+                                      ).expand(bash_command=generate_distcp_script.partial(parameters=parameters).expand(entity=generate_entity_list(parameters,delete_current)),
                                               )
-    parameters >> delete_current >> generate_entity_list
+    parameters >> delete_current 
