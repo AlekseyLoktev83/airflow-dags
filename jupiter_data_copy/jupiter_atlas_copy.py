@@ -129,6 +129,7 @@ with DAG(
     delete_current = BashOperator(
         task_id='delete_current',
         bash_command='hdfs dfs -rm -r  {{ti.xcom_pull(task_ids="get_parameters",key="DstDir")}}* ',
+        do_xcom_push=True,
     )
     
     parameters >> delete_current 
