@@ -112,6 +112,15 @@ def generate_entity_list(parameters:dict):
     dst_dir=parameters['DstDir'] 
     entities = [
               {'SrcPath':'/FILES/HYDRATEATLAS/0CUSTOMER_ATTR','DstPath':dst_dir},
+              {'SrcPath':'/FILES/HYDRATEATLAS/0CUSTOMER_TEXT','DstPath':dst_dir},
+              {'SrcPath':'/FILES/HYDRATEATLAS/0CUST_SALES_ATTR','DstPath':dst_dir},
+              {'SrcPath':'/FILES/HYDRATEATLAS/0CUST_SALES_ATTR.PARQUET','DstPath':dst_dir},
+              {'SrcPath':'/FILES/HYDRATEATLAS/0CUST_SALES_LKDH_HIER_T_ELEMENTS','DstPath':dst_dir},
+              {'SrcPath':'/FILES/HYDRATEATLAS/0CUST_SALES_TEXT','DstPath':dst_dir},
+              {'SrcPath':'/FILES/HYDRATEATLAS/Z2LIS_11_VAITM.PARQUET','DstPath':dst_dir},
+              {'SrcPath':'/FILES/HYDRATEATLAS/HISTORICAL_SOLD_TO_CORRECTION','DstPath':dst_dir},
+              {'SrcPath':'/FILES/HYDRATEATLAS/Z2LIS_12_VCITM.PARQUET','DstPath':dst_dir},
+              {'SrcPath':'/FILES/HYDRATEATLAS/ZCUSTOPF_ATTR','DstPath':dst_dir},
              ]
     return entities
 
