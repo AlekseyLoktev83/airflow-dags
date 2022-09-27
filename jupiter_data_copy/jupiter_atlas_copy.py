@@ -69,7 +69,9 @@ def get_parameters(**kwargs):
     db_conn = BaseHook.get_connection(MSSQL_CONNECTION_NAME)
     remote_hdfs_conn = BaseHook.get_connection(REMOTE_HDFS_CONNECTION_NAME)
     print(remote_hdfs_conn)
-    remote_hdfs_url = remote_hdfs_conn.get_uri() 
+    remote_hdfs_url = remote_hdfs_conn.get_uri()
+    
+    dst_dir = f'{raw_path}/SOURCES_REMOTE/HYDRATEATLAS/'}
     
 
     parameters = {"RawPath": raw_path,
@@ -88,6 +90,7 @@ def get_parameters(**kwargs):
                   "Schema":schema,
                   "ParentRunId":parent_run_id,
                   "RemoteHdfsUrl":remote_hdfs_url,
+                  "DstDir":dst_dir,
                   }
     print(parameters)
     return parameters
@@ -106,8 +109,9 @@ def generate_distcp_script(parameters:dict, entity):
 @task
 def generate_entity_list(parameters:dict):
     raw_path=parameters['RawPath']
+    dst_dir=parameters['DstDir'] 
     entities = [
-              {'SrcPath':'/FILES/HYDRATEATLAS/0CUSTOMER_ATTR','DstPath':f'{raw_path}/SOURCES_REMOTE/HYDRATEATLAS/0CUSTOMER_ATTR'},
+              {'SrcPath':'/FILES/HYDRATEATLAS/0CUSTOMER_ATTR','DstPath':dst_dir},
              ]
     return entities
 
@@ -121,7 +125,14 @@ with DAG(
 ) as dag:
 # Get dag parameters from vault    
     parameters = get_parameters()
+    
+    delete_current = BashOperator(
+        task_id='delete_current',
+        bash_command='hdfs dfs -rm -r  {{ti.xcom_pull(task_ids="get_parameters",key="DstDir")}}* ',
+    )
+    
     copy_entities = BashOperator.partial(task_id="copy_entity",
                                        do_xcom_push=True,
                                       ).expand(bash_command=generate_distcp_script.partial(parameters=parameters).expand(entity=generate_entity_list(parameters)),
                                               )
+    parameters >> delete_current >> generate_entity_list
