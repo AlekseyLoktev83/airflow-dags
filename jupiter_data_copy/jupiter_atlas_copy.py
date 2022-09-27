@@ -37,6 +37,7 @@ from contextlib import closing
 MSSQL_CONNECTION_NAME = 'odbc_jupiter'
 HDFS_CONNECTION_NAME = 'webhdfs_default'
 VAULT_CONNECTION_NAME = 'vault_default'
+REMOTE_HDFS_CONNECTION_NAME = 'webhdfs_atlas'
 TAGS=["jupiter", "promo", "copy"]
 
 
@@ -66,17 +67,17 @@ def get_parameters(**kwargs):
     last_upload_date = Variable.get("LastUploadDate")
     
     db_conn = BaseHook.get_connection(MSSQL_CONNECTION_NAME)
-    bcp_parameters =  base64.b64encode(('-S {} -d {} -U {} -P {}'.format(db_conn.host, db_conn.schema, db_conn.login,db_conn.password)).encode()).decode()
-    bcp_import_parameters =  base64.b64encode((f'DRIVER=ODBC Driver 18 for SQL Server;SERVER={db_conn.host};DATABASE={db_conn.schema};UID={db_conn.login};PWD={db_conn.password};Encrypt=no;').encode()).decode()
-    blocked_promo_output_path=f'{process_path}/BlockedPromo/'
+    remote_hdfs_conn = BaseHook.get_connection(REMOTE_HDFS_CONNECTION_NAME)
+    print(remote_hdfs_conn)
+    remote_hdfs_url = remote_hdfs_conn.host 
     
+
     parameters = {"RawPath": raw_path,
                   "ProcessPath": process_path,
                   "OutputPath": output_path,
                   "WhiteList": white_list,
                   "BlackList": black_list,
                   "MaintenancePathPrefix":"{}{}{}_{}_".format(raw_path,"/#MAINTENANCE/",process_date,run_id),
-                  "BcpParameters": bcp_parameters,
                   "UploadPath": upload_path,
                   "RunId":run_id,
                   "SystemName":system_name,
@@ -86,10 +87,7 @@ def get_parameters(**kwargs):
                   "MaintenancePath":"{}{}".format(raw_path,"/#MAINTENANCE/"),
                   "Schema":schema,
                   "ParentRunId":parent_run_id,
-                  "FileName":file_name,
-                  "CreateDate":create_date,
-                  "BcpImportParameters":bcp_import_parameters,
-                  "BlockedPromoOutputPath":blocked_promo_output_path,
+                  "RemoteHdfsUrl":remote_hdfs_url,
                   }
     print(parameters)
     return parameters
@@ -97,29 +95,21 @@ def get_parameters(**kwargs):
 
 
 @task
-def generate_bcp_import_script(parameters:dict, entity):
-    schema = parameters["Schema"]
-    table_name = entity['TableName']
+def generate_distcp_script(parameters:dict, entity):
     src_path = entity['SrcPath']
-    bcp_import_parameters=parameters['BcpImportParameters']
-    script = f'/utils/bcp_import.sh {src_path} {bcp_import_parameters} \"{table_name}\" "1" '
-    print(script)
-
+    dst_path = entity['DstPath']
+    remote_hdfs_url = parameters['RemoteHdfsUrl']
+    
+    script = f'hadoop distcp hdfs://{remote_hdfs_url}{src_path} hdfs://$(hdfs getconf -namenodes){dst_path} '
     return script
 
 @task
 def generate_entity_list(parameters:dict):
-    schema = parameters["Schema"]
-    output_path=parameters['OutputPath']
-    tables = [
-              {'SrcPath':f'{output_path}/Promo/Promo.CSV/*.csv','TableName':f'{schema}.TEMP_PROMO'},
-              {'SrcPath':f'{output_path}/PromoProduct/PromoProduct.CSV/*.csv','TableName':f'{schema}.TEMP_PROMOPRODUCT'},
-              {'SrcPath':f'{output_path}/PromoSupportPromo/PromoSupportPromo.CSV/*.csv','TableName':f'{schema}.TEMP_PROMOSUPPORTPROMO'},
-              {'SrcPath':f'{output_path}/ServiceInfo/ServiceInfo.CSV/*.csv','TableName':f'{schema}.ServiceInfo'},
-              {'SrcPath':f'{output_path}/ProductChangeIncident/NewProductChangeIncident.CSV/*.csv','TableName':f'{schema}.TEMP_PRODUCTCHANGEINCIDENTS'},
-              {'SrcPath':f'{output_path}/ChangesIncident/ChangesIncident.CSV/*.csv','TableName':f'{schema}.ChangesIncident'},
+    output_path=parameters['RawPath']
+    entities = [
+              {'SrcPath':'/FILES/HYDRATEATLAS/0CUSTOMER_ATTR',''DstPath':f'{raw_path}/SOURCES_REMOTE/HYDRATEATLAS/0CUSTOMER_ATTR'},
              ]
-    return tables
+    return entities
 
 with DAG(
     dag_id='jupiter_atlas_copy',
@@ -131,7 +121,7 @@ with DAG(
 ) as dag:
 # Get dag parameters from vault    
     parameters = get_parameters()
-    upload_tables = BashOperator.partial(task_id="import_table",
+    copy_entities = BashOperator.partial(task_id="copy_entity",
                                        do_xcom_push=True,
-                                      ).expand(bash_command=generate_bcp_import_script.partial(parameters=parameters).expand(entity=generate_entity_list(parameters)),
+                                      ).expand(bash_command=generate_distcp_script.partial(parameters=parameters).expand(entity=generate_entity_list(parameters)),
                                               )
