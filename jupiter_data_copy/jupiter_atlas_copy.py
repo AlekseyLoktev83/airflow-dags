@@ -131,8 +131,10 @@ with DAG(
         bash_command='hdfs dfs -rm -r  {{ti.xcom_pull(task_ids="get_parameters",key="DstDir")}}* ',
     )
     
+    parameters >> delete_current 
+    
     copy_entities = BashOperator.partial(task_id="copy_entity",
                                        do_xcom_push=True,
                                       ).expand(bash_command=generate_distcp_script.partial(parameters=parameters).expand(entity=generate_entity_list(parameters,delete_current)),
                                               )
-    parameters >> delete_current 
+
