@@ -25,5 +25,5 @@ with DAG(
     
     postgres_export = BashOperator(
         task_id='postgres_export',
-        bash_command='PGPASSWORD=Tl41s9 psql -h 192.168.10.234 -d EVORUS_InitialDevelopment_Main_Dev11_Current -U ptw_user -c "\copy (SELECT * FROM \"WOMBAT_ANALYSIS_DETAIL_FACT\") to STDOUT with csv header"|hadoop dfs -put -f - /PTW/RAW/WOMBAT_ANALYSIS_DETAIL_FACT.csv ',
+        bash_command='PGPASSWORD=Tl41s9 psql -h 192.168.10.234 -d EVORUS_InitialDevelopment_Main_Dev11_Current -U ptw_user -c "\copy (SELECT * FROM "WOMBAT_ANALYSIS_DETAIL_FACT") to STDOUT with csv header"|hadoop dfs -put -f - /PTW/RAW/WOMBAT_ANALYSIS_DETAIL_FACT.csv ',
         )    
