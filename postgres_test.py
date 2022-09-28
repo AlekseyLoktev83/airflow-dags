@@ -20,5 +20,5 @@ dag = DAG(
     create_table = PostgresOperator(
         task_id='query_1',
         postgres_conn_id="postgres_default",
-        sql='''select 1;''',
+        sql='''select * from "Animal";''',
     )
