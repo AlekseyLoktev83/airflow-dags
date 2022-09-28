@@ -16,7 +16,6 @@ dag = DAG(
     tags=["example"],
     catchup=False,
 )
-
     create_table = PostgresOperator(
         task_id='query_1',
         postgres_conn_id="postgres_default",
