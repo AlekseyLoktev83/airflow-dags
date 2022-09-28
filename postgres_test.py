@@ -8,14 +8,14 @@ from airflow.hooks.base_hook import BaseHook
 from airflow.providers.postgres.operators.postgres import PostgresOperator
 import base64
 
-dag = DAG(
+with DAG(
     dag_id="postgres_test",
     default_args={},
     schedule_interval=None,
     start_date=days_ago(2),
     tags=["example"],
     catchup=False,
-)
+) as dag:
     create_table = PostgresOperator(
         task_id='query_1',
         postgres_conn_id="postgres_default",
