@@ -77,7 +77,9 @@ def get_parameters(**kwargs):
     last_upload_date = Variable.get("LastUploadDate#PTW")
 
     db_conn = BaseHook.get_connection(POSTGRES_CONNECTION_NAME)
-    postgres_copy_parameters =  base64.b64encode((f'PGPASSWORD={db_conn.password} psql -h {db_conn.host} -d {db_conn.schema} -U {db_conn.login}').encode()).decode()
+    postgres_copy_parameters =  base64.b64encode((f'psql -h {db_conn.host} -d {db_conn.schema} -U {db_conn.login}').encode()).decode()
+    postgres_password =  base64.b64encode((f'{db_conn.password}').encode()).decode()
+    
     
     parameters = {"RawPath": raw_path,
                   "ProcessPath": process_path,
@@ -86,6 +88,7 @@ def get_parameters(**kwargs):
                   "BlackList": black_list,
                   "MaintenancePathPrefix": "{}{}{}_{}_".format(raw_path, "/#MAINTENANCE/", process_date, run_id),
                   "PostgresCopyParameters": postgres_copy_parameters,
+                  "PostgresPassword": postgres_password,
                   "UploadPath": upload_path,
                   "RunId": run_id,
                   "SystemName": system_name,
@@ -149,7 +152,7 @@ def generate_upload_script(prev_task, src_dir, src_file, upload_path, postgres_c
 def generate_postgres_copy_script(upload_path, postgres_copy_parameters, entities):
     scripts = []
     for entity in entities:
-        script = 'cp -r /tmp/data/src/. ~/ && chmod +x ~/exec_query_postgres.sh && ~/exec_query_postgres.sh "{}" {}{}/{}/{}/{}.csv "{}" {} {} '.format(entity["Extraction"], upload_path, entity["Schema"], entity["EntityName"], entity["Method"], entity["EntityName"], postgres_copy_parameters, CSV_SEPARATOR, entity["Schema"])
+        script = 'cp -r /tmp/data/src/. ~/ && chmod +x ~/exec_query_postgres.sh && ~/exec_query_postgres.sh "{}" {}{}/{}/{}/{}.csv "{}" {} {} {} '.format(entity["Extraction"], upload_path, entity["Schema"], entity["EntityName"], entity["Method"], entity["EntityName"], postgres_copy_parameters, postgres_password, CSV_SEPARATOR, entity["Schema"])
         scripts.append(script)
 
     return scripts
