@@ -149,7 +149,7 @@ def generate_upload_script(prev_task, src_dir, src_file, upload_path, postgres_c
 
 
 @task
-def generate_postgres_copy_script(upload_path, postgres_copy_parameters, entities):
+def generate_postgres_copy_script(upload_path, postgres_copy_parameters, postgres_password, entities):
     scripts = []
     for entity in entities:
         script = 'cp -r /tmp/data/src/. ~/ && chmod +x ~/exec_query_postgres.sh && ~/exec_query_postgres.sh "{}" {}{}/{}/{}/{}.csv "{}" {} {} {} '.format(entity["Extraction"], upload_path, entity["Schema"], entity["EntityName"], entity["Method"], entity["EntityName"], postgres_copy_parameters, postgres_password, CSV_SEPARATOR, entity["Schema"])
@@ -301,7 +301,7 @@ with DAG(
         extract_schema, dst_dir=parameters["MaintenancePathPrefix"], system_name=parameters["SystemName"], runid=parameters["RunId"])
 #    Create entities list and start monitoring for them
     start_mon_detail = start_monitoring_detail(dst_dir=parameters["MaintenancePathPrefix"], upload_path=parameters["UploadPath"], runid=parameters["RunId"], entities=generate_upload_script(
-        start_mon, parameters["MaintenancePathPrefix"], RAW_SCHEMA_FILE, parameters["UploadPath"], parameters["PostgresCopyParameters"], parameters["CurrentUploadDate"], parameters["LastUploadDate"]))
+        start_mon, parameters["MaintenancePathPrefix"], RAW_SCHEMA_FILE, parameters["UploadPath"], parameters["PostgresCopyParameters"], parameters["PostgresPassword"], parameters["CurrentUploadDate"], parameters["LastUploadDate"]))
 # Upload entities from sql to hdfs in parallel
     upload_tables = BashOperator.partial(task_id="upload_tables", do_xcom_push=True,execution_timeout=datetime.timedelta(minutes=240), retries=3).expand(
         bash_command=generate_postgres_copy_script(
