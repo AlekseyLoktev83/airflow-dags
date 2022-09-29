@@ -105,23 +105,13 @@ def generate_table_select_query(current_upload_date, last_upload_date, actual_sc
         column_name_list = []
         for column in columns:
             if column["FieldType"] == 'nvarchar':
-                fields_list.append("REPLACE(REPLACE([{field_name}],CHAR(10),''),CHAR(13),'') [{field_name}]".format(
+                fields_list.append("""REPLACE(REPLACE("{field_name}",CHR(10),''),CHR(13),'') "{field_name}" """.format(
                     field_name=column["FieldName"]))
-            elif column["FieldType"] == 'numeric' and column["Size"] == 38:
-                fields_list.append("CONVERT(NVARCHAR(40),[{field_name}]) [{field_name}]".format(
-                    field_name=column["FieldName"]))
-            elif column["FieldType"] == 'datetimeoffset' and column["FieldName"] != 'STAMP':
-                fields_list.append("""IIF(DATEPART(YEAR, [{field_name}])<1900,
-                IIF(DATEPART(TZ, [{field_name}])<0,
-                        DATEADD(HOUR, -3, CONVERT(DATETIME,DATEADD(YEAR, 1900-DATEPART(YEAR, [{field_name}]), [{field_name}]),0)),
-                            CONVERT(DATETIME,DATEADD(YEAR, 1900-DATEPART(YEAR, [{field_name}]), [{field_name}]),0)),
-                            IIF(DATEPART(TZ, [{field_name}])<0,DATEADD(HOUR, -3,
-                             CONVERT(DATETIME,[{field_name}],0)),CONVERT(DATETIME,[{field_name}],1))) [{field_name}]""".format(field_name=column["FieldName"]))
-            elif column["FieldType"] == 'datetimeoffset' and column["FieldName"] == 'STAMP':
-                fields_list.append("CONVERT(DATETIME,[{field_name}],1) [{field_name}]".format(
+            elif column["FieldType"] == 'nvarchar':
+                fields_list.append("""REPLACE(REPLACE("{field_name}",CHR(10),''),CHR(13),'') "{field_name}" """.format(
                     field_name=column["FieldName"]))
             else:
-                fields_list.append("[{field_name}]".format(
+                fields_list.append(""" "{field_name}" """.format(
                     field_name=column["FieldName"]))
                 
             if column["FieldName"] == 'STAMP':   
@@ -131,7 +121,7 @@ def generate_table_select_query(current_upload_date, last_upload_date, actual_sc
 
         fields = ",".join(fields_list)
 
-        column_name_list.append("#QCCount")
+        column_name_list.append('#QCCount')
         column_names = ",".join(column_name_list)
 
 
@@ -140,7 +130,7 @@ def generate_table_select_query(current_upload_date, last_upload_date, actual_sc
             script = "SELECT {fields} , (SELECT count(*) FROM {schema}.[{table_name}] WHERE STAMP BETWEEN CONVERT(nvarchar(20),'{last_modified_date}', 120) AND CONVERT(nvarchar(20),'{current_upload_date}', 120)) [#QCCount] FROM {schema}.[{table_name}] t WHERE t.STAMP BETWEEN CONVERT(nvarchar(20),'{last_modified_date}', 120) AND CONVERT(nvarchar(20),'{current_upload_date}', 120)".format(
                 fields=fields, schema=table[0], table_name=table[1], last_modified_date=last_upload_date, current_upload_date=current_upload_date)
         else:
-            script = "SELECT {fields} , (SELECT count(*) FROM {schema}.[{table_name}]) [#QCCount] FROM {schema}.[{table_name}]".format(
+            script = """SELECT {fields} , (SELECT count(*) FROM {schema}."{table_name}") "#QCCount" FROM {schema}."{table_name}" """.format(
                 fields=fields, schema=table[0], table_name=table[1])
 
         result.append(
