@@ -7,8 +7,17 @@ from airflow.operators.bash import BashOperator
 from airflow.utils.dates import days_ago
 from airflow.hooks.base_hook import BaseHook
 from airflow.providers.postgres.operators.postgres import PostgresOperator
+from airflow.providers.postgres.hooks.postgres import PostgresHook
+from airflow.decorators import dag, task
+
 import base64
 
+@task
+def to_pandas():
+    postgres_hook = PostgresHook('postgres_ptw')
+    df = postgres_hook.get_pandas_df('''select * from "Animal";''')
+    print(df.to_markdown())
+ 
 with DAG(
     dag_id="postgres_test",
     default_args={},
@@ -22,6 +31,8 @@ with DAG(
         postgres_conn_id="postgres_default",
         sql='''select * from "Animal";''',
     )
+    
+    to_pandas=to_pandas()
     
     postgres_export = BashOperator(
         task_id='postgres_export',
