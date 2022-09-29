@@ -26,6 +26,7 @@ import pandas as pd
 import glob
 import os
 import csv
+import base64
 
 
 MSSQL_CONNECTION_NAME = 'odbc_mip'
