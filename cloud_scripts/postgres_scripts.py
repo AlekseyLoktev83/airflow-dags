@@ -28,20 +28,20 @@ def generate_db_schema_query(environment=None, upload_date=None, black_list=None
                                            white_list_sql) if white_list_sql else combined_list_sql
 
     script = """Select 
-                TABLE_SCHEMA AS Schema,
-                TABLE_NAME as TableName,
-                COLUMN_NAME as FieldName,
-                ORDINAL_POSITION as Position,
-                DATA_TYPE as FieldType,
+                TABLE_SCHEMA AS "Schema",
+                TABLE_NAME as "TableName",
+                COLUMN_NAME as "FieldName",
+                ORDINAL_POSITION as "Position",
+                DATA_TYPE as "FieldType",
                 COALESCE(CHARACTER_MAXIMUM_LENGTH,
 		                 NUMERIC_PRECISION,
-		                 DATETIME_PRECISION) as Size,
+		                 DATETIME_PRECISION) as "Size",
                 case 
 	             when IS_NULLABLE = 'NO' then 0
 	             when IS_NULLABLE = 'YES' then 1 
-                end AS IsNull,
-                to_date('{}','YYYY-MM-DD') as updateDate,
-                NUMERIC_PRECISION as Scale
+                end AS "IsNull",
+                to_date('{}','YYYY-MM-DD') as "updateDate",
+                NUMERIC_PRECISION as "Scale"
                 from  INFORMATION_SCHEMA.COLUMNS
                 where TABLE_SCHEMA <>'pg_catalog' {}""".format(upload_date, combined_list_sql)
 
