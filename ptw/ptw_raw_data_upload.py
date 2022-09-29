@@ -77,7 +77,7 @@ def get_parameters(**kwargs):
     last_upload_date = Variable.get("LastUploadDate#PTW")
 
     db_conn = BaseHook.get_connection(POSTGRES_CONNECTION_NAME)
-    postgres_copy_parameters =  base64.b64encode(('PGPASSWORD={db_conn.password} psql -h {db_conn.host} -d {db_conn.schema} -U {db_conn.login}').encode()).decode()
+    postgres_copy_parameters =  base64.b64encode((f'PGPASSWORD={db_conn.password} psql -h {db_conn.host} -d {db_conn.schema} -U {db_conn.login}').encode()).decode()
     
     parameters = {"RawPath": raw_path,
                   "ProcessPath": process_path,
