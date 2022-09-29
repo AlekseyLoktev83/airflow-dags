@@ -20,7 +20,7 @@ from io import StringIO
 import urllib.parse
 import subprocess
 
-import cloud_scripts.mssql_scripts as mssql_scripts
+import cloud_scripts.postgres_scripts as postgres_scripts
 import json
 import pandas as pd
 import glob
@@ -130,7 +130,7 @@ def generate_upload_script(prev_task, src_dir, src_file, upload_path, bcp_parame
     conn = hdfs_hook.get_conn()
     conn.download(src_path, tmp_path)
 
-    entities_df = mssql_scripts.ptw_generate_table_select_query(
+    entities_df = mssql_scripts.generate_table_select_query(
         current_upload_date, last_upload_date, tmp_path)
     entities_json = json.loads(entities_df.to_json(orient="records"))
 
