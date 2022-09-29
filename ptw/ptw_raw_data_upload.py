@@ -301,11 +301,11 @@ with DAG(
         extract_schema, dst_dir=parameters["MaintenancePathPrefix"], system_name=parameters["SystemName"], runid=parameters["RunId"])
 #    Create entities list and start monitoring for them
     start_mon_detail = start_monitoring_detail(dst_dir=parameters["MaintenancePathPrefix"], upload_path=parameters["UploadPath"], runid=parameters["RunId"], entities=generate_upload_script(
-        start_mon, parameters["MaintenancePathPrefix"], RAW_SCHEMA_FILE, parameters["UploadPath"], parameters["PostgresCopyParameters"], parameters["PostgresPassword"], parameters["CurrentUploadDate"], parameters["LastUploadDate"]))
+        start_mon, parameters["MaintenancePathPrefix"], RAW_SCHEMA_FILE, parameters["UploadPath"], parameters["PostgresCopyParameters"], parameters["CurrentUploadDate"], parameters["LastUploadDate"]))
 # Upload entities from sql to hdfs in parallel
     upload_tables = BashOperator.partial(task_id="upload_tables", do_xcom_push=True,execution_timeout=datetime.timedelta(minutes=240), retries=3).expand(
         bash_command=generate_postgres_copy_script(
-            upload_path=parameters["UploadPath"], postgres_copy_parameters=parameters["PostgresCopyParameters"], entities=start_mon_detail),
+            upload_path=parameters["UploadPath"], postgres_copy_parameters=parameters["PostgresCopyParameters"], postgres_password=parameters["PostgresPassword"], entities=start_mon_detail),
     )
 #     Check entities upload results and update monitoring files
     end_mon_detail = end_monitoring_detail(
