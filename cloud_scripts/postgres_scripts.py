@@ -107,7 +107,7 @@ def generate_table_select_query(current_upload_date, last_upload_date, actual_sc
             if column["FieldType"] == 'nvarchar':
                 fields_list.append("""REPLACE(REPLACE("{field_name}",CHR(10),''),CHR(13),'') "{field_name}" """.format(
                     field_name=column["FieldName"]))
-            elif column["FieldType"] == 'nvarchar':
+            elif column["FieldType"] == 'character varying':
                 fields_list.append("""REPLACE(REPLACE("{field_name}",CHR(10),''),CHR(13),'') "{field_name}" """.format(
                     field_name=column["FieldName"]))
             else:
