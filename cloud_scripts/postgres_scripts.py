@@ -16,29 +16,34 @@ def generate_db_schema_query(environment=None, upload_date=None, black_list=None
     upload_date = upload_date if upload_date else datetime.today().strftime("%Y-%m-%d %H:%M:%S")
 
     black_list_sql = " AND ".join(
-        ["NOT TABLE_SCHEMA+'.'+TABLE_NAME Like '{}'".format(x) for x in black_list.split(PARAM_DELIMETER)]) if black_list else ""
+        ["NOT TABLE_SCHEMA||'.'||TABLE_NAME Like '{}'".format(x) for x in black_list.split(PARAM_DELIMETER)]) if black_list else ""
 
     combined_list_sql = " AND {}".format(
         black_list_sql) if black_list_sql else ""
 
-    white_list_sql = "("+(" OR ".join(["TABLE_SCHEMA+'.'+TABLE_NAME Like '{}'".format(
+    white_list_sql = "("+(" OR ".join(["TABLE_SCHEMA||'.'||TABLE_NAME Like '{}'".format(
         x) for x in white_list.split(PARAM_DELIMETER)])) + ")" if white_list else ""
 
     combined_list_sql = "{} AND {}".format(combined_list_sql,
                                            white_list_sql) if white_list_sql else combined_list_sql
 
     script = """Select 
-                Table_Schema as [Schema],
+                TABLE_SCHEMA AS Schema,
                 TABLE_NAME as TableName,
-                Column_Name as FieldName,
-                Ordinal_Position as Position,
-                Data_Type as FieldType,
-                Coalesce(CHARACTER_MAXIMUM_LENGTH, NUMERIC_PRECISION, DATETIME_PRECISION) as Size,
-                IIF(IS_NULLABLE='NO',0, IIF(IS_NULLABLE='YES',1,null)) as [IsNull],
-                CONVERT(nvarchar(20),'{}',23) as updateDate,
+                COLUMN_NAME as FieldName,
+                ORDINAL_POSITION as Position,
+                DATA_TYPE as FieldType,
+                COALESCE(CHARACTER_MAXIMUM_LENGTH,
+		                 NUMERIC_PRECISION,
+		                 DATETIME_PRECISION) as Size,
+                case 
+	             when IS_NULLABLE = 'NO' then 0
+	             when IS_NULLABLE = 'YES' then 1 
+                end AS IsNull,
+                to_date('{}','YYYY-MM-DD') as updateDate,
                 NUMERIC_PRECISION as Scale
                 from  INFORMATION_SCHEMA.COLUMNS
-                Where Table_Schema <>'sys' {}""".format(upload_date, combined_list_sql)
+                where TABLE_SCHEMA <>'pg_catalog' {}""".format(upload_date, combined_list_sql)
 
     print(script)
     return script
