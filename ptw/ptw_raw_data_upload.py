@@ -26,6 +26,7 @@ import pandas as pd
 import glob
 import os
 import csv
+import base64
 
 
 POSTGRES_CONNECTION_NAME = 'postgres_ptw'
