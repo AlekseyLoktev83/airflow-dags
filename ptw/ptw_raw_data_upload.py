@@ -149,7 +149,7 @@ def generate_upload_script(prev_task, src_dir, src_file, upload_path, postgres_c
 def generate_postgres_copy_script(upload_path, postgres_copy_parameters, entities):
     scripts = []
     for entity in entities:
-        script = 'cp -r /tmp/data/src/. ~/ && chmod +x ~/exec_query_postgres.sh && ~/exec_query_postgres.sh "{}" {}{}/{}/{}/{}.csv "{}" {} {} "{}" '.format(entity["Extraction"], upload_path, entity["Schema"], entity["EntityName"], entity["Method"], entity["EntityName"], postgres_copy_parameters, CSV_SEPARATOR, entity["Schema"])
+        script = 'cp -r /tmp/data/src/. ~/ && chmod +x ~/exec_query_postgres.sh && ~/exec_query_postgres.sh "{}" {}{}/{}/{}/{}.csv "{}" {} {} '.format(entity["Extraction"], upload_path, entity["Schema"], entity["EntityName"], entity["Method"], entity["EntityName"], postgres_copy_parameters, CSV_SEPARATOR, entity["Schema"])
         scripts.append(script)
 
     return scripts
