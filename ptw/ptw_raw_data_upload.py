@@ -4,7 +4,7 @@ import pendulum
 from airflow import DAG, XComArg
 from airflow.decorators import dag, task
 from airflow.utils.trigger_rule import TriggerRule
-from airflow.providers.odbc.hooks.odbc import OdbcHook
+from airflow.providers.odbc.hooks.odbc import PostgresHook
 from airflow.providers.apache.hdfs.hooks.webhdfs import WebHDFSHook
 from airflow.providers.yandex.operators.yandexcloud_dataproc import DataprocCreatePysparkJobOperator
 from airflow.models import Variable
@@ -14,6 +14,7 @@ from airflow.operators.python import PythonOperator, BranchPythonOperator
 from airflow.utils.task_group import TaskGroup
 from airflow.hooks.base_hook import BaseHook
 from airflow.providers.hashicorp.hooks.vault import VaultHook
+from airflow.providers.postgres.hooks.postgres import PostgresHook
 
 import uuid
 from io import StringIO
@@ -28,7 +29,7 @@ import os
 import csv
 
 
-MSSQL_CONNECTION_NAME = 'odbc_ptw'
+POSTGRES_CONNECTION_NAME = 'postgres_ptw'
 HDFS_CONNECTION_NAME = 'webhdfs_default'
 VAULT_CONNECTION_NAME = 'vault_default'
 AVAILABILITY_ZONE_ID = 'ru-central1-b'
@@ -75,7 +76,7 @@ def get_parameters(**kwargs):
     system_name = Variable.get("SystemName#PTW")
     last_upload_date = Variable.get("LastUploadDate#PTW")
 
-    db_conn = BaseHook.get_connection(MSSQL_CONNECTION_NAME)
+    db_conn = BaseHook.get_connection(POSTGRES_CONNECTION_NAME)
     bcp_parameters =  base64.b64encode(('-S {} -d {} -U {} -P {}'.format(db_conn.host, db_conn.schema, db_conn.login,db_conn.password)).encode()).decode()
 
     parameters = {"RawPath": raw_path,
@@ -109,11 +110,11 @@ def generate_schema_query(parameters: dict):
 def copy_data_db_to_hdfs(query, dst_dir, dst_file):
 
     dst_path = f"{dst_dir}{dst_file}"
-    odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
+    postgres_hook = PostgresHook(POSTGRES_CONNECTION_NAME)
     hdfs_hook = WebHDFSHook(HDFS_CONNECTION_NAME)
     conn = hdfs_hook.get_conn()
 
-    df = odbc_hook.get_pandas_df(query)
+    df = postgres_hook.get_pandas_df(query)
     df.to_csv(f'/tmp/{dst_file}', index=False, sep=CSV_SEPARATOR)
     conn.upload(dst_path, f'/tmp/{dst_file}',overwrite=True)
 
