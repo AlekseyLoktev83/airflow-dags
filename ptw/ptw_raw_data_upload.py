@@ -4,7 +4,6 @@ import pendulum
 from airflow import DAG, XComArg
 from airflow.decorators import dag, task
 from airflow.utils.trigger_rule import TriggerRule
-from airflow.providers.odbc.hooks.odbc import PostgresHook
 from airflow.providers.apache.hdfs.hooks.webhdfs import WebHDFSHook
 from airflow.providers.yandex.operators.yandexcloud_dataproc import DataprocCreatePysparkJobOperator
 from airflow.models import Variable
