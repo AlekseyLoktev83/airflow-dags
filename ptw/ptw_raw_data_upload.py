@@ -100,7 +100,7 @@ def get_parameters(**kwargs):
 
 @task
 def generate_schema_query(parameters: dict):
-    query = mssql_scripts.generate_db_schema_query(
+    query = postgres_scripts.generate_db_schema_query(
         white_list=parameters['WhiteList'], black_list=parameters['BlackList'])
 
     return query
@@ -131,7 +131,7 @@ def generate_upload_script(prev_task, src_dir, src_file, upload_path, bcp_parame
     conn = hdfs_hook.get_conn()
     conn.download(src_path, tmp_path)
 
-    entities_df = mssql_scripts.generate_table_select_query(
+    entities_df = postgres_scripts.generate_table_select_query(
         current_upload_date, last_upload_date, tmp_path)
     entities_json = json.loads(entities_df.to_json(orient="records"))
 
