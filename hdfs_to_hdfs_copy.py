@@ -82,5 +82,5 @@ with DAG(
     
     copy = BashOperator(
         task_id='copy',
-        bash_command='cp -r /tmp/data/src/. ~/ && chmod +x ~/hdfs_to_hdfs.sh && ~/hdfs_to_hdfs.sh /MIP/RAW/2022/09/23/dbo/ProdOperationMars/DELTA/* /MIP/RAW/ProdOp.csv',
+        bash_command='cp -r /tmp/data/src/. ~/ && chmod +x ~/hdfs_to_hdfs.sh && ~/hdfs_to_hdfs.sh /MIP/RAW/2022/09/23/dbo/ProdOperationMars/DELTA/* /MIP/RAW/ProdOp.csv ',
     )
