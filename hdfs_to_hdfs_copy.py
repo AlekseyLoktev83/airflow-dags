@@ -79,3 +79,8 @@ with DAG(
         task_id='hdfs_to_hdfs',
         bash_command='hadoop dfs -ls hdfs://airflow@rc1b-dataproc-m-9cq245wo3unikye2.mdb.yandexcloud.net/ATLAS ',
     )
+    
+    copy = BashOperator(
+        task_id='copy',
+        bash_command='cp -r /tmp/data/src/. ~/ && chmod +x ~/hdfs_to_hdfs.sh && ~/hdfs_to_hdfs.sh /MIP/RAW/2022/09/23/dbo/ProdOperationMars/DELTA/* /MIP/RAW/ProdOp.csv',
+    )
