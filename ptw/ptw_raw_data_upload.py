@@ -77,15 +77,15 @@ def get_parameters(**kwargs):
     last_upload_date = Variable.get("LastUploadDate#PTW")
 
     db_conn = BaseHook.get_connection(POSTGRES_CONNECTION_NAME)
-    bcp_parameters =  base64.b64encode(('-S {} -d {} -U {} -P {}'.format(db_conn.host, db_conn.schema, db_conn.login,db_conn.password)).encode()).decode()
-
+    postgres_copy_parameters =  base64.b64encode(('PGPASSWORD={db_conn.password} psql -h {db_conn.host} -d {db_conn.schema} -U {db_conn.login}').encode()).decode()
+    
     parameters = {"RawPath": raw_path,
                   "ProcessPath": process_path,
                   "OutputPath": output_path,
                   "WhiteList": white_list,
                   "BlackList": black_list,
                   "MaintenancePathPrefix": "{}{}{}_{}_".format(raw_path, "/#MAINTENANCE/", process_date, run_id),
-                  "BcpParameters": bcp_parameters,
+                  "PostgresCopyParameters": postgres_copy_parameters,
                   "UploadPath": upload_path,
                   "RunId": run_id,
                   "SystemName": system_name,
@@ -122,7 +122,7 @@ def copy_data_db_to_hdfs(query, dst_dir, dst_file):
 
 
 @task
-def generate_upload_script(prev_task, src_dir, src_file, upload_path, bcp_parameters, current_upload_date, last_upload_date):
+def generate_upload_script(prev_task, src_dir, src_file, upload_path, postgres_copy_parameters, current_upload_date, last_upload_date):
     src_path = f"{src_dir}{src_file}"
     tmp_path = f"/tmp/{src_file}"
     print(src_path)
@@ -146,11 +146,10 @@ def generate_upload_script(prev_task, src_dir, src_file, upload_path, bcp_parame
 
 
 @task
-def generate_bcp_script(upload_path, bcp_parameters, entities):
+def generate_postgres_copy_script(upload_path, postgres_copy_parameters, entities):
     scripts = []
     for entity in entities:
-        script = '/utils/exec_query.sh "{}" {}{}/{}/{}/{}.csv "{}" {} {} "{}" '.format(entity["Extraction"].replace("\'\'", "\'\\'").replace(
-            "\n", " "), upload_path, entity["Schema"], entity["EntityName"], entity["Method"], entity["EntityName"], bcp_parameters, BCP_SEPARATOR, entity["Schema"], entity["Columns"].replace(",", separator_convert_hex_to_string(BCP_SEPARATOR)))
+        script = 'cp -r /tmp/data/src/. ~/ && chmod +x ~/exec_query_postgres.sh && ~/exec_query_postgres.sh "{}" {}{}/{}/{}/{}.csv "{}" {} {} "{}" '.format(entity["Extraction"], upload_path, entity["Schema"], entity["EntityName"], entity["Method"], entity["EntityName"], postgres_copy_parameters, CSV_SEPARATOR, entity["Schema"])
         scripts.append(script)
 
     return scripts
@@ -299,11 +298,11 @@ with DAG(
         extract_schema, dst_dir=parameters["MaintenancePathPrefix"], system_name=parameters["SystemName"], runid=parameters["RunId"])
 #    Create entities list and start monitoring for them
     start_mon_detail = start_monitoring_detail(dst_dir=parameters["MaintenancePathPrefix"], upload_path=parameters["UploadPath"], runid=parameters["RunId"], entities=generate_upload_script(
-        start_mon, parameters["MaintenancePathPrefix"], RAW_SCHEMA_FILE, parameters["UploadPath"], parameters["BcpParameters"], parameters["CurrentUploadDate"], parameters["LastUploadDate"]))
+        start_mon, parameters["MaintenancePathPrefix"], RAW_SCHEMA_FILE, parameters["UploadPath"], parameters["PostgresCopyParameters"], parameters["CurrentUploadDate"], parameters["LastUploadDate"]))
 # Upload entities from sql to hdfs in parallel
     upload_tables = BashOperator.partial(task_id="upload_tables", do_xcom_push=True,execution_timeout=datetime.timedelta(minutes=240), retries=3).expand(
-        bash_command=generate_bcp_script(
-            upload_path=parameters["UploadPath"], bcp_parameters=parameters["BcpParameters"], entities=start_mon_detail),
+        bash_command=generate_postgres_copy_script(
+            upload_path=parameters["UploadPath"], postgres_copy_parameters=parameters["PostgresCopyParameters"], entities=start_mon_detail),
     )
 #     Check entities upload results and update monitoring files
     end_mon_detail = end_monitoring_detail(
