@@ -105,13 +105,13 @@ def generate_table_select_query(current_upload_date, last_upload_date, actual_sc
         column_name_list = []
         for column in columns:
             if column["FieldType"] == 'nvarchar':
-                fields_list.append("""REPLACE(REPLACE(\"{field_name}\",CHR(10),''),CHR(13),'') \"{field_name}\" """.format(
+                fields_list.append("""REPLACE(REPLACE(\\"{field_name}\\",CHR(10),''),CHR(13),'') \\"{field_name}\\" """.format(
                     field_name=column["FieldName"]))
             elif column["FieldType"] == 'character varying':
-                fields_list.append("""REPLACE(REPLACE(\"{field_name}\",CHR(10),''),CHR(13),'') \"{field_name}\" """.format(
+                fields_list.append("""REPLACE(REPLACE(\\"{field_name}\\",CHR(10),''),CHR(13),'') \\"{field_name}\\" """.format(
                     field_name=column["FieldName"]))
             else:
-                fields_list.append(""" \"{field_name}\" """.format(
+                fields_list.append(""" \\"{field_name}\\" """.format(
                     field_name=column["FieldName"]))
                 
             if column["FieldName"] == 'STAMP':   
@@ -130,7 +130,7 @@ def generate_table_select_query(current_upload_date, last_upload_date, actual_sc
             script = "SELECT {fields} , (SELECT count(*) FROM {schema}.[{table_name}] WHERE STAMP BETWEEN CONVERT(nvarchar(20),'{last_modified_date}', 120) AND CONVERT(nvarchar(20),'{current_upload_date}', 120)) [#QCCount] FROM {schema}.[{table_name}] t WHERE t.STAMP BETWEEN CONVERT(nvarchar(20),'{last_modified_date}', 120) AND CONVERT(nvarchar(20),'{current_upload_date}', 120)".format(
                 fields=fields, schema=table[0], table_name=table[1], last_modified_date=last_upload_date, current_upload_date=current_upload_date)
         else:
-            script = """SELECT {fields} , (SELECT count(*) FROM {schema}.\"{table_name}\") \"#QCCount\" FROM {schema}.\"{table_name}\" """.format(
+            script = """SELECT {fields} , (SELECT count(*) FROM {schema}.\\"{table_name}\\") \\"#QCCount\\" FROM {schema}.\\"{table_name}\\" """.format(
                 fields=fields, schema=table[0], table_name=table[1])
 
         result.append(
