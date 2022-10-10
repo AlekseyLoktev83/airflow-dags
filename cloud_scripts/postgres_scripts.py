@@ -43,7 +43,7 @@ def generate_db_schema_query(environment=None, upload_date=None, black_list=None
                 to_date('{}','YYYY-MM-DD') as "updateDate",
                 NUMERIC_PRECISION as "Scale"
                 from  INFORMATION_SCHEMA.COLUMNS
-                where (TABLE_SCHEMA <>'pg_catalog' or TABLE_SCHEMA <> 'information_schema') {}""".format(upload_date, combined_list_sql)
+                where TABLE_SCHEMA <>'pg_catalog' and TABLE_SCHEMA <> 'information_schema' {}""".format(upload_date, combined_list_sql)
 
     print(script)
     return script
