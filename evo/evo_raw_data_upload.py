@@ -56,7 +56,7 @@ def get_parameters(**kwargs):
 
     Returns:
         dict:Параметры
-    """    
+    """
     ti = kwargs['ti']
     ds = kwargs['ds']
     dag_run = kwargs['dag_run']
@@ -78,26 +78,34 @@ def get_parameters(**kwargs):
     last_upload_date = Variable.get("LastUploadDate#EVO")
 
     db_conn = BaseHook.get_connection(POSTGRES_CONNECTION_NAME)
-    postgres_copy_parameters =  base64.b64encode((f'psql -h {db_conn.host} -d {db_conn.schema} -U {db_conn.login}').encode()).decode()
-    postgres_password =  base64.b64encode((f'{db_conn.password}').encode()).decode()
-    
-    
-    parameters = {"RawPath": raw_path,
-                  "ProcessPath": process_path,
-                  "OutputPath": output_path,
-                  "WhiteList": white_list,
-                  "BlackList": black_list,
-                  "MaintenancePathPrefix": "{}{}{}_{}_".format(raw_path, "/#MAINTENANCE/", process_date, run_id),
-                  "PostgresCopyParameters": postgres_copy_parameters,
-                  "PostgresPassword": postgres_password,
-                  "UploadPath": upload_path,
-                  "RunId": run_id,
-                  "SystemName": system_name,
-                  "LastUploadDate": last_upload_date,
-                  "CurrentUploadDate": upload_date,
-                  "ProcessDate": process_date,
-                  "MaintenancePath": "{}{}".format(raw_path, "/#MAINTENANCE/"),
-                  }
+    postgres_copy_parameters = base64.b64encode(
+        (f'psql -h {db_conn.host} -d {db_conn.schema} -U {db_conn.login}').encode()).decode()
+    postgres_password = base64.b64encode(
+        (f'{db_conn.password}').encode()).decode()
+
+    parameters = {
+        "RawPath": raw_path,
+        "ProcessPath": process_path,
+        "OutputPath": output_path,
+        "WhiteList": white_list,
+        "BlackList": black_list,
+        "MaintenancePathPrefix": "{}{}{}_{}_".format(
+            raw_path,
+            "/#MAINTENANCE/",
+            process_date,
+            run_id),
+        "PostgresCopyParameters": postgres_copy_parameters,
+        "PostgresPassword": postgres_password,
+        "UploadPath": upload_path,
+        "RunId": run_id,
+        "SystemName": system_name,
+        "LastUploadDate": last_upload_date,
+        "CurrentUploadDate": upload_date,
+        "ProcessDate": process_date,
+        "MaintenancePath": "{}{}".format(
+            raw_path,
+            "/#MAINTENANCE/"),
+    }
     print(parameters)
     return parameters
 
@@ -111,7 +119,7 @@ def generate_schema_query(parameters: dict):
 
     Returns:
         str: Запрос sql
-    """    
+    """
     query = postgres_scripts.generate_db_schema_query(
         white_list=parameters['WhiteList'], black_list=parameters['BlackList'])
 
@@ -129,7 +137,7 @@ def copy_data_db_to_hdfs(query, dst_dir, dst_file):
 
     Returns:
         bool: Результат операции
-    """    
+    """
 
     dst_path = f"{dst_dir}{dst_file}"
     postgres_hook = PostgresHook(POSTGRES_CONNECTION_NAME)
@@ -138,13 +146,20 @@ def copy_data_db_to_hdfs(query, dst_dir, dst_file):
 
     df = postgres_hook.get_pandas_df(query)
     df.to_csv(f'/tmp/{dst_file}', index=False, sep=CSV_SEPARATOR)
-    conn.upload(dst_path, f'/tmp/{dst_file}',overwrite=True)
+    conn.upload(dst_path, f'/tmp/{dst_file}', overwrite=True)
 
     return True
 
 
 @task
-def generate_upload_script(prev_task, src_dir, src_file, upload_path, postgres_copy_parameters, current_upload_date, last_upload_date):
+def generate_upload_script(
+        prev_task,
+        src_dir,
+        src_file,
+        upload_path,
+        postgres_copy_parameters,
+        current_upload_date,
+        last_upload_date):
     """Генерация скрипта загрузки таблиц
 
     Args:
@@ -153,12 +168,12 @@ def generate_upload_script(prev_task, src_dir, src_file, upload_path, postgres_c
         src_file (str): Название файла со схемой
         upload_path (str): Путь к hdfs каталогу-назначению
         postgres_copy_parameters (str): Парметры подключения к бд postgres
-        current_upload_date (str): Дата текущей загрузки 
+        current_upload_date (str): Дата текущей загрузки
         last_upload_date (str): Дата последней успешной загрузки
 
     Returns:
         json: Скрипты загрузки таблиц
-    """    
+    """
     src_path = f"{src_dir}{src_file}"
     tmp_path = f"/tmp/{src_file}"
     print(src_path)
@@ -176,13 +191,17 @@ def generate_upload_script(prev_task, src_dir, src_file, upload_path, postgres_c
 
     del entities_df['Extraction']
     entities_df.to_csv(tmp_dst_path, index=False, sep=CSV_SEPARATOR)
-    conn.upload(dst_path, tmp_dst_path,overwrite=True)
+    conn.upload(dst_path, tmp_dst_path, overwrite=True)
 
     return entities_json
 
 
 @task
-def generate_postgres_copy_script(upload_path, postgres_copy_parameters, postgres_password, entities):
+def generate_postgres_copy_script(
+        upload_path,
+        postgres_copy_parameters,
+        postgres_password,
+        entities):
     """Генерация скрипта копирования postgres -> hdfs
 
     Args:
@@ -193,10 +212,22 @@ def generate_postgres_copy_script(upload_path, postgres_copy_parameters, postgre
 
     Returns:
         list: Список скриптов копирования таблиц
-    """    
+    """
     scripts = []
     for entity in entities:
-        script = 'cp -r /tmp/data/src/. ~/ && chmod +x ~/exec_query_postgres.sh && ~/exec_query_postgres.sh "{}" {}{}/{}/{}/{}.csv "{}" "{}" "{}" {} '.format(entity["Extraction"].replace('"', '\\"'), upload_path, entity["Schema"], entity["EntityName"], entity["Method"], entity["EntityName"], postgres_copy_parameters, postgres_password, CSV_SEPARATOR, entity["Schema"])
+        script = 'cp -r /tmp/data/src/. ~/ && chmod +x ~/exec_query_postgres.sh && ~/exec_query_postgres.sh "{}" {}{}/{}/{}/{}.csv "{}" "{}" "{}" {} '.format(
+            entity["Extraction"].replace(
+                '"',
+                '\\"'),
+            upload_path,
+            entity["Schema"],
+            entity["EntityName"],
+            entity["Method"],
+            entity["EntityName"],
+            postgres_copy_parameters,
+            postgres_password,
+            CSV_SEPARATOR,
+            entity["Schema"])
         scripts.append(script)
 
     return scripts
@@ -214,7 +245,7 @@ def start_monitoring(prev_task, dst_dir, system_name, runid):
 
     Returns:
         bool: Результат операции
-    """    
+    """
     monitoring_file_path = f'{dst_dir}{MONITORING_FILE}'
 
     temp_file_path = f'/tmp/{MONITORING_FILE}'
@@ -245,7 +276,7 @@ def start_monitoring_detail(dst_dir, upload_path, runid, entities):
 
     Returns:
         list: Cписок сущностей
-    """    
+    """
     hdfs_hook = WebHDFSHook(HDFS_CONNECTION_NAME)
     conn = hdfs_hook.get_conn()
 
@@ -257,17 +288,16 @@ def start_monitoring_detail(dst_dir, upload_path, runid, entities):
 
         temp_file_path = f'/tmp/{schema}_{entity_name}.csv'
         df = pd.DataFrame([{'PipelineRunId': runid,
-                           'Schema': schema,
+                            'Schema': schema,
                             'EntityName': entity_name,
                             'TargetPath': f'{upload_path}{schema}/{entity_name}/{method}/{entity_name}.csv',
                             'TargetFormat': 'CSV',
                             'StartDate': pendulum.now(),
                             'Duration': 0,
                             'Status': STATUS_PROCESS,
-                            'ErrorDescription': None
-                            }])
+                            'ErrorDescription': None}])
         df.to_csv(temp_file_path, index=False, sep=CSV_SEPARATOR)
-        conn.upload(monitoring_file_path, temp_file_path,overwrite=True)
+        conn.upload(monitoring_file_path, temp_file_path, overwrite=True)
 
     return entities
 
@@ -282,7 +312,7 @@ def end_monitoring_detail(dst_dir, entities):
 
     Returns:
         list: Список с результатми загрузки таблиц
-    """    
+    """
     hdfs_hook = WebHDFSHook(HDFS_CONNECTION_NAME)
     conn = hdfs_hook.get_conn()
 
@@ -321,7 +351,7 @@ def get_upload_result(dst_dir, input):
 
     Returns:
         bool: Результат загрузки таблиц
-    """    
+    """
     monintoring_details = input
     print(monintoring_details)
     return not any(d['Result'] == False for d in monintoring_details)
@@ -333,7 +363,7 @@ def _end_monitoring(dst_dir, status):
     Args:
         dst_dir (str): Каталог hdfs с результатами мониторинга
         status (status): Статус загрузки таблиц
-    """    
+    """
     monitoring_file_path = f'{dst_dir}{MONITORING_FILE}'
     temp_file_path = f'/tmp/{MONITORING_FILE}'
 
@@ -354,8 +384,9 @@ def _check_upload_result(**kwargs):
 
     Returns:
         str: Taskid
-    """    
-    return ['end_monitoring_success'] if kwargs['input'] else ['end_monitoring_failure']
+    """
+    return ['end_monitoring_success'] if kwargs['input'] else [
+        'end_monitoring_failure']
 
 
 @task(task_id="end_monitoring_success")
@@ -364,7 +395,7 @@ def end_monitoring_success(dst_dir):
 
     Args:
         dst_dir (str): Каталог hdfs с результатами мониторинга
-    """    
+    """
     _end_monitoring(dst_dir, True)
 
 
@@ -374,7 +405,7 @@ def end_monitoring_failure(dst_dir):
 
     Args:
         dst_dir (str): Каталог hdfs с результатами мониторинга
-    """    
+    """
     _end_monitoring(dst_dir, False)
 
 
@@ -384,11 +415,13 @@ def update_last_upload_date(last_upload_date):
 
     Args:
         last_upload_date (str): Дата последней успешной загрузки
-    """    
+    """
     vault_hook = VaultHook(VAULT_CONNECTION_NAME)
     conn = vault_hook.get_conn()
     conn.secrets.kv.v2.create_or_update_secret(
-        path="variables/LastUploadDate#EVO", secret={"value": last_upload_date})
+        path="variables/LastUploadDate#EVO",
+        secret={
+            "value": last_upload_date})
 
 
 with DAG(
@@ -410,26 +443,48 @@ with DAG(
     extract_schema = copy_data_db_to_hdfs(
         schema_query, parameters["MaintenancePathPrefix"], RAW_SCHEMA_FILE)
     """Начало записи мониторинга
-    """        
+    """
     start_mon = start_monitoring(
-        extract_schema, dst_dir=parameters["MaintenancePathPrefix"], system_name=parameters["SystemName"], runid=parameters["RunId"])
-    start_mon_detail = start_monitoring_detail(dst_dir=parameters["MaintenancePathPrefix"], upload_path=parameters["UploadPath"], runid=parameters["RunId"], entities=generate_upload_script(
-        start_mon, parameters["MaintenancePathPrefix"], RAW_SCHEMA_FILE, parameters["UploadPath"], parameters["PostgresCopyParameters"], parameters["CurrentUploadDate"], parameters["LastUploadDate"]))
+        extract_schema,
+        dst_dir=parameters["MaintenancePathPrefix"],
+        system_name=parameters["SystemName"],
+        runid=parameters["RunId"])
+    start_mon_detail = start_monitoring_detail(
+        dst_dir=parameters["MaintenancePathPrefix"],
+        upload_path=parameters["UploadPath"],
+        runid=parameters["RunId"],
+        entities=generate_upload_script(
+            start_mon,
+            parameters["MaintenancePathPrefix"],
+            RAW_SCHEMA_FILE,
+            parameters["UploadPath"],
+            parameters["PostgresCopyParameters"],
+            parameters["CurrentUploadDate"],
+            parameters["LastUploadDate"]))
     """Параллельная загрузка таблиц sql -> hdfs
     """
-    upload_tables = BashOperator.partial(task_id="upload_tables", do_xcom_push=True,execution_timeout=datetime.timedelta(minutes=240), retries=3).expand(
-        bash_command=generate_postgres_copy_script(
-            upload_path=parameters["UploadPath"], postgres_copy_parameters=parameters["PostgresCopyParameters"], postgres_password=parameters["PostgresPassword"], entities=start_mon_detail),
+    upload_tables = BashOperator.partial(
+        task_id="upload_tables",
+        do_xcom_push=True,
+        execution_timeout=datetime.timedelta(
+            minutes=240),
+        retries=3).expand(
+            bash_command=generate_postgres_copy_script(
+                upload_path=parameters["UploadPath"],
+                postgres_copy_parameters=parameters["PostgresCopyParameters"],
+                postgres_password=parameters["PostgresPassword"],
+                entities=start_mon_detail),
     )
-    """Получение результатов мониторинга 
+    """Получение результатов мониторинга
     """
     end_mon_detail = end_monitoring_detail(
-        dst_dir=parameters["MaintenancePathPrefix"], entities=XComArg(upload_tables))
+        dst_dir=parameters["MaintenancePathPrefix"],
+        entities=XComArg(upload_tables))
     """Получение общего результата загрузки
-    """        
+    """
     upload_result = get_upload_result(
         dst_dir=parameters["MaintenancePathPrefix"], input=end_mon_detail)
-    """Проверка результата и принятие решения 
+    """Проверка результата и принятие решения
     """
     if_upload_success = BranchPythonOperator(
         task_id='if_upload_success',
@@ -441,10 +496,12 @@ with DAG(
         task_id='cleanup',
         trigger_rule=TriggerRule.NONE_FAILED_MIN_ONE_SUCCESS,
         bash_command='/utils/hdfs_delete_old_files.sh {{ti.xcom_pull(task_ids="get_parameters",key="MaintenancePath")}} {{params.days_to_keep_old_files}} ',
-        params={'days_to_keep_old_files': DAYS_TO_KEEP_OLD_FILES},
+        params={
+            'days_to_keep_old_files': DAYS_TO_KEEP_OLD_FILES},
     )
 
-    if_upload_success >> end_monitoring_success(dst_dir=parameters["MaintenancePathPrefix"]) >> update_last_upload_date(
+    if_upload_success >> end_monitoring_success(
+        dst_dir=parameters["MaintenancePathPrefix"]) >> update_last_upload_date(
         last_upload_date=parameters["CurrentUploadDate"]) >> cleanup
     if_upload_success >> end_monitoring_failure(
         dst_dir=parameters["MaintenancePathPrefix"]) >> cleanup

@@ -12,12 +12,12 @@ with DAG(
     schedule_interval=None,
     tags=["evo", "dev"],
 ) as dag:
-   
+
     trigger_dag_raw_upload = TriggerDagRunOperator(
         task_id="trigger_raw_data_upload",
-        trigger_dag_id="evo_raw_data_upload",  
-        conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}"},
-        wait_for_completion = True,
+        trigger_dag_id="evo_raw_data_upload",
+        conf={"parent_run_id": "{{run_id}}", "parent_process_date": "{{ds}}"},
+        wait_for_completion=True,
     )
-    
-    trigger_dag_raw_upload 
+
+    trigger_dag_raw_upload
