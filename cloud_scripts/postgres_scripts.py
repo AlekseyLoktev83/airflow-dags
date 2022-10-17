@@ -12,6 +12,17 @@ CSV_SEPARATOR = '\u0001'
 
 
 def generate_db_schema_query(environment=None, upload_date=None, black_list=None, white_list=None):
+    """Функция создания запроса для выборки схемы таблиц
+
+    Args:
+        environment (str, optional): Среда . Defaults to None.
+        upload_date (str, optional): Строка с датой загрузки. Defaults to None.
+        black_list (str, optional): Список исключенных таблиц(разделитель: ;). Defaults to None.
+        white_list (str, optional): Список разрешенных таблиц(разделитель: ;). Defaults to None.
+
+    Returns:
+        str: Строка с запросом
+    """""""""    
     environment_name = environment.strip() if environment else ""
     upload_date = upload_date if upload_date else datetime.today().strftime("%Y-%m-%d %H:%M:%S")
 
@@ -49,13 +60,17 @@ def generate_db_schema_query(environment=None, upload_date=None, black_list=None
     return script
 
 def get_records(odbc_hook, sql, parameters=None, output_converters=[]):
-    """
-        Executes the sql and returns a list of dicts.
-        :param sql: the sql statement to be executed (str) or a list of
-            sql statements to execute
-        :param parameters: The parameters to render the SQL query with.
-        :param output_converters: List of connection output converters
-    """
+    """Получение записей в результате выполнения sql запроса
+
+    Args:
+        odbc_hook (OdbcHook): Хук odbc
+        sql (str): Запрос sql
+        parameters (dict, optional): Параметры запроса. Defaults to None.
+        output_converters (list, optional): Список конвертеров запроса. Defaults to [].
+
+    Returns:
+        List of dicts: Список строк с результатми выполнения запроса
+    """""""""
     with closing(odbc_hook.get_conn()) as conn:
         for conv in output_converters:
             conn.add_output_converter(conv[0], conv[1])   
@@ -72,11 +87,15 @@ def get_records(odbc_hook, sql, parameters=None, output_converters=[]):
             return results
         
 def get_first(odbc_hook, sql, parameters=None):
-    """
-        Executes the sql and returns the first resulting row as dict.
-        :param sql: the sql statement to be executed (str) or a list of
-            sql statements to execute
-        :param parameters: The parameters to render the SQL query with.
+    """Получение первой записи в результате выполнения sql запроса
+
+    Args:
+        odbc_hook (OdbcHook): Хук odbc
+        sql (str): Запрос sql
+        parameters (_type_, optional): Параметры запроса. Defaults to None.
+
+    Returns:
+        dict: Первая запись результата запроса
     """
     with closing(odbc_hook.get_conn()) as conn:
         with closing(conn.cursor()) as cur:
@@ -90,6 +109,16 @@ def get_first(odbc_hook, sql, parameters=None):
             return dict(zip(columns, row))
         
 def generate_table_select_query(current_upload_date, last_upload_date, actual_schema_file):
+    """Функция создания запроса для выборки таблицы
+
+    Args:
+        current_upload_date (str): Дата текущей загрузки
+        last_upload_date (str): Дата последней успешной загрузки
+        actual_schema_file (str): Путь к файлу со схемой таблицы
+
+    Returns:
+        Pandas Dataframe: Dataframe с запросами для извлечения таблиц из бд
+    """    """"""
     df = pd.read_csv(actual_schema_file, keep_default_na=False,sep=CSV_SEPARATOR)
     rows = df.to_dict('records')
     grouped_rows = {i: list(j) for (i, j) in groupby(
