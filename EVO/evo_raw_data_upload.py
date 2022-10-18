@@ -31,6 +31,7 @@ import base64
 
 # Названия connections
 POSTGRES_CONNECTION_NAME = 'postgres_evo'
+POSTGRES_CONNECTION2_NAME = 'postgres_evo2'
 HDFS_CONNECTION_NAME = 'webhdfs_default'
 VAULT_CONNECTION_NAME = 'vault_default'
 # Префикс файла с деталями монитоинга
@@ -76,6 +77,10 @@ def get_parameters(**kwargs):
     upload_path = f'{raw_path}/{execution_date}/'
     system_name = Variable.get("SystemName#EVO")
     last_upload_date = Variable.get("LastUploadDate#EVO")
+    
+    postgres_hook = PostgresHook(POSTGRES_CONNECTION_NAME)
+    active_db_id=postgres_hook.get_first('SELECT "Id" FROM public."EnvironmentInfo"')
+    print(active_db_id)
 
     db_conn = BaseHook.get_connection(POSTGRES_CONNECTION_NAME)
     postgres_copy_parameters = base64.b64encode(
