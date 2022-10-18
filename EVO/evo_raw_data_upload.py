@@ -79,10 +79,13 @@ def get_parameters(**kwargs):
     last_upload_date = Variable.get("LastUploadDate#EVO")
     
     postgres_hook = PostgresHook(POSTGRES_CONNECTION_NAME)
-    active_db_id=postgres_hook.get_first('SELECT "Id" FROM public."EnvironmentInfo"')
-    print(active_db_id)
+    current_env_name = postgres_hook.get_first('SELECT "Value" FROM public."EnvironmentInfo"')
+    print(current_env_name[0])
+    
+    current_db_conn_name = POSTGRES_CONNECTION_NAME if current_env_name[0] == 'EvoDev1_1' else POSTGRES_CONNECTION2_NAME
+    
 
-    db_conn = BaseHook.get_connection(POSTGRES_CONNECTION_NAME)
+    db_conn = BaseHook.get_connection(current_db_conn_name)
     postgres_copy_parameters = base64.b64encode(
         (f'psql -h {db_conn.host} -d {db_conn.schema} -U {db_conn.login}').encode()).decode()
     postgres_password = base64.b64encode(
@@ -110,6 +113,7 @@ def get_parameters(**kwargs):
         "MaintenancePath": "{}{}".format(
             raw_path,
             "/#MAINTENANCE/"),
+        "CurrentDbConnName":current_db_conn_name,
     }
     print(parameters)
     return parameters
@@ -132,20 +136,20 @@ def generate_schema_query(parameters: dict):
 
 
 @task
-def copy_data_db_to_hdfs(query, dst_dir, dst_file):
+def copy_data_db_to_hdfs(parameters: dict, query, dst_file):
     """Копирование результатов sql запроса в файл на hdfs
 
     Args:
+        parameters (dict): Параметры
         query (str): Sql запрос
-        dst_dir (str): Путь к каталогу hdfs
         dst_file (str): Название файла
 
     Returns:
         bool: Результат операции
     """
-
+    dst_dir = parameters["MaintenancePathPrefix"]
     dst_path = f"{dst_dir}{dst_file}"
-    postgres_hook = PostgresHook(POSTGRES_CONNECTION_NAME)
+    postgres_hook = PostgresHook(parameters["CurrentDbConnName"])
     hdfs_hook = WebHDFSHook(HDFS_CONNECTION_NAME)
     conn = hdfs_hook.get_conn()
 
@@ -446,7 +450,7 @@ with DAG(
     """Копирование схемы таблиц в hdfs
     """
     extract_schema = copy_data_db_to_hdfs(
-        schema_query, parameters["MaintenancePathPrefix"], RAW_SCHEMA_FILE)
+        parameters, schema_query, RAW_SCHEMA_FILE)
     """Начало записи мониторинга
     """
     start_mon = start_monitoring(
