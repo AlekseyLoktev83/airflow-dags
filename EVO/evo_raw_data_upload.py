@@ -83,7 +83,7 @@ def get_parameters(**kwargs):
     postgres_hook = PostgresHook(POSTGRES_CONNECTION_NAME)
     current_env_name = postgres_hook.get_first('SELECT "Value" FROM public."EnvironmentInfo"')
     print(current_env_name[0])
-    
+    current_env_name = 'EvoDev2_1'
     current_db_conn_name = POSTGRES_CONNECTION_NAME if current_env_name[0] == env_name1 else POSTGRES_CONNECTION2_NAME
     
 
