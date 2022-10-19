@@ -77,12 +77,14 @@ def get_parameters(**kwargs):
     upload_path = f'{raw_path}/{execution_date}/'
     system_name = Variable.get("SystemName#EVO")
     last_upload_date = Variable.get("LastUploadDate#EVO")
+    env_name1 = Variable.get("Environment1#EVO")
+    env_name2 = Variable.get("Environment2#EVO")
     
     postgres_hook = PostgresHook(POSTGRES_CONNECTION_NAME)
     current_env_name = postgres_hook.get_first('SELECT "Value" FROM public."EnvironmentInfo"')
     print(current_env_name[0])
     
-    current_db_conn_name = POSTGRES_CONNECTION_NAME if current_env_name[0] == 'EvoDev1_1' else POSTGRES_CONNECTION2_NAME
+    current_db_conn_name = POSTGRES_CONNECTION_NAME if current_env_name[0] == env_name1 else POSTGRES_CONNECTION2_NAME
     
 
     db_conn = BaseHook.get_connection(current_db_conn_name)
