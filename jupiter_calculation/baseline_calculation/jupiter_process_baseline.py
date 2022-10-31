@@ -37,7 +37,6 @@ import base64
 MSSQL_CONNECTION_NAME = 'odbc_jupiter'
 HDFS_CONNECTION_NAME = 'webhdfs_default'
 VAULT_CONNECTION_NAME = 'vault_default'
-SSH_CONNECTION_NAME = 'ssh_jupiter'
 AVAILABILITY_ZONE_ID = 'ru-central1-b'
 S3_BUCKET_NAME_FOR_JOB_LOGS = 'jupiter-app-test-storage'
 BCP_SEPARATOR = '0x01'
@@ -78,7 +77,6 @@ def get_parameters(**kwargs):
     upload_path = f'{raw_path}/SOURCES/JUPITER/'
     system_name = Variable.get("SystemName")
     last_upload_date = Variable.get("LastUploadDate")
-    baseline_sftp_path = Variable.get("BaselineSftpPath")
     baseline_raw_path = f'{raw_path}/SOURCES/BASELINE/'
     
     db_conn = BaseHook.get_connection(MSSQL_CONNECTION_NAME)
@@ -102,7 +100,6 @@ def get_parameters(**kwargs):
                   "ParentRunId":parent_run_id,
                   "FileName":file_name,
                   "CreateDate":create_date,
-                  "BaselineSftpPath":baseline_sftp_path,
                   "BaselineRawPath":baseline_raw_path,
                   }
     print(parameters)
@@ -158,30 +155,6 @@ def create_child_dag_config(parameters:dict):
     conf={"parent_run_id":parameters["ParentRunId"],"parent_process_date":parameters["ProcessDate"],"schema":parameters["Schema"],"FileName":parameters["FileName"]}
     return conf
 
-@task
-def copy_sftp_to_hdfs(parameters:dict):
-    file_name=parameters["FileName"]
-    baseline_sftp_path=parameters["BaselineSftpPath"]
-    baseline_raw_path=parameters["BaselineRawPath"]
-    
-    tmp_path=f'/tmp/{file_name}'
-    sftp_path=f'{baseline_sftp_path}{file_name}'
-    dst_path = f'{baseline_raw_path}{file_name}'
-    
-    ssh_hook=SSHHook(SSH_CONNECTION_NAME)
-    hdfs_hook = WebHDFSHook(HDFS_CONNECTION_NAME)
-    
-    with ssh_hook.get_conn() as ssh_client:
-     sftp_client = ssh_client.open_sftp()
-     local_folder = os.path.dirname(tmp_path)
-     Path(local_folder).mkdir(parents=True, exist_ok=True)
-     sftp_client.get(sftp_path, tmp_path)
-    
-    
-    conn = hdfs_hook.get_conn()
-    conn.upload(dst_path, tmp_path, overwrite=True)
-
-    return True
 
 with DAG(
     dag_id='jupiter_process_baseline',
@@ -208,7 +181,6 @@ with DAG(
                                  bash_command=baseline_upload_script,
                                 )
     
-    copy_baseline_to_hdfs=copy_sftp_to_hdfs(parameters)
     
     trigger_jupiter_input_baseline_processing = TriggerDagRunOperator(
         task_id="trigger_jupiter_input_baseline_processing",
@@ -227,6 +199,6 @@ with DAG(
     complete_filebuffer_status = complete_filebuffer_status_sp(parameters)
     error_filebuffer_status = error_filebuffer_status_sp(parameters)
     
-    child_dag_config >> baseline_upload_script >> clear_old_baseline >> [copy_baseline_to_hdfs, copy_baseline_from_source] >> trigger_jupiter_input_baseline_processing >> trigger_jupiter_update_baseline >> [complete_filebuffer_status,error_filebuffer_status]
+    child_dag_config >> baseline_upload_script >> clear_old_baseline >>  copy_baseline_from_source >> trigger_jupiter_input_baseline_processing >> trigger_jupiter_update_baseline >> [complete_filebuffer_status,error_filebuffer_status]
     
 
