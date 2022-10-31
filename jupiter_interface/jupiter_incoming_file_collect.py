@@ -164,7 +164,7 @@ def create_file_info(parameters:dict, entity):
     return {"File":entity["File"].replace(".csv",".dat"), "ProcessDate":current_process_date.isoformat(), "CopyCommand":copy_command}
 
 @task(trigger_rule=TriggerRule.ALL_SUCCESS)
-def add_filebuffer_sp(parameters:dict, entity, prev_task):
+def add_filebuffer_sp(parameters:dict, entity):
     odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
     schema = parameters["Schema"]
     result = odbc_hook.run(sql=f"""exec [Jupiter].[AddFileBuffer] @FileName = ? ,@ProcessDate = ?,  @HandlerId = ? """, parameters=(entity["File"],entity["ProcessDate"], parameters["HandlerId"]))
@@ -193,7 +193,7 @@ with DAG(
                                        do_xcom_push=True,
                                       bash_command=create_file_info["CopyCommand"],
                                               )
-    add_filebuffer_sp(parameters=parameters, prev_task=copy_file_to_target_folder, entity=create_file_info)
+    add_filebuffer_sp = add_filebuffer_sp(parameters=parameters, entity=create_file_info)
     
-    copy_remote_to_intermediate >> get_intermediate_file_metadata
+    copy_remote_to_intermediate >> get_intermediate_file_metadata >> create_file_info >> copy_file_to_target_folder >> add_filebuffer_sp
 
