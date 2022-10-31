@@ -151,7 +151,7 @@ def get_intermediate_file_metadata(parameters:dict):
     
     return entity
 
-@task
+@task(multiple_outputs=True)
 def create_file_info(parameters:dict, entity):
     interface_dst_path=parameters["InterfaceDstPath"]
     src_path=entity["SrcPath"]
