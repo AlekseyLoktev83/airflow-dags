@@ -190,7 +190,7 @@ with DAG(
     create_file_info = create_file_info(parameters=parameters, entity=get_intermediate_file_metadata)
     copy_file_to_target_folder = BashOperator(task_id="copy_file_to_target_folder",
                                        do_xcom_push=True,
-                                      bash_command=create_file_info["CopyCommand"]),
+                                      bash_command=create_file_info["CopyCommand"],
                                               )
     add_filebuffer_sp(parameters=parameters, prev_task=copy_file_to_target_folder, entity=create_file_info)
     
