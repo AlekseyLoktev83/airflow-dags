@@ -191,7 +191,7 @@ with DAG(
     file_info = create_file_info(parameters=parameters, entity=get_intermediate_file_metadata)
     copy_file_to_target_folder = BashOperator(task_id="copy_file_to_target_folder",
                                        do_xcom_push=True,
-                                      bash_command='{{ti.xcom_pull(task_ids="file_info",key="CopyCommand")}} ',
+                                      bash_command=file_info["CopyCommand"],
                                               )
     add_filebuffer_sp = add_filebuffer_sp(parameters=parameters, entity=file_info)
     
