@@ -192,7 +192,7 @@ with DAG(
                                        do_xcom_push=True,
                                       ).expand(bash_command=create_files_info["CopyCommand"],
                                               )
-    add_filebuffer_sp.partial(parameters=parameters, prev_task=copy_files_to_target_folder).expand(entity=create_files_info)
+    add_filebuffer_sp.partial(parameters=parameters, prev_task=XComArg(copy_files_to_target_folder)).expand(entity=create_files_info)
     
     copy_remote_to_intermediate >> get_intermediate_files_folder_metadata
 
