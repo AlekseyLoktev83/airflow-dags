@@ -184,7 +184,11 @@ with DAG(
     copy_entities = BashOperator.partial(task_id="copy_entity",
                                        do_xcom_push=True,
                                       ).expand(bash_command=generate_distcp_script.partial(parameters=parameters).expand(entity=generate_entity_list(parameters)),
-                                              )    
+                                              )
+    
+    get_incoming_files_folder_metadat = get_incoming_files_folder_metadata(parameters)
     upload_files = copy_file_into_target_folder.partial(parameters=parameters).expand(entity=get_incoming_files_folder_metadata(parameters))
     add_filebuffer_sp.partial(parameters=parameters).expand(entity=upload_files)
+    
+    copy_entities >> get_incoming_files_folder_metadata
 
