@@ -39,6 +39,7 @@ MSSQL_CONNECTION_NAME = 'odbc_jupiter'
 HDFS_CONNECTION_NAME = 'webhdfs_default'
 VAULT_CONNECTION_NAME = 'vault_default'
 SSH_CONNECTION_NAME = 'ssh_jupiter'
+REMOTE_HDFS_CONNECTION_NAME = 'webhdfs_atlas'
 
 AVAILABILITY_ZONE_ID = 'ru-central1-b'
 S3_BUCKET_NAME_FOR_JOB_LOGS = 'jupiter-app-test-storage'
@@ -75,6 +76,11 @@ def get_parameters(**kwargs):
     last_upload_date = Variable.get("LastUploadDate")
     
     db_conn = BaseHook.get_connection(MSSQL_CONNECTION_NAME)
+    remote_hdfs_conn = BaseHook.get_connection(REMOTE_HDFS_CONNECTION_NAME)
+    print(remote_hdfs_conn)
+    remote_hdfs_url = remote_hdfs_conn.get_uri()
+    dst_dir = f'{raw_path}/SOURCES_REMOTE/BASELINE/'
+    
     bcp_parameters =  base64.b64encode(('-S {} -d {} -U {} -P {}'.format(db_conn.host, db_conn.schema, db_conn.login,db_conn.password)).encode()).decode()
     parent_handler_id = dag_run.conf.get('parent_handler_id')
     handler_id = parent_handler_id if parent_handler_id else str(uuid.uuid4())
@@ -101,7 +107,9 @@ def get_parameters(**kwargs):
                   "CreateDate":create_date,
                   "HandlerId":handler_id,
                   "InterfaceSftpPath":interface_sftp_path,
-                  "InterfaceRawPath":interface_raw_path,                  
+                  "InterfaceRawPath":interface_raw_path,
+                   "RemoteHdfsUrl":remote_hdfs_url,
+                  "DstDir":dst_dir,
                    }
     print(parameters)
     return parameters
