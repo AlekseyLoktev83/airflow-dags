@@ -85,7 +85,7 @@ def get_parameters(**kwargs):
     parent_handler_id = dag_run.conf.get('parent_handler_id')
     handler_id = parent_handler_id if parent_handler_id else str(uuid.uuid4())
     
-    interface_sftp_path = Variable.get("InterfaceSftpPath")
+    interface_dst_path = f'{raw_path}/SOURCES/BASELINE/'
     interface_raw_path = f'{raw_path}/SOURCES/BASELINE_ANAPLAN/'
        
     parameters = {"RawPath": raw_path,
@@ -106,7 +106,7 @@ def get_parameters(**kwargs):
                   "ParentRunId":parent_run_id,
                   "CreateDate":create_date,
                   "HandlerId":handler_id,
-                  "InterfaceSftpPath":interface_sftp_path,
+                  "InterfaceDstPath":interface_dst_path,
                   "InterfaceRawPath":interface_raw_path,
                    "RemoteHdfsUrl":remote_hdfs_url,
                   "DstDir":dst_dir,
@@ -152,25 +152,15 @@ def get_incoming_files_folder_metadata(parameters:dict):
 
 @task
 def copy_file_into_target_folder(parameters:dict, entity):
-    interface_sftp_path=parameters["InterfaceSftpPath"]
+    interface_dst_path=parameters["InterfaceDstPath"]
     src_path=entity["SrcPath"]
     current_process_date = pendulum.now()
     file_name=os.path.splitext(entity["File"])[0] + current_process_date.strftime("_%Y%m%d_%H%M%S.dat")
+    dst_path=f'{interface_dst_path}/{file_name}'
+    copy_command = f'hadoop dfs -cp -f {src_path} {dst_path}'
     
-    tmp_path=f'/tmp/{entity["File"]}'
-    sftp_path=f'{interface_sftp_path}/{file_name}'
     
-    ssh_hook=SSHHook(SSH_CONNECTION_NAME)
-    hdfs_hook = WebHDFSHook(HDFS_CONNECTION_NAME)
-    
-    conn = hdfs_hook.get_conn()
-    conn.download(src_path, tmp_path, overwrite=True)
-    
-    with ssh_hook.get_conn() as ssh_client:
-     sftp_client = ssh_client.open_sftp()
-     sftp_client.put(tmp_path,sftp_path)
-    
-    return {"File":entity["File"].replace(".csv",".dat"), "ProcessDate":current_process_date.isoformat()}
+    return {"File":entity["File"].replace(".csv",".dat"), "ProcessDate":current_process_date.isoformat(), "CopyCommand":copy_command}
 
 @task(trigger_rule=TriggerRule.ALL_SUCCESS)
 def add_filebuffer_sp(parameters:dict,entity):
@@ -195,6 +185,6 @@ with DAG(
                                        do_xcom_push=True,
                                       ).expand(bash_command=generate_distcp_script.partial(parameters=parameters).expand(entity=generate_entity_list(parameters)),
                                               )    
-#     upload_files = copy_file_into_target_folder.partial(parameters=parameters).expand(entity=get_incoming_files_folder_metadata(parameters))
-#     add_filebuffer_sp.partial(parameters=parameters).expand(entity=upload_files)
+    upload_files = copy_file_into_target_folder.partial(parameters=parameters).expand(entity=get_incoming_files_folder_metadata(parameters))
+    add_filebuffer_sp.partial(parameters=parameters).expand(entity=upload_files)
 
