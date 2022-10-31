@@ -138,7 +138,7 @@ def generate_entity_list(parameters:dict):
     return entities
 
 @task
-def get_incoming_files_folder_metadata(parameters:dict):
+def get_intermediate_files_folder_metadata(parameters:dict):
     hdfs_hook = WebHDFSHook(HDFS_CONNECTION_NAME)
     conn = hdfs_hook.get_conn()
     src_path=parameters["InterfaceRawPath"]
@@ -151,19 +151,19 @@ def get_incoming_files_folder_metadata(parameters:dict):
     return entities
 
 @task
-def copy_file_into_target_folder(parameters:dict, entity):
+def create_files_info(parameters:dict, entity):
     interface_dst_path=parameters["InterfaceDstPath"]
     src_path=entity["SrcPath"]
     current_process_date = pendulum.now()
     file_name=os.path.splitext(entity["File"])[0] + current_process_date.strftime("_%Y%m%d_%H%M%S.dat")
-    dst_path=f'{interface_dst_path}/{file_name}'
+    dst_path=f'{interface_dst_path}{file_name}'
     copy_command = f'hadoop dfs -cp -f {src_path} {dst_path}'
     
     
     return {"File":entity["File"].replace(".csv",".dat"), "ProcessDate":current_process_date.isoformat(), "CopyCommand":copy_command}
 
 @task(trigger_rule=TriggerRule.ALL_SUCCESS)
-def add_filebuffer_sp(parameters:dict,entity):
+def add_filebuffer_sp(parameters:dict, entity, prev_task):
     odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
     schema = parameters["Schema"]
     result = odbc_hook.run(sql=f"""exec [Jupiter].[AddFileBuffer] @FileName = ? ,@ProcessDate = ?,  @HandlerId = ? """, parameters=(entity["File"],entity["ProcessDate"], parameters["HandlerId"]))
@@ -181,14 +181,18 @@ with DAG(
 ) as dag:
 # Get dag parameters from vault    
     parameters = get_parameters()
-    copy_entities = BashOperator.partial(task_id="copy_entity",
+    copy_remote_to_intermediate = BashOperator.partial(task_id="copy_remote_to_intermediate",
                                        do_xcom_push=True,
                                       ).expand(bash_command=generate_distcp_script.partial(parameters=parameters).expand(entity=generate_entity_list(parameters)),
                                               )
     
-    get_incoming_files_folder_metadata = get_incoming_files_folder_metadata(parameters)
-    upload_files = copy_file_into_target_folder.partial(parameters=parameters).expand(entity=get_incoming_files_folder_metadata)
-    add_filebuffer_sp.partial(parameters=parameters).expand(entity=upload_files)
+    get_intermediate_files_folder_metadata = get_intermediate_files_folder_metadata(parameters)
+    create_files_info = create_files_info.partial(parameters=parameters).expand(entity=get_intermediate_files_folder_metadata)
+    copy_files_to_target_folder = BashOperator.partial(task_id="copy_files_to_target_folder",
+                                       do_xcom_push=True,
+                                      ).expand(bash_command=create_files_info["CopyCommand"],
+                                              )
+    add_filebuffer_sp.partial(parameters=parameters, prev_task=copy_files_to_target_folder).expand(entity=create_files_info)
     
-    copy_entities >> get_incoming_files_folder_metadata
+    copy_remote_to_intermediate >> get_intermediate_files_folder_metadata
 
