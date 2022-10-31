@@ -187,7 +187,7 @@ with DAG(
                                               )
     
     get_incoming_files_folder_metadat = get_incoming_files_folder_metadata(parameters)
-    upload_files = copy_file_into_target_folder.partial(parameters=parameters).expand(entity=get_incoming_files_folder_metadata(parameters))
+    upload_files = copy_file_into_target_folder.partial(parameters=parameters).expand(entity=get_incoming_files_folder_metadata)
     add_filebuffer_sp.partial(parameters=parameters).expand(entity=upload_files)
     
     copy_entities >> get_incoming_files_folder_metadata
