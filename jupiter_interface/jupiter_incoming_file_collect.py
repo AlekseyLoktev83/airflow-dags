@@ -120,41 +120,22 @@ def create_child_dag_config(parameters:dict):
     return conf
 
 @task
-def truncate_table(parameters:dict, entity):
-    odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
-    schema = parameters["Schema"]
-    table_name = entity['TableName']
-    result = odbc_hook.run(sql=f"""truncate table {table_name}""")
-    print(result)
-
-    return entity
-
-@task
-def generate_bcp_import_script(parameters:dict, entity):
-    schema = parameters["Schema"]
-    table_name = entity['TableName']
+def generate_distcp_script(parameters:dict, entity):
     src_path = entity['SrcPath']
-    bcp_import_parameters=parameters['BcpImportParameters']
-    script = f'/utils/bcp_import.sh {src_path} {bcp_import_parameters} \"{table_name}\" "1" '
-    print(script)
-
+    dst_path = entity['DstPath']
+    remote_hdfs_url = parameters['RemoteHdfsUrl']
+    
+    script = f'hdfs dfs -rm -r {dst_path};hadoop distcp -pbc {remote_hdfs_url}{src_path} hdfs://$(hdfs getconf -namenodes){dst_path} '
     return script
 
 @task
 def generate_entity_list(parameters:dict):
-    schema = parameters["Schema"]
-    process_path=parameters['ProcessPath']
-    tables = [
-              {'SrcPath':f'{process_path}/UPLOAD_FROM_SCENARIO/Promo/Promo.CSV/*.csv','TableName':f'{schema}.TEMP_SCENARIO_PROMO'},
-              {'SrcPath':f'{process_path}/UPLOAD_FROM_SCENARIO/PromoProduct/PromoProduct.CSV/*.csv','TableName':f'{schema}.TEMP_SCENARIO_PROMOPRODUCT'},
-              {'SrcPath':f'{process_path}/UPLOAD_FROM_SCENARIO/PromoSupportPromo/PromoSupportPromo.CSV/*.csv','TableName':f'{schema}.TEMP_SCENARIO_PROMOSUPPORTPROMO'},
-              {'SrcPath':f'{process_path}/UPLOAD_FROM_SCENARIO/PromoProductsCorrection/PromoProductsCorrection.CSV/*.csv','TableName':f'{schema}.TEMP_SCENARIO_PROMOPRODUCTSCORRECTION'},
-              {'SrcPath':f'{process_path}/UPLOAD_FROM_SCENARIO/PromoProductTree/PromoProductTree.CSV/*.csv','TableName':f'{schema}.TEMP_SCENARIO_PROMOPRODUCTTREE'},
-              {'SrcPath':f'{process_path}/UPLOAD_FROM_SCENARIO/BTLPromo/BTLPromo.CSV/*.csv','TableName':f'{schema}.TEMP_SCENARIO_BTLPROMO'},
-              {'SrcPath':f'{process_path}/UPLOAD_FROM_SCENARIO/BTL/BTL.CSV/*.csv','TableName':f'{schema}.TEMP_SCENARIO_BTL'},
-              {'SrcPath':f'{process_path}/UPLOAD_FROM_SCENARIO/PromoSupport/PromoSupport.CSV/*.csv','TableName':f'{schema}.TEMP_SCENARIO_PROMOSUPPORT'},
+    raw_path=parameters['RawPath']
+    dst_dir=parameters['DstDir'] 
+    entities = [
+              {'SrcPath':'/FILES/BASELINE_ANAPLAN/BASELINE_0.csv','DstPath':dst_dir},
              ]
-    return tables
+    return entities
 
 @task
 def get_incoming_files_folder_metadata(parameters:dict):
@@ -210,9 +191,10 @@ with DAG(
 ) as dag:
 # Get dag parameters from vault    
     parameters = get_parameters()
-    upload_files = copy_file_into_target_folder.partial(parameters=parameters).expand(entity=get_incoming_files_folder_metadata(parameters))
-    add_filebuffer_sp.partial(parameters=parameters).expand(entity=upload_files)
-#     upload_tables = BashOperator.partial(task_id="import_table",
-#                                        do_xcom_push=True,
-#                                       ).expand(bash_command=generate_bcp_import_script.partial(parameters=parameters).expand(entity=trunc_tables),
-#                                               )
+    copy_entities = BashOperator.partial(task_id="copy_entity",
+                                       do_xcom_push=True,
+                                      ).expand(bash_command=generate_distcp_script.partial(parameters=parameters).expand(entity=generate_entity_list(parameters)),
+                                              )    
+#     upload_files = copy_file_into_target_folder.partial(parameters=parameters).expand(entity=get_incoming_files_folder_metadata(parameters))
+#     add_filebuffer_sp.partial(parameters=parameters).expand(entity=upload_files)
+
