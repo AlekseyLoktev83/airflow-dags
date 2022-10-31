@@ -145,7 +145,7 @@ def get_intermediate_file_metadata(parameters:dict):
     files = conn.list(src_path)
     
     entity = None
-    file for file in files if file.endswith(".csv"):
+    [file for file in files if file.endswith(".csv")]:
        entity = {'File':file,'SrcPath':f'{src_path}{file}'}
     
     return entity
