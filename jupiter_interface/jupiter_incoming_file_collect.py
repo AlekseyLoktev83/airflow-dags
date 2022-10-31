@@ -79,7 +79,7 @@ def get_parameters(**kwargs):
     remote_hdfs_conn = BaseHook.get_connection(REMOTE_HDFS_CONNECTION_NAME)
     print(remote_hdfs_conn)
     remote_hdfs_url = remote_hdfs_conn.get_uri()
-    dst_dir = f'{raw_path}/SOURCES_REMOTE/BASELINE/'
+    dst_dir = f'{raw_path}/SOURCES/BASELINE_ANAPLAN/'
     
     bcp_parameters =  base64.b64encode(('-S {} -d {} -U {} -P {}'.format(db_conn.host, db_conn.schema, db_conn.login,db_conn.password)).encode()).decode()
     parent_handler_id = dag_run.conf.get('parent_handler_id')
@@ -133,7 +133,7 @@ def generate_entity_list(parameters:dict):
     raw_path=parameters['RawPath']
     dst_dir=parameters['DstDir'] 
     entities = [
-              {'SrcPath':'/FILES/BASELINE_ANAPLAN/BASELINE_0.csv','DstPath':dst_dir},
+              {'SrcPath':'/FILES/BASELINE_ANAPLAN/','DstPath':dst_dir},
              ]
     return entities
 
