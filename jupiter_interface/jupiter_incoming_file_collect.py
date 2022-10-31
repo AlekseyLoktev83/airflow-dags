@@ -193,7 +193,7 @@ with DAG(
                                        do_xcom_push=True,
                                       bash_command='{{ti.xcom_pull(task_ids="file_info",key="CopyCommand")}} ',
                                               )
-    add_filebuffer_sp = add_filebuffer_sp(parameters=parameters, entity=create_file_info)
+    add_filebuffer_sp = add_filebuffer_sp(parameters=parameters, entity=file_info)
     
     copy_remote_to_intermediate >> get_intermediate_file_metadata >> file_info >> copy_file_to_target_folder >> add_filebuffer_sp
 
