@@ -138,20 +138,20 @@ def generate_entity_list(parameters:dict):
     return entities
 
 @task
-def get_intermediate_files_folder_metadata(parameters:dict):
+def get_intermediate_file_metadata(parameters:dict):
     hdfs_hook = WebHDFSHook(HDFS_CONNECTION_NAME)
     conn = hdfs_hook.get_conn()
     src_path=parameters["InterfaceRawPath"]
     files = conn.list(src_path)
     
-    entities = []
-    for file in files:
-        entities.append({'File':file,'SrcPath':f'{src_path}{file}'})
+    entity = None
+    file for file in files if file.endswith(".csv"):
+       entity = {'File':file,'SrcPath':f'{src_path}{file}'})
     
-    return entities
+    return entity
 
 @task
-def create_files_info(parameters:dict, entity):
+def create_file_info(parameters:dict, entity):
     interface_dst_path=parameters["InterfaceDstPath"]
     src_path=entity["SrcPath"]
     current_process_date = pendulum.now()
@@ -186,13 +186,13 @@ with DAG(
                                       ).expand(bash_command=generate_distcp_script.partial(parameters=parameters).expand(entity=generate_entity_list(parameters)),
                                               )
     
-    get_intermediate_files_folder_metadata = get_intermediate_files_folder_metadata(parameters)
-    create_files_info = create_files_info.partial(parameters=parameters).expand(entity=get_intermediate_files_folder_metadata)
-    copy_files_to_target_folder = BashOperator.partial(task_id="copy_files_to_target_folder",
+    get_intermediate_file_metadata = get_intermediate_file_metadata(parameters)
+    create_file_info = create_file_info(parameters=parameters, entity=get_intermediate_file_metadata)
+    copy_file_to_target_folder = BashOperator(task_id="copy_file_to_target_folder",
                                        do_xcom_push=True,
-                                      ).expand(bash_command=XComArg(create_files_info["CopyCommand"]),
+                                      bash_command=create_file_info["CopyCommand"]),
                                               )
-    add_filebuffer_sp.partial(parameters=parameters, prev_task=XComArg(copy_files_to_target_folder)).expand(entity=create_files_info)
+    add_filebuffer_sp(parameters=parameters, prev_task=copy_file_to_target_folder, entity=create_file_info)
     
-    copy_remote_to_intermediate >> get_intermediate_files_folder_metadata
+    copy_remote_to_intermediate >> get_intermediate_file_metadata
 
