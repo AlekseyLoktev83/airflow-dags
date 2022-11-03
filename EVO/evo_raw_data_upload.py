@@ -245,6 +245,18 @@ def gen_copy_command(query,dst_path,db_params,db_password,sep,schema):
     fi
     """
 
+def generate_delete_old_files_command(dir,days_to_keep_old_files):
+    return f"""today=`date +'%s'`
+hdfs dfs -ls {dir} | grep "^d\|^-" | while read line ; do
+dir_date=$(echo ${{line}} | awk '{{print $6}}')
+difference=$(( ( ${{today}} - $(date -d ${{dir_date}} +%s) ) / ( 24*60*60 ) ))
+filePath=$(echo ${{line}} | awk '{{print $8}}')
+
+if [ ${{difference}} -gt "{{days_to_keep_old_files}}" ]; then
+    hdfs dfs -rm -r $filePath
+fi
+done"""
+
 @task
 def generate_postgres_copy_script(
         upload_path,
@@ -264,20 +276,6 @@ def generate_postgres_copy_script(
     """
     scripts = []
     for entity in entities:
-#         script = 'cp -r /tmp/data/src/. ~/ && chmod +x ~/exec_query_postgres.sh && ~/exec_query_postgres.sh "{}" {}{}/{}/{}/{}.csv "{}" "{}" "{}" {} '.format(
-#             entity["Extraction"].replace(
-#                 '"',
-#                 '\\"'),
-#             upload_path,
-#             entity["Schema"],
-#             entity["EntityName"],
-#             entity["Method"],
-#             entity["EntityName"],
-#             postgres_copy_parameters,
-#             postgres_password,
-#             CSV_SEPARATOR,
-#             entity["Schema"])
-#         scripts.append(script)
         script = gen_copy_command(
             query=entity["Extraction"].replace(
                 '"',
@@ -482,7 +480,18 @@ def update_last_upload_date(last_upload_date):
         path="variables/LastUploadDate#EVO",
         secret={
             "value": last_upload_date})
+    
+@task
+def generate_cleanup_command(parameters: dict):
+    """Генерация shell скрипта удаления старых файлов из каталога #MAINTENANCE на hdfs
 
+    Args:
+        parameters (dict): Параметры
+    Returns:
+        str: Shell скрипт
+    """
+    dst_dir = f'{parameters["HdfsUrl"]}{parameters["MaintenancePath"]}'    
+    return generate_delete_old_files_command(dir=dst_dir,days_to_keep_old_files=DAYS_TO_KEEP_OLD_FILES)
 
 with DAG(
     dag_id='evo_raw_data_upload',
@@ -555,9 +564,7 @@ with DAG(
     cleanup = BashOperator(
         task_id='cleanup',
         trigger_rule=TriggerRule.NONE_FAILED_MIN_ONE_SUCCESS,
-        bash_command='/utils/hdfs_delete_old_files.sh {{ti.xcom_pull(task_ids="get_parameters",key="MaintenancePath")}} {{params.days_to_keep_old_files}} ',
-        params={
-            'days_to_keep_old_files': DAYS_TO_KEEP_OLD_FILES},
+        bash_command=generate_cleanup_command(parameters),
     )
 
     if_upload_success >> end_monitoring_success(
