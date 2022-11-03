@@ -570,6 +570,6 @@ with DAG(
 
     if_upload_success >> end_monitoring_success(
         dst_dir=parameters["MaintenancePathPrefix"]) >> update_last_upload_date(
-        last_upload_date=parameters["CurrentUploadDate"]) >> generate_cleanup_comman >> cleanup
+        last_upload_date=parameters["CurrentUploadDate"]) >> generate_cleanup_command >> cleanup
     if_upload_success >> end_monitoring_failure(
-        dst_dir=parameters["MaintenancePathPrefix"]) >> generate_cleanup_comman >> cleanup
+        dst_dir=parameters["MaintenancePathPrefix"]) >> generate_cleanup_command >> cleanup
