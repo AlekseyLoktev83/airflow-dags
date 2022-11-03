@@ -74,7 +74,11 @@ def get_parameters(**kwargs):
     output_path = Variable.get("OutputPath#EVO")
     white_list = Variable.get("WhiteList#EVO", default_var=None)
     black_list = Variable.get("BlackList#EVO", default_var=None)
-    upload_path = f'{raw_path}/{execution_date}/'
+    
+    hdfs_conn = BaseHook.get_connection(HDFS_CONNECTION_NAME)
+    hdfs_url = hdfs_conn.get_uri()
+    
+    upload_path = f'{hdfs_url}{raw_path}/{execution_date}/'
     system_name = Variable.get("SystemName#EVO")
     last_upload_date = Variable.get("LastUploadDate#EVO")
     env_name1 = Variable.get("Environment1#EVO")
@@ -91,7 +95,7 @@ def get_parameters(**kwargs):
         (f'psql -h {db_conn.host} -d {db_conn.schema} -U {db_conn.login}').encode()).decode()
     postgres_password = base64.b64encode(
         (f'{db_conn.password}').encode()).decode()
-
+    
     parameters = {
         "RawPath": raw_path,
         "ProcessPath": process_path,
@@ -115,6 +119,7 @@ def get_parameters(**kwargs):
             raw_path,
             "/#MAINTENANCE/"),
         "CurrentDbConnName":current_db_conn_name,
+        "HdfsUrl":hdfs_url,
     }
     print(parameters)
     return parameters
