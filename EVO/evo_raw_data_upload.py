@@ -290,7 +290,7 @@ def generate_postgres_copy_script(
 #             CSV_SEPARATOR,
 #             entity["Schema"])
 #         scripts.append(script)
-        script = generate_postgres_copy_script(
+        script = gen_copy_command(
             query=entity["Extraction"].replace(
                 '"',
                 '\\"'),
