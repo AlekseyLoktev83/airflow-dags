@@ -481,7 +481,7 @@ def update_last_upload_date(last_upload_date):
         secret={
             "value": last_upload_date})
     
-@task
+@task(trigger_rule=TriggerRule.NONE_FAILED_MIN_ONE_SUCCESS)
 def generate_cleanup_command(parameters: dict):
     """Генерация shell скрипта удаления старых файлов из каталога #MAINTENANCE на hdfs
 
