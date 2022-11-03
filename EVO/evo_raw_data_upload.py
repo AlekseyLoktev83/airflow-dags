@@ -238,9 +238,9 @@ def gen_copy_command(query,dst_path,db_params,db_password,sep,schema):
         
     if [ $ret_code -eq 0 ];# Check bcp result
     then
-       echo "{{"Schema":"{schema}","EntityName":"$(basename {dst_path} .csv)","Result":true,"Duration":"$duration"}}"
+       echo "{{\\"Schema\\":\\"{schema}\\",\\"EntityName\\":\\"$(basename {dst_path} .csv)\\",\\"Result\\":true,\\"Duration\\":\\"$duration\\"}}"
     else
-       echo "{{"Schema":"{schema}","EntityName":"$(basename {dst_path} .csv)","Result":false,"Duration":"$duration"}}"
+       echo "{{\\"Schema\\":\\"{schema}\\",\\"EntityName\\":\\"$(basename {dst_path} .csv)\\",\\"Result\\":false,\\"Duration\\":\\"$duration\\"}}"
        exit $ret_code
     fi
     """
