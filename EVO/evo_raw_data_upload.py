@@ -212,18 +212,6 @@ def generate_upload_script(
 
 def gen_copy_command(query,dst_path,db_params,db_password,sep,schema):
     return f"""
-    #!/bin/sh
-
-    #Скрипт загрузки результатов запроса к Postgres в csv файл в каталоге hdfs
-    #Параметры:
-    #query - Sql запрос
-    #dst_path - путь к файлу в каталоге hdfs
-    #db_params - настройки бд(base64)
-    #db_password - пароль бл(base64)
-    #sep - csv разделитель
-    #schema - схема бд
-    #Возвращет json с результатом загрузки 
-
     get_duration()
     {
         local start_ts=$1
