@@ -211,52 +211,51 @@ def generate_upload_script(
     return entities_json
 
 def gen_copy_command(query,dst_path,db_params,db_password,sep,schema):
-    return "123"
-#     return """
-#     #!/bin/sh
+    return """
+    #!/bin/sh
 
-#     #Скрипт загрузки результатов запроса к Postgres в csv файл в каталоге hdfs
-#     #Параметры:
-#     #query - Sql запрос
-#     #dst_path - путь к файлу в каталоге hdfs
-#     #db_params - настройки бд(base64)
-#     #db_password - пароль бл(base64)
-#     #sep - csv разделитель
-#     #schema - схема бд
-#     #Возвращет json с результатом загрузки 
+    #Скрипт загрузки результатов запроса к Postgres в csv файл в каталоге hdfs
+    #Параметры:
+    #query - Sql запрос
+    #dst_path - путь к файлу в каталоге hdfs
+    #db_params - настройки бд(base64)
+    #db_password - пароль бл(base64)
+    #sep - csv разделитель
+    #schema - схема бд
+    #Возвращет json с результатом загрузки 
 
-#     get_duration()
-#     {
-#         local start_ts=$1
-#         local end_ts=$(date +%s%N | cut -b1-13)
-#         local duration=$((end_ts - start_ts))
+    get_duration()
+    {
+        local start_ts=$1
+        local end_ts=$(date +%s%N | cut -b1-13)
+        local duration=$((end_ts - start_ts))
 
-#         return $duration
-#     }
+        return $duration
+    }
 
-#     start_ts=$(date +%s%N | cut -b1-13)
+    start_ts=$(date +%s%N | cut -b1-13)
 
-#     db_params=$(echo {db_params}|base64 -d)
+    db_params=$(echo {db_params}|base64 -d)
 
-#     export PGPASSWORD=$(echo {db_password}|base64 -d)
-#     echo {sep}
+    export PGPASSWORD=$(echo {db_password}|base64 -d)
+    echo {sep}
         
-#     $db_params -c "\copy ({query}) to STDOUT with csv header delimiter E'{sep}'"|hadoop dfs -put -f - {dst_path}
-#     ret_code=$?
+    $db_params -c "\copy ({query}) to STDOUT with csv header delimiter E'{sep}'"|hadoop dfs -put -f - {dst_path}
+    ret_code=$?
 
-#     echo "Postgres copy return code="$ret_code     
+    echo "Postgres copy return code="$ret_code     
         
-#     get_duration $start_ts
-#     duration=$?
+    get_duration $start_ts
+    duration=$?
         
-#     if [ $ret_code -eq 0 ];# Check bcp result
-#     then
-#        echo "{\"Schema\":\"{schema}\",\"EntityName\":\"$(basename {dst_path} .csv)\",\"Result\":true,\"Duration\":\"$duration\"}"
-#     else
-#        echo "{\"Schema\":\"{schema}\",\"EntityName\":\"$(basename {dst_path} .csv)\",\"Result\":false,\"Duration\":\"$duration\"}"
-#        exit $ret_code
-#     fi
-#     """
+    if [ $ret_code -eq 0 ];# Check bcp result
+    then
+       echo "{\"Schema\":\"{schema}\",\"EntityName\":\"$(basename {dst_path} .csv)\",\"Result\":true,\"Duration\":\"$duration\"}"
+    else
+       echo "{\"Schema\":\"{schema}\",\"EntityName\":\"$(basename {dst_path} .csv)\",\"Result\":false,\"Duration\":\"$duration\"}"
+       exit $ret_code
+    fi
+    """
 
 @task
 def generate_postgres_copy_script(
@@ -292,14 +291,14 @@ def generate_postgres_copy_script(
 #             entity["Schema"])
 #         scripts.append(script)
         script = generate_postgres_copy_script(
-            entity["Extraction"].replace(
+            query=entity["Extraction"].replace(
                 '"',
                 '\\"'),
-            f'{upload_path}{entity["Schema"]}/{entity["EntityName"]}/{entity["Method"]}/{entity["EntityName"]}.csv',
-            postgres_copy_parameters,
-            postgres_password,
-            CSV_SEPARATOR,
-            entity["Schema"])
+            dst_path=f'{upload_path}{entity["Schema"]}/{entity["EntityName"]}/{entity["Method"]}/{entity["EntityName"]}.csv',
+            db_params=postgres_copy_parameters,
+            db_password=postgres_password,
+            sep=CSV_SEPARATOR,
+            schema=entity["Schema"])
         scripts.append(script)        
         
 
