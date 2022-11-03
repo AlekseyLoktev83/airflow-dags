@@ -213,13 +213,13 @@ def generate_upload_script(
 def gen_copy_command(query,dst_path,db_params,db_password,sep,schema):
     return f"""
     get_duration()
-    {
+    {{
         local start_ts=$1
         local end_ts=$(date +%s%N | cut -b1-13)
         local duration=$((end_ts - start_ts))
 
         return $duration
-    }
+    }}
 
     start_ts=$(date +%s%N | cut -b1-13)
 
@@ -238,9 +238,9 @@ def gen_copy_command(query,dst_path,db_params,db_password,sep,schema):
         
     if [ $ret_code -eq 0 ];# Check bcp result
     then
-       echo "{\"Schema\":\"{schema}\",\"EntityName\":\"$(basename {dst_path} .csv)\",\"Result\":true,\"Duration\":\"$duration\"}"
+       echo "{{\"Schema\":\"{schema}\",\"EntityName\":\"$(basename {dst_path} .csv)\",\"Result\":true,\"Duration\":\"$duration\"}}"
     else
-       echo "{\"Schema\":\"{schema}\",\"EntityName\":\"$(basename {dst_path} .csv)\",\"Result\":false,\"Duration\":\"$duration\"}"
+       echo "{{\"Schema\":\"{schema}\",\"EntityName\":\"$(basename {dst_path} .csv)\",\"Result\":false,\"Duration\":\"$duration\"}}"
        exit $ret_code
     fi
     """
