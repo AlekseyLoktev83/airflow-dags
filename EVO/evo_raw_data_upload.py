@@ -561,14 +561,15 @@ with DAG(
         op_kwargs={'input': upload_result},
     )
 
+    generate_cleanup_command = generate_cleanup_command(parameters)
     cleanup = BashOperator(
         task_id='cleanup',
         trigger_rule=TriggerRule.NONE_FAILED_MIN_ONE_SUCCESS,
-        bash_command=generate_cleanup_command(parameters),
+        bash_command=generate_cleanup_command,
     )
 
     if_upload_success >> end_monitoring_success(
         dst_dir=parameters["MaintenancePathPrefix"]) >> update_last_upload_date(
-        last_upload_date=parameters["CurrentUploadDate"]) >> cleanup
+        last_upload_date=parameters["CurrentUploadDate"]) >> generate_cleanup_comman >> cleanup
     if_upload_success >> end_monitoring_failure(
-        dst_dir=parameters["MaintenancePathPrefix"]) >> cleanup
+        dst_dir=parameters["MaintenancePathPrefix"]) >> generate_cleanup_comman >> cleanup
