@@ -252,7 +252,7 @@ dir_date=$(echo ${{line}} | awk '{{print $6}}')
 difference=$(( ( ${{today}} - $(date -d ${{dir_date}} +%s) ) / ( 24*60*60 ) ))
 filePath=$(echo ${{line}} | awk '{{print $8}}')
 
-if [ ${{difference}} -gt "{{days_to_keep_old_files}}" ]; then
+if [ ${{difference}} -gt "{days_to_keep_old_files}" ]; then
     hdfs dfs -rm -r $filePath
 fi
 done"""
