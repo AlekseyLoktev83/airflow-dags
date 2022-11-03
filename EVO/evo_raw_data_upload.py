@@ -76,7 +76,7 @@ def get_parameters(**kwargs):
     black_list = Variable.get("BlackList#EVO", default_var=None)
     
     hdfs_conn = BaseHook.get_connection(HDFS_CONNECTION_NAME)
-    hdfs_url = hdfs_conn.get_uri()
+    hdfs_url = hdfs_conn.host
     
     upload_path = f'{hdfs_url}{raw_path}/{execution_date}/'
     system_name = Variable.get("SystemName#EVO")
