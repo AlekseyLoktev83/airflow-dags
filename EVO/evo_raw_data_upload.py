@@ -211,7 +211,7 @@ def generate_upload_script(
     return entities_json
 
 def gen_copy_command(query,dst_path,db_params,db_password,sep,schema):
-    return """
+    return f"""
     #!/bin/sh
 
     #Скрипт загрузки результатов запроса к Postgres в csv файл в каталоге hdfs
