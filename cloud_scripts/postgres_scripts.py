@@ -167,3 +167,36 @@ def generate_table_select_query(current_upload_date, last_upload_date, actual_sc
 
     result_df = pd.DataFrame(result)
     return result_df
+
+def generate_copy_command(query,dst_path,db_params,db_password,sep,schema):
+    return f"""
+    get_duration()
+    {{
+        local start_ts=$1
+        local end_ts=$(date +%s%N | cut -b1-13)
+        local duration=$((end_ts - start_ts))
+        return $duration
+    }}
+    start_ts=$(date +%s%N | cut -b1-13)
+    db_params=$(echo {db_params}|base64 -d)
+    export PGPASSWORD=$(echo {db_password}|base64 -d)
+    echo {sep}
+        
+    $db_params -c "\copy ({query}) to STDOUT with csv header delimiter E'{sep}'"|hadoop dfs -put -f - {dst_path}
+    ret_code=$?
+    echo "Postgres copy return code="$ret_code     
+        
+    get_duration $start_ts
+    duration=$?
+        
+    if [ $ret_code -eq 0 ];# Check bcp result
+    then
+       echo "{{\\"Schema\\":\\"{schema}\\",\\"EntityName\\":\\"$(basename {dst_path} .csv)\\",\\"Result\\":true,\\"Duration\\":\\"$duration\\"}}"
+    else
+       echo "{{\\"Schema\\":\\"{schema}\\",\\"EntityName\\":\\"$(basename {dst_path} .csv)\\",\\"Result\\":false,\\"Duration\\":\\"$duration\\"}}"
+       exit $ret_code
+    fi
+    """
+
+def generate_delete_old_files_command():
+	pass
