@@ -74,28 +74,29 @@ def get_parameters(**kwargs):
     output_path = Variable.get("OutputPath#EVO")
     white_list = Variable.get("WhiteList#EVO", default_var=None)
     black_list = Variable.get("BlackList#EVO", default_var=None)
-    
+
     hdfs_conn = BaseHook.get_connection(HDFS_CONNECTION_NAME)
     hdfs_url = f'hdfs://{hdfs_conn.host}'
-    
+
     upload_path = f'{hdfs_url}{raw_path}/{execution_date}/'
     system_name = Variable.get("SystemName#EVO")
     last_upload_date = Variable.get("LastUploadDate#EVO")
     env_name1 = Variable.get("Environment1#EVO")
     env_name2 = Variable.get("Environment2#EVO")
-    
+
     postgres_hook = PostgresHook(POSTGRES_CONNECTION_NAME)
-    current_env_name = postgres_hook.get_first('SELECT "Value" FROM public."EnvironmentInfo"')
+    current_env_name = postgres_hook.get_first(
+        'SELECT "Value" FROM public."EnvironmentInfo"')
     print(current_env_name[0])
-    current_db_conn_name = POSTGRES_CONNECTION_NAME if current_env_name[0] == env_name1 else POSTGRES_CONNECTION2_NAME
-    
+    current_db_conn_name = POSTGRES_CONNECTION_NAME if current_env_name[
+        0] == env_name1 else POSTGRES_CONNECTION2_NAME
 
     db_conn = BaseHook.get_connection(current_db_conn_name)
     postgres_copy_parameters = base64.b64encode(
         (f'psql -h {db_conn.host} -d {db_conn.schema} -U {db_conn.login}').encode()).decode()
     postgres_password = base64.b64encode(
         (f'{db_conn.password}').encode()).decode()
-    
+
     parameters = {
         "RawPath": raw_path,
         "ProcessPath": process_path,
@@ -118,8 +119,8 @@ def get_parameters(**kwargs):
         "MaintenancePath": "{}{}".format(
             raw_path,
             "/#MAINTENANCE/"),
-        "CurrentDbConnName":current_db_conn_name,
-        "HdfsUrl":hdfs_url,
+        "CurrentDbConnName": current_db_conn_name,
+        "HdfsUrl": hdfs_url,
     }
     print(parameters)
     return parameters
@@ -210,6 +211,7 @@ def generate_upload_script(
 
     return entities_json
 
+
 @task
 def generate_postgres_copy_script(
         upload_path,
@@ -238,8 +240,7 @@ def generate_postgres_copy_script(
             db_password=postgres_password,
             sep=CSV_SEPARATOR,
             schema=entity["Schema"])
-        scripts.append(script)        
-        
+        scripts.append(script)
 
     return scripts
 
@@ -433,7 +434,8 @@ def update_last_upload_date(last_upload_date):
         path="variables/LastUploadDate#EVO",
         secret={
             "value": last_upload_date})
-    
+
+
 @task(trigger_rule=TriggerRule.NONE_FAILED_MIN_ONE_SUCCESS)
 def generate_cleanup_command(parameters: dict):
     """Генерация shell скрипта удаления старых файлов из каталога #MAINTENANCE на hdfs
@@ -443,8 +445,10 @@ def generate_cleanup_command(parameters: dict):
     Returns:
         str: Shell скрипт
     """
-    dst_dir = f'{parameters["HdfsUrl"]}{parameters["MaintenancePath"]}'    
-    return postgres_scripts.generate_delete_old_files_command(dir=dst_dir,days_to_keep_old_files=DAYS_TO_KEEP_OLD_FILES)
+    dst_dir = f'{parameters["HdfsUrl"]}{parameters["MaintenancePath"]}'
+    return postgres_scripts.generate_delete_old_files_command(
+        dir=dst_dir, days_to_keep_old_files=DAYS_TO_KEEP_OLD_FILES)
+
 
 with DAG(
     dag_id='evo_raw_data_upload',
