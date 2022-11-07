@@ -175,15 +175,20 @@ def generate_copy_command(query,dst_path,db_params,db_password,sep,schema):
         local start_ts=$1
         local end_ts=$(date +%s%N | cut -b1-13)
         local duration=$((end_ts - start_ts))
+
         return $duration
     }}
+
     start_ts=$(date +%s%N | cut -b1-13)
+
     db_params=$(echo {db_params}|base64 -d)
+
     export PGPASSWORD=$(echo {db_password}|base64 -d)
     echo {sep}
         
     $db_params -c "\copy ({query}) to STDOUT with csv header delimiter E'{sep}'"|hadoop dfs -put -f - {dst_path}
     ret_code=$?
+
     echo "Postgres copy return code="$ret_code     
         
     get_duration $start_ts
@@ -198,5 +203,15 @@ def generate_copy_command(query,dst_path,db_params,db_password,sep,schema):
     fi
     """
 
-def generate_delete_old_files_command():
-	pass
+def generate_delete_old_files_command(dir,days_to_keep_old_files):
+    return f"""today=`date +'%s'`
+hdfs dfs -ls {dir} | grep "^d\|^-" | while read line ; do
+dir_date=$(echo ${{line}} | awk '{{print $6}}')
+difference=$(( ( ${{today}} - $(date -d ${{dir_date}} +%s) ) / ( 24*60*60 ) ))
+filePath=$(echo ${{line}} | awk '{{print $8}}')
+
+if [ ${{difference}} -gt "{days_to_keep_old_files}" ]; then
+    hdfs dfs -rm -r $filePath
+fi
+done"""
+
