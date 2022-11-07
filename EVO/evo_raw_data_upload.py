@@ -210,53 +210,6 @@ def generate_upload_script(
 
     return entities_json
 
-def gen_copy_command(query,dst_path,db_params,db_password,sep,schema):
-    return f"""
-    get_duration()
-    {{
-        local start_ts=$1
-        local end_ts=$(date +%s%N | cut -b1-13)
-        local duration=$((end_ts - start_ts))
-
-        return $duration
-    }}
-
-    start_ts=$(date +%s%N | cut -b1-13)
-
-    db_params=$(echo {db_params}|base64 -d)
-
-    export PGPASSWORD=$(echo {db_password}|base64 -d)
-    echo {sep}
-        
-    $db_params -c "\copy ({query}) to STDOUT with csv header delimiter E'{sep}'"|hadoop dfs -put -f - {dst_path}
-    ret_code=$?
-
-    echo "Postgres copy return code="$ret_code     
-        
-    get_duration $start_ts
-    duration=$?
-        
-    if [ $ret_code -eq 0 ];# Check bcp result
-    then
-       echo "{{\\"Schema\\":\\"{schema}\\",\\"EntityName\\":\\"$(basename {dst_path} .csv)\\",\\"Result\\":true,\\"Duration\\":\\"$duration\\"}}"
-    else
-       echo "{{\\"Schema\\":\\"{schema}\\",\\"EntityName\\":\\"$(basename {dst_path} .csv)\\",\\"Result\\":false,\\"Duration\\":\\"$duration\\"}}"
-       exit $ret_code
-    fi
-    """
-
-def generate_delete_old_files_command(dir,days_to_keep_old_files):
-    return f"""today=`date +'%s'`
-hdfs dfs -ls {dir} | grep "^d\|^-" | while read line ; do
-dir_date=$(echo ${{line}} | awk '{{print $6}}')
-difference=$(( ( ${{today}} - $(date -d ${{dir_date}} +%s) ) / ( 24*60*60 ) ))
-filePath=$(echo ${{line}} | awk '{{print $8}}')
-
-if [ ${{difference}} -gt "{days_to_keep_old_files}" ]; then
-    hdfs dfs -rm -r $filePath
-fi
-done"""
-
 @task
 def generate_postgres_copy_script(
         upload_path,
@@ -276,7 +229,7 @@ def generate_postgres_copy_script(
     """
     scripts = []
     for entity in entities:
-        script = gen_copy_command(
+        script = postgres_scripts.generate_copy_command(
             query=entity["Extraction"].replace(
                 '"',
                 '\\"'),
@@ -491,7 +444,7 @@ def generate_cleanup_command(parameters: dict):
         str: Shell скрипт
     """
     dst_dir = f'{parameters["HdfsUrl"]}{parameters["MaintenancePath"]}'    
-    return generate_delete_old_files_command(dir=dst_dir,days_to_keep_old_files=DAYS_TO_KEEP_OLD_FILES)
+    return postgres_scripts.generate_delete_old_files_command(dir=dst_dir,days_to_keep_old_files=DAYS_TO_KEEP_OLD_FILES)
 
 with DAG(
     dag_id='evo_raw_data_upload',
