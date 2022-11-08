@@ -17,5 +17,5 @@ with DAG('scheduler_test',
          default_args=default_args,
          catchup=False,
         ) as dag:
-      task2
+      task2()
     
