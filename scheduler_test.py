@@ -13,7 +13,7 @@ def task2():
 
 with DAG('scheduler_test',
          start_date=datetime(2022, 11, 7),
-         schedule_interval='7 15 * * *',
+         schedule_interval='16 7 * * *',
          catchup=False,
         ) as dag:
       task2()
