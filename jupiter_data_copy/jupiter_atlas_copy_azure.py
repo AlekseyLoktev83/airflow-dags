@@ -99,9 +99,21 @@ def get_parameters(**kwargs):
 def generate_distcp_script(parameters:dict, entity):
     src_path = entity['SrcPath']
     dst_path = entity['DstPath']
-    remote_hdfs_url = parameters['RemoteHdfsUrl']
+    entity_subfolder = os.sep.join(os.path.normpath(src_path).split(os.sep)[-2:])
     
-    script = f'hdfs dfs -rm -r {dst_path};hadoop distcp -pbc {remote_hdfs_url}{src_path} hdfs://$(hdfs getconf -namenodes){dst_path} '
+    azure_conn = BaseHook.get_connection(AZURE_CONNECTION_NAME)
+    
+    
+    script = f"""
+    export AZCOPY_AUTO_LOGIN_TYPE=SPN
+    export AZCOPY_SPA_APPLICATION_ID={azure_conn.login} 
+    export AZCOPY_SPA_CLIENT_SECRET={azure_conn.password}
+    export AZCOPY_TENANT_ID={azure_conn.extra_dejson['extra__azure__tenantId']}
+    
+    azcopy copy {src_path} /tmp/entity --recursive && hdfs dfs -put -f /tmp/entity/*/ {dst_path}{entity_subfolder} && rm -rf /tmp/entity   
+    
+    """
+
     return script
 
 @task
@@ -109,13 +121,12 @@ def generate_entity_list(parameters:dict):
     raw_path=parameters['RawPath']
     dst_dir=parameters['DstDir'] 
     entities = [
-              {'SrcPath':'/FILES/HYDRATEATLAS/0CUSTOMER_ATTR','DstPath':dst_dir},
-              {'SrcPath':'/FILES/HYDRATEATLAS/0CUSTOMER_TEXT','DstPath':dst_dir},
-              {'SrcPath':'/FILES/HYDRATEATLAS/0CUST_SALES_ATTR','DstPath':dst_dir},
-              {'SrcPath':'/FILES/HYDRATEATLAS/0CUST_SALES_ATTR.PARQUET','DstPath':dst_dir},
-              {'SrcPath':'/FILES/HYDRATEATLAS/0CUST_SALES_LKDH_HIER_T_ELEMENTS','DstPath':dst_dir},
-              {'SrcPath':'/FILES/HYDRATEATLAS/0CUST_SALES_TEXT','DstPath':dst_dir},
-              {'SrcPath':'/FILES/HYDRATEATLAS/ZCUSTOPF_ATTR','DstPath':dst_dir},
+              {'SrcPath':'https://marsanalyticsprodadls.dfs.core.windows.net/output/ATLAS/AEP/MASTER_DATA/0CUSTOMER_ATTR/DATA','DstPath':dst_dir},
+              {'SrcPath':'https://marsanalyticsprodadls.dfs.core.windows.net/output/ATLAS/AEP/MASTER_DATA/0CUSTOMER_TEXT/DATA','DstPath':dst_dir},
+              {'SrcPath':'https://marsanalyticsprodadls.dfs.core.windows.net/output/ATLAS/AEP/MASTER_DATA/0CUST_SALES_ATTR/DATA','DstPath':dst_dir},
+              {'SrcPath':'https://marsanalyticsprodadls.dfs.core.windows.net/output/ATLAS/AEP/MASTER_DATA/0CUST_SALES_LKDH_HIER_T_ELEMENTS/DATA','DstPath':dst_dir},
+              {'SrcPath':'https://marsanalyticsprodadls.dfs.core.windows.net/output/ATLAS/AEP/MASTER_DATA/0CUST_SALES_TEXT/DATA','DstPath':dst_dir},
+              {'SrcPath':'https://marsanalyticsprodadls.dfs.core.windows.net/output/ATLAS/AEP/MASTER_DATA/ZCUSTOPF_ATTR/DATA','DstPath':dst_dir},
              ]
     return entities
 
