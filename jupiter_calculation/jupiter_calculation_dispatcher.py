@@ -30,6 +30,7 @@ with DAG(
         task_id="trigger_jupiter_calc_copy",
         trigger_dag_id="jupiter_calc_copy",  
         conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":"{{dag_run.conf.get('schema')}}"},
+        retries=2,
         wait_for_completion = True,
     )
     
@@ -44,6 +45,7 @@ with DAG(
         task_id="trigger_jupiter_copy_after_baseline_update",
         trigger_dag_id="jupiter_calc_copy",  
         conf={"parent_run_id":"{{run_id}}","parent_process_date":"{{ds}}","schema":"{{dag_run.conf.get('schema')}}"},
+        retries=2,
         wait_for_completion = True,
     )
     

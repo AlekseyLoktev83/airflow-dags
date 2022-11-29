@@ -12,13 +12,17 @@ import time
 def print_var():
     my_var = Variable.get("var999")
     print(f'My variable is: {my_var}')
-    
+
     for i in range(10):
         print(i)
         raw_path = Variable.get("RawPath")
     
-#     vault_hook = VaultHook()
-#     conn = vault_hook.get_conn()
+    vault_hook = VaultHook()
+    conn = vault_hook.get_conn()
+    current_token = conn.auth.token.lookup_self()
+    print(f'Token:{current_token}')
+    
+    
 #     conn.secrets.kv.v1.create_or_update_secret(path="variables/var999",secret={"value":"AIRFLOW_UPD2"})
 #     for secrets_backend in ensure_secrets_loaded():
 #       if isinstance(secrets_backend, VaultBackend):
