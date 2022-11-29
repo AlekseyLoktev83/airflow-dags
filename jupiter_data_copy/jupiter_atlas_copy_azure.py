@@ -24,6 +24,7 @@ import urllib.parse
 import subprocess
 
 import cloud_scripts.mssql_scripts as mssql_scripts
+import cloud_scripts.azure_scripts as azure_scripts
 import json
 import pandas as pd
 import glob
@@ -99,21 +100,24 @@ def get_parameters(**kwargs):
 def generate_azure_copy_script(parameters:dict, entity):
     src_path = entity['SrcPath']
     dst_path = entity['DstPath']
-    entity_subfolder = os.sep.join(os.path.normpath(src_path).split(os.sep)[-2:])
+#     entity_subfolder = os.sep.join(os.path.normpath(src_path).split(os.sep)[-2:])
     
-    azure_conn = BaseHook.get_connection(AZURE_CONNECTION_NAME)
+#     azure_conn = BaseHook.get_connection(AZURE_CONNECTION_NAME)
     
     
-    script = f"""
-    export AZCOPY_AUTO_LOGIN_TYPE=SPN
-    export AZCOPY_SPA_APPLICATION_ID={azure_conn.login} 
-    export AZCOPY_SPA_CLIENT_SECRET={azure_conn.password}
-    export AZCOPY_TENANT_ID={azure_conn.extra_dejson['extra__azure__tenantId']}
+#     script = f"""
+#     export AZCOPY_AUTO_LOGIN_TYPE=SPN
+#     export AZCOPY_SPA_APPLICATION_ID={azure_conn.login} 
+#     export AZCOPY_SPA_CLIENT_SECRET={azure_conn.password}
+#     export AZCOPY_TENANT_ID={azure_conn.extra_dejson['extra__azure__tenantId']}
     
-    azcopy copy {src_path} /tmp/entity --recursive && hdfs dfs -rm -f {dst_path}{entity_subfolder}/* && hdfs dfs -mkdir -p {dst_path}{entity_subfolder} && hdfs dfs -put -f /tmp/entity/*/* {dst_path}{entity_subfolder} && rm -rf /tmp/entity   
+#     azcopy copy {src_path} /tmp/entity --recursive && hdfs dfs -rm -f {dst_path}{entity_subfolder}/* && hdfs dfs -mkdir -p {dst_path}{entity_subfolder} && hdfs dfs -put -f /tmp/entity/*/* {dst_path}{entity_subfolder} && rm -rf /tmp/entity   
     
-    """
-
+#     """
+    script = azure_scripts.generate_adls_to_hdfs_copy_command(azure_connection_name=AZURE_CONNECTION_NAME,
+                                                     src_path=src_path,
+                                                     dst_path=dst_path,
+                                                     folders_from_tail_count = 2)
     return script
 
 @task
