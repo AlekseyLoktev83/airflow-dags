@@ -104,7 +104,7 @@ def generate_azure_copy_script(parameters:dict, entity):
     script = azure_scripts.generate_adls_to_hdfs_copy_folder_command(azure_connection_name=AZURE_CONNECTION_NAME,
                                                      src_path=src_path,
                                                      dst_path=dst_path,
-                                                     folders_from_tail_count = 2)
+                                                     folders_from_tail_count = 1)
     return script
 
 @task
