@@ -37,7 +37,7 @@ from contextlib import closing
 MSSQL_CONNECTION_NAME = 'odbc_jupiter'
 HDFS_CONNECTION_NAME = 'webhdfs_default'
 VAULT_CONNECTION_NAME = 'vault_default'
-REMOTE_HDFS_CONNECTION_NAME = 'webhdfs_atlas'
+AZURE_CONNECTION_NAME = 'azure_demandplanning_sp'
 TAGS=["jupiter", "promo", "copy"]
 
 
@@ -67,9 +67,8 @@ def get_parameters(**kwargs):
     last_upload_date = Variable.get("LastUploadDate")
     
     db_conn = BaseHook.get_connection(MSSQL_CONNECTION_NAME)
-    remote_hdfs_conn = BaseHook.get_connection(REMOTE_HDFS_CONNECTION_NAME)
-    print(remote_hdfs_conn)
-    remote_hdfs_url = remote_hdfs_conn.get_uri()
+    azure_conn = BaseHook.get_connection(AZURE_CONNECTION_NAME)
+    print(azure_conn)
     
     dst_dir = f'{raw_path}/SOURCES_REMOTE/HYDRATEATLAS/'
     
@@ -89,7 +88,6 @@ def get_parameters(**kwargs):
                   "MaintenancePath":"{}{}".format(raw_path,"/#MAINTENANCE/"),
                   "Schema":schema,
                   "ParentRunId":parent_run_id,
-                  "RemoteHdfsUrl":remote_hdfs_url,
                   "DstDir":dst_dir,
                   }
     print(parameters)
