@@ -32,7 +32,7 @@ import base64
 MSSQL_CONNECTION_NAME = 'odbc_jupiter'
 HDFS_CONNECTION_NAME = 'webhdfs_default'
 VAULT_CONNECTION_NAME = 'vault_default'
-AVAILABILITY_ZONE_ID = 'ru-central1-b'
+AVAILABILITY_ZONE_ID = 'ru-central1-a'
 S3_BUCKET_NAME_FOR_JOB_LOGS = 'jupiter-app-test-storage'
 BCP_SEPARATOR = '0x01'
 
@@ -287,6 +287,7 @@ with DAG(
     catchup=False,
     tags=["jupiter", "dev"],
     render_template_as_native_obj=True,
+    default_args={'retries': 2},
 ) as dag:
     # Get dag parameters from vault
     parameters = get_parameters()
@@ -301,7 +302,7 @@ with DAG(
     start_mon_detail = start_monitoring_detail(dst_dir=parameters["MaintenancePathPrefix"], upload_path=parameters["UploadPath"], runid=parameters["RunId"], entities=generate_upload_script(
         start_mon, parameters["MaintenancePathPrefix"], RAW_SCHEMA_FILE, parameters["UploadPath"], parameters["BcpParameters"], parameters["CurrentUploadDate"], parameters["LastUploadDate"]))
 # Upload entities from sql to hdfs in parallel
-    upload_tables = BashOperator.partial(task_id="upload_tables", do_xcom_push=True,execution_timeout=datetime.timedelta(minutes=60), retries=2).expand(
+    upload_tables = BashOperator.partial(task_id="upload_tables", do_xcom_push=True,execution_timeout=datetime.timedelta(minutes=30), retries=2).expand(
         bash_command=generate_bcp_script(
             upload_path=parameters["UploadPath"], bcp_parameters=parameters["BcpParameters"], entities=start_mon_detail),
     )

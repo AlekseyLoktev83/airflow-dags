@@ -36,7 +36,7 @@ HDFS_CONNECTION_NAME = 'webhdfs_default'
 VAULT_CONNECTION_NAME = 'vault_default'
 SSH_CONNECTION_NAME = 'ssh_jupiter'
 
-AVAILABILITY_ZONE_ID = 'ru-central1-b'
+AVAILABILITY_ZONE_ID = 'ru-central1-a'
 S3_BUCKET_NAME_FOR_JOB_LOGS = 'jupiter-app-test-storage'
 BCP_SEPARATOR = '0x01'
 CSV_SEPARATOR = '\u0001'
@@ -147,6 +147,7 @@ with DAG(
     catchup=False,
     tags=TAGS,
     render_template_as_native_obj=True,
+    default_args={'retries': 2},	
 ) as dag:
 # Get dag parameters from vault    
     parameters = get_parameters()

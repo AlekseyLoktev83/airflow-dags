@@ -21,6 +21,7 @@ with DAG(
     catchup=False,
     schedule_interval=None,
     tags=TAGS,
+    default_args={'retries': 2},	
 ) as dag:
     
     handler_id=generate_handler_id()
@@ -81,5 +82,7 @@ with DAG(
         wait_for_completion = True,
     )  
     
-    handler_id >> trigger_jupiter_calc_copy >> trigger_jupiter_baseline_dispatcher >> trigger_jupiter_copy_after_baseline_update >> trigger_jupiter_promo_filtering >> trigger_jupiter_all_parameters_calc >> trigger_jupiter_update_promo >> trigger_jupiter_unblock_promo >> trigger_jupiter_incremental_processing 
+    handler_id >> trigger_jupiter_calc_copy >> trigger_jupiter_baseline_dispatcher >> trigger_jupiter_copy_after_baseline_update >> trigger_jupiter_promo_filtering >> trigger_jupiter_all_parameters_calc >> trigger_jupiter_update_promo >> trigger_jupiter_unblock_promo >> trigger_jupiter_incremental_processing
+
+	
     

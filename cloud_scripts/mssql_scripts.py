@@ -205,3 +205,13 @@ def mip_generate_table_select_query(current_upload_date, last_upload_date, actua
     result_df = pd.DataFrame(result)
     return result_df
         
+def get_odbc_extras_string(db_conn):
+    extra_exclude = {"driver", "dsn", "connect_kwargs", "sqlalchemy_scheme"}
+    extra_params = {
+        k: v for k, v in db_conn.extra_dejson.items() if not k.lower() in extra_exclude
+    }
+    conn_str=""
+    for k, v in extra_params.items():
+        conn_str += f"{k}={v};"
+    
+    return conn_str	

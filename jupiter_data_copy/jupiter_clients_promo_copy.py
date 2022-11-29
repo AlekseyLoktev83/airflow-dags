@@ -37,7 +37,7 @@ from contextlib import closing
 MSSQL_CONNECTION_NAME = 'odbc_jupiter'
 HDFS_CONNECTION_NAME = 'webhdfs_default'
 VAULT_CONNECTION_NAME = 'vault_default'
-AVAILABILITY_ZONE_ID = 'ru-central1-b'
+AVAILABILITY_ZONE_ID = 'ru-central1-a'
 S3_BUCKET_NAME_FOR_JOB_LOGS = 'jupiter-app-test-storage'
 BCP_SEPARATOR = '0x01'
 CSV_SEPARATOR = '\u0001'
@@ -132,7 +132,8 @@ def create_dag_config_copy_from_db(parameters:dict, clients):
           "emails":clients[0]["Email"],
           "drop_files_if_errors":True,
           "copy_mode":COPY_MODE_DATABASE,
-          "source_path":f'{parameters["RawPath"]}/{parameters["ClientPromoDir"]}/{clients[0]["ClientObjectId"]}_{pendulum.now().strftime("%Y%m%d%H%M%S")}/'   
+          "source_path":f'{parameters["RawPath"]}/{parameters["ClientPromoDir"]}/{clients[0]["ClientObjectId"]}_{pendulum.now().strftime("%Y%m%d%H%M%S")}/',
+          "Id":clients[0]["Id"],		  
          }
     return conf
 
@@ -149,7 +150,8 @@ def create_dag_config_copy_from_adls(parameters:dict, db_conf:dict,clients):
           "client_name":client["ClientPrefix"],
           "emails":client["Email"],
           "drop_files_if_errors":True,
-          "source_path":db_conf["source_path"],   
+          "source_path":db_conf["source_path"],
+          "Id":client["Id"],				  
             }
         conf_list.append(conf)
         
@@ -163,6 +165,7 @@ with DAG(
     catchup=False,
     tags=TAGS,
     render_template_as_native_obj=True,
+    default_args={'retries': 2},	
 ) as dag:
 # Get dag parameters from vault    
     parameters = get_parameters()

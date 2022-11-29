@@ -37,7 +37,7 @@ from contextlib import closing
 MSSQL_CONNECTION_NAME = 'odbc_jupiter'
 HDFS_CONNECTION_NAME = 'webhdfs_default'
 VAULT_CONNECTION_NAME = 'vault_default'
-AVAILABILITY_ZONE_ID = 'ru-central1-b'
+AVAILABILITY_ZONE_ID = 'ru-central1-a'
 S3_BUCKET_NAME_FOR_JOB_LOGS = 'jupiter-app-test-storage'
 BCP_SEPARATOR = '0x01'
 CSV_SEPARATOR = '\u0001'
@@ -84,6 +84,7 @@ def get_parameters(**kwargs):
     copy_mode = dag_run.conf.get('copy_mode')
     source_path = dag_run.conf.get('source_path')
     emails = dag_run.conf.get('emails')
+    id = dag_run.conf.get('Id')
     
     parent_handler_id = dag_run.conf.get('parent_handler_id')   
     handler_id = parent_handler_id if parent_handler_id else str(uuid.uuid4())
@@ -118,6 +119,7 @@ def get_parameters(**kwargs):
                   "TimestampField":timestamp_field,
                   "SourcePath": source_path,
                   "Emails":emails,
+				  "Id":id,
                   }
     print(parameters)
     return parameters
@@ -171,6 +173,24 @@ def set_client_upload_processing_flag_error(parameters:dict):
     print(result)
 
     return result 
+	
+@task(trigger_rule=TriggerRule.NONE_FAILED)  
+def set_copy_task_status_complete(parameters:dict):
+    odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
+    schema = parameters["Schema"]
+    result = odbc_hook.run(sql=f"""exec [{schema}].[UpdateScenarioCopyTaskStatus] @Success = ? , @TaskId = ? """, parameters=(1,parameters["Id"]))
+    print(result)
+
+    return result
+	
+@task(trigger_rule=TriggerRule.ONE_FAILED)  
+def set_copy_task_status_error(parameters:dict):
+    odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
+    schema = parameters["Schema"]
+    result = odbc_hook.run(sql=f"""exec [{schema}].[UpdateScenarioCopyTaskStatus] @Success = ? , @TaskId = ? """, parameters=(0,parameters["Id"]))
+    print(result)
+
+    return result	
 
 def _check_drop_data_if_failure(**kwargs):
     return kwargs['drop_files_if_errors']
@@ -183,6 +203,7 @@ with DAG(
     catchup=False,
     tags=TAGS,
     render_template_as_native_obj=True,
+    default_args={'retries': 2},	
 ) as dag:
 # Get dag parameters from vault    
     parameters = get_parameters()
@@ -210,16 +231,19 @@ with DAG(
         bash_command='hadoop dfs -cp {{ti.xcom_pull(task_ids="get_parameters",key="SourcePath")}} {{ti.xcom_pull(task_ids="get_parameters",key="UploadPath")}} ',
     )
     
-    jupiter_send_copy_successful_notification = EmailOperator( 
-          task_id='jupiter_send_copy_successful_notification', 
-          to='{{ti.xcom_pull(task_ids="get_parameters")["Emails"]}}', 
-          subject='Copy promo for client {{ti.xcom_pull(task_ids="get_parameters")["ClientName"]}}', 
-          html_content='Promo for client {{ti.xcom_pull(task_ids="get_parameters")["ClientName"]}} copied successful.',
-          trigger_rule=TriggerRule.NONE_FAILED,
-    )
+    # jupiter_send_copy_successful_notification = EmailOperator( 
+          # task_id='jupiter_send_copy_successful_notification', 
+          # to='{{ti.xcom_pull(task_ids="get_parameters")["Emails"]}}', 
+          # subject='Copy promo for client {{ti.xcom_pull(task_ids="get_parameters")["ClientName"]}}', 
+          # html_content='Promo for client {{ti.xcom_pull(task_ids="get_parameters")["ClientName"]}} copied successful.',
+          # trigger_rule=TriggerRule.NONE_FAILED,
+    # )
     
     set_client_upload_processing_flag_complete = set_client_upload_processing_flag_complete(parameters)
     set_client_upload_processing_flag_error = set_client_upload_processing_flag_error(parameters)
+	
+    set_copy_task_status_complete = set_copy_task_status_complete(parameters)
+    set_copy_task_status_error = set_copy_task_status_error(parameters)	
     
     check_drop_data_if_failure = ShortCircuitOperator(
         task_id='check_drop_data_if_failure',
@@ -233,15 +257,15 @@ with DAG(
         bash_command='hadoop dfs -rm -r {{ti.xcom_pull(task_ids="get_parameters",key="UploadPath")}} ',
     )
     
-    jupiter_send_copy_error_notification = EmailOperator( 
-          task_id='jupiter_send_copy_error_notification', 
-          to='{{ti.xcom_pull(task_ids="get_parameters")["Emails"]}}', 
-          subject='Error copy promo for client {{ti.xcom_pull(task_ids="get_parameters")["ClientName"]}}', 
-          html_content='Promo for client {{ti.xcom_pull(task_ids="get_parameters")["ClientName"]}} copied with errors. Please contact administrator.',
-          trigger_rule=TriggerRule.ONE_FAILED,
-    )
+    # jupiter_send_copy_error_notification = EmailOperator( 
+          # task_id='jupiter_send_copy_error_notification', 
+          # to='{{ti.xcom_pull(task_ids="get_parameters")["Emails"]}}', 
+          # subject='Error copy promo for client {{ti.xcom_pull(task_ids="get_parameters")["ClientName"]}}', 
+          # html_content='Promo for client {{ti.xcom_pull(task_ids="get_parameters")["ClientName"]}} copied with errors. Please contact administrator.',
+          # trigger_rule=TriggerRule.ONE_FAILED,
+    # )
     
-    child_dag_config >> set_client_upload_processing_flag_up >> create_client_upload_wait_handler >> if_load_from_database >> trigger_jupiter_client_promo_copy_table >> [jupiter_send_copy_successful_notification,set_client_upload_processing_flag_complete,set_client_upload_processing_flag_error,jupiter_send_copy_error_notification]
+    child_dag_config >> set_client_upload_processing_flag_up >> create_client_upload_wait_handler >> if_load_from_database >> trigger_jupiter_client_promo_copy_table >> [set_client_upload_processing_flag_complete,set_client_upload_processing_flag_error,set_copy_task_status_complete,set_copy_task_status_error]
     child_dag_config >> set_client_upload_processing_flag_up >> create_client_upload_wait_handler >> if_load_from_database >> trigger_jupiter_client_promo_copy_table >> check_drop_data_if_failure >> drop_uploaded_data
-    child_dag_config >> set_client_upload_processing_flag_up >> create_client_upload_wait_handler >> if_load_from_database >> copy_from_existing >> [jupiter_send_copy_successful_notification,set_client_upload_processing_flag_complete,set_client_upload_processing_flag_error,jupiter_send_copy_error_notification]
+    child_dag_config >> set_client_upload_processing_flag_up >> create_client_upload_wait_handler >> if_load_from_database >> copy_from_existing >> [set_client_upload_processing_flag_complete,set_client_upload_processing_flag_error,set_copy_task_status_complete,set_copy_task_status_error]
     child_dag_config >> set_client_upload_processing_flag_up >> create_client_upload_wait_handler >> if_load_from_database >> copy_from_existing >> check_drop_data_if_failure >> drop_uploaded_data

@@ -36,12 +36,13 @@ from contextlib import closing
 MSSQL_CONNECTION_NAME = 'odbc_jupiter'
 HDFS_CONNECTION_NAME = 'webhdfs_default'
 VAULT_CONNECTION_NAME = 'vault_default'
-AVAILABILITY_ZONE_ID = 'ru-central1-b'
+AVAILABILITY_ZONE_ID = 'ru-central1-a'
 S3_BUCKET_NAME_FOR_JOB_LOGS = 'jupiter-app-test-storage'
 BCP_SEPARATOR = '0x01'
 CSV_SEPARATOR = '\u0001'
 TAGS=["jupiter","promo","dev"]
 PARAMETERS_FILE = 'PARAMETERS.csv'
+SCHEMA='Scenario'
 
 def separator_convert_hex_to_string(sep):
     sep_map = {'0x01':'\x01'}
@@ -63,7 +64,7 @@ def get_parameters(**kwargs):
     parent_run_id = dag_run.conf.get('parent_run_id')
     run_id = urllib.parse.quote_plus(parent_run_id) if parent_run_id else urllib.parse.quote_plus(kwargs['run_id'])
     
-    schema = dag_run.conf.get('schema')
+    schema = SCHEMA
     upload_date = kwargs['logical_date'].strftime("%Y-%m-%d %H:%M:%S")
     file_name = dag_run.conf.get('FileName')
     create_date = dag_run.conf.get('CreateDate')
@@ -120,11 +121,14 @@ def get_clients_to_copy(parameters:dict):
   
 with DAG(
     dag_id='jupiter_clients_promo_copy_dispatcher',
-    schedule_interval=None,
-    start_date=pendulum.datetime(2021, 1, 1, tz="UTC"),
+    # schedule_interval=None,
+    start_date=pendulum.datetime(2022, 11, 27, tz="UTC"),
     catchup=False,
     tags=TAGS,
     render_template_as_native_obj=True,
+    default_args={'retries': 2},
+    max_active_runs=1,
+    schedule_interval='*/10 * * * *',
 ) as dag:
 # Get dag parameters from vault    
     parameters = get_parameters()

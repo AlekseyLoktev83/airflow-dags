@@ -30,7 +30,7 @@ import base64
 MSSQL_CONNECTION_NAME = 'odbc_jupiter'
 HDFS_CONNECTION_NAME = 'webhdfs_default'
 VAULT_CONNECTION_NAME = 'vault_default'
-AVAILABILITY_ZONE_ID = 'ru-central1-b'
+AVAILABILITY_ZONE_ID = 'ru-central1-a'
 S3_BUCKET_NAME_FOR_JOB_LOGS = 'jupiter-app-test-storage'
 BCP_SEPARATOR = '0x01'
 CSV_SEPARATOR = '\u0001'
@@ -72,6 +72,9 @@ def get_parameters(**kwargs):
     upload_path = f'{raw_path}/{execution_date}/'
     system_name = Variable.get("SystemName")
     last_upload_date = Variable.get("LastUploadDate")
+	
+    parent_handler_id = dag_run.conf.get('parent_handler_id')
+    handler_id = parent_handler_id if parent_handler_id else str(uuid.uuid4())	
     
     db_conn = BaseHook.get_connection(MSSQL_CONNECTION_NAME)
     bcp_parameters =  base64.b64encode(('-S {} -d {} -U {} -P {}'.format(db_conn.host, db_conn.schema, db_conn.login,db_conn.password)).encode()).decode()
@@ -91,6 +94,7 @@ def get_parameters(**kwargs):
                   "ProcessDate":process_date,
                   "MaintenancePath":"{}{}".format(raw_path,"/#MAINTENANCE/"),
                   "Schema":schema,
+				  "HandlerId":handler_id,
                   }
     print(parameters)
     return parameters
@@ -108,7 +112,8 @@ def set_night_processing_progress_flag_up(parameters:dict):
 def create_night_processing_wait_handler(parameters:dict):
     odbc_hook = OdbcHook(MSSQL_CONNECTION_NAME)
     schema = parameters["Schema"]
-    result = odbc_hook.run(sql=f"""exec [{schema}].[CreateNightProcessingWaitHandler]""")
+    handler_id = parameters["HandlerId"]
+    result = odbc_hook.run(sql=f"""exec [{schema}].[CreateNightProcessingWaitHandler] @HandlerId = ? """,parameters=(handler_id))
     print(result)
 
     return result
@@ -121,6 +126,7 @@ with DAG(
     catchup=False,
     tags=["jupiter", "dev"],
     render_template_as_native_obj=True,
+    default_args={'retries': 2},	
 ) as dag:
 # Get dag parameters from vault    
     parameters = get_parameters()
