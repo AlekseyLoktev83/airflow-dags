@@ -110,7 +110,7 @@ def generate_distcp_script(parameters:dict, entity):
     export AZCOPY_SPA_CLIENT_SECRET={azure_conn.password}
     export AZCOPY_TENANT_ID={azure_conn.extra_dejson['extra__azure__tenantId']}
     
-    azcopy copy {src_path} /tmp/entity --recursive && hdfs dfs -rm -f {dst_path}{entity_subfolder} && hdfs dfs -put -f /tmp/entity/*/* {dst_path}{entity_subfolder} && rm -rf /tmp/entity   
+    azcopy copy {src_path} /tmp/entity --recursive && hdfs dfs -rm -f {dst_path}{entity_subfolder} && hdfs dfs -mkdir -p {dst_path}{entity_subfolder} && hdfs dfs -put -f /tmp/entity/*/* {dst_path}{entity_subfolder} && rm -rf /tmp/entity   
     
     """
 
