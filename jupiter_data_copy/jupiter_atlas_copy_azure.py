@@ -96,7 +96,7 @@ def get_parameters(**kwargs):
 
 
 @task
-def generate_distcp_script(parameters:dict, entity):
+def generate_azure_copy_script(parameters:dict, entity):
     src_path = entity['SrcPath']
     dst_path = entity['DstPath']
     entity_subfolder = os.sep.join(os.path.normpath(src_path).split(os.sep)[-2:])
@@ -143,5 +143,5 @@ with DAG(
   
     copy_entities = BashOperator.partial(task_id="copy_entity",
                                        do_xcom_push=True,
-                                      ).expand(bash_command=generate_distcp_script.partial(parameters=parameters).expand(entity=generate_entity_list(parameters)),
+                                      ).expand(bash_command=generate_azure_copy_script.partial(parameters=parameters).expand(entity=generate_entity_list(parameters)),
                                               )
