@@ -112,8 +112,8 @@ def generate_entity_list(parameters:dict):
     raw_path=parameters['RawPath']
     dst_dir=parameters['DstDir'] 
     entities = [
-              {'SrcPath':'https://marsanalyticsprodadls.dfs.core.windows.net/output/RUSSIA_DATA_FOUNDATION/SELLIN/MODEL/HELIOS_ACTUALS_BDM.parquet','DstPath':dst_dir},
-              {'SrcPath':'https://marsanalyticsprodadls.dfs.core.windows.net/output/RUSSIA_DATA_FOUNDATION/SELLIN/MODEL/YEAR_END_ESTIMATE_BDM.parquet','DstPath':dst_dir},
+              {'SrcPath':'https://marsanalyticsprodadls.dfs.core.windows.net/output/RUSSIA_DATA_FOUNDATION/_SELLIN/MODEL/HELIOS_ACTUALS_BDM.parquet','DstPath':dst_dir},
+              {'SrcPath':'https://marsanalyticsprodadls.dfs.core.windows.net/output/RUSSIA_DATA_FOUNDATION/_SELLIN/MODEL/YEAR_END_ESTIMATE_BDM.parquet','DstPath':dst_dir},
                ]
     return entities
 
