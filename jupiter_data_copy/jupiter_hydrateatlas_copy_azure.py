@@ -71,7 +71,7 @@ def get_parameters(**kwargs):
     azure_conn = BaseHook.get_connection(AZURE_CONNECTION_NAME)
     print(azure_conn)
     
-    dst_dir = f'{raw_path}/SOURCES_REMOTE/HYDRATEATLAS/'
+    dst_dir = f'{raw_path}/SOURCES/HYDRATEATLAS/'
     
 
     parameters = {"RawPath": raw_path,
@@ -120,8 +120,8 @@ def generate_entity_list(parameters:dict):
 
 with DAG(
     dag_id='jupiter_hydrateatlas_copy_azure',
-    schedule_interval=None,
-    start_date=pendulum.datetime(2021, 1, 1, tz="UTC"),
+    schedule_interval='0 20 * * *',
+    start_date=pendulum.datetime(2022, 11, 29, tz="UTC"),
     catchup=False,
     tags=TAGS,
     render_template_as_native_obj=True,
