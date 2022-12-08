@@ -172,21 +172,21 @@ with DAG(
     create_hive_table = DataprocCreateHiveJobOperator(
         cluster_id=parameters['JupiterDataprocClusterId'],
         task_id="create_hive_table",
-        query="DROP TABLE Letter;
+        query="""DROP TABLE Letter;
 CREATE TABLE IF NOT EXISTS Letter(
         Id INT,
         Name String,
         src_file string,
 ingestion_ts timestamp
-);",
+);""",
     )    
     
     ingest_to_hive_tables = DataprocCreateHiveJobOperator(
         cluster_id=parameters['JupiterDataprocClusterId'],
         task_id="ingest_to_hive_tables",
-        query="with new_data as(select * from letter_stage)
+        query="""with new_data as(select * from letter_stage)
 insert overwrite table letter
-select new_data.*, 'file_X.csv' as src_file, current_timestamp as ingestion_ts from new_data;",
+select new_data.*, 'file_X.csv' as src_file, current_timestamp as ingestion_ts from new_data;""",
     )
     
    
