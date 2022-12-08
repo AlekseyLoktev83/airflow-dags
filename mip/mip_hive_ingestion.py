@@ -170,6 +170,7 @@ with DAG(
 #     )
     
     ingest_to_hive_tables = DataprocCreateHiveJobOperator(
+        cluster_id=parameters['JupiterDataprocClusterId'],
         task_id="ingest_to_hive_tables",
         query="SELECT 1;",
     )
