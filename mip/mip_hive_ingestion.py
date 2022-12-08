@@ -178,8 +178,8 @@ with DAG(
     ingest_to_hive_tables = DataprocCreateHiveJobOperator(
         cluster_id=parameters['JupiterDataprocClusterId'],
         task_id="ingest_to_hive_tables",
-        query="""with new_data as(select * from letter_stage)
-insert overwrite table letter
+        query="""with new_data as(select * from letter_stage)\n
+insert overwrite table letter\n
 select new_data.*, 'file_X.csv' as src_file, current_timestamp as ingestion_ts from new_data;""",
     )
     
