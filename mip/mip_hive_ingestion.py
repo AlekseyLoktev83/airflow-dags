@@ -149,25 +149,30 @@ with DAG(
 # Get dag parameters from vault    
     parameters = get_parameters()
     save_params = save_parameters(parameters)
-    build_model = DataprocCreatePysparkJobOperator(
-        task_id='build_model',
-        cluster_id=parameters['JupiterDataprocClusterId'],
-        main_python_file_uri='hdfs:///SRC/JUPITER/YEAR_END_ESTIMATE/JUPITER_YEAR_END_ESTIMATE_FDM.py',
-        python_file_uris=[
-            'hdfs:///SRC/SHARED/EXTRACT_SETTING.py',
-            'hdfs:///SRC/SHARED/SUPPORT_FUNCTIONS.py',
-        ],
-        file_uris=[
-            's3a://data-proc-public/jobs/sources/data/config.json',
-        ],
-        args=save_params,
-        properties={
-            'spark.submit.deployMode': 'cluster'
-        },
-        packages=['org.slf4j:slf4j-simple:1.7.30'],
-        repositories=['https://repo1.maven.org/maven2'],
-        exclude_packages=['com.amazonaws:amazon-kinesis-client'],
+#     build_model = DataprocCreatePysparkJobOperator(
+#         task_id='build_model',
+#         cluster_id=parameters['JupiterDataprocClusterId'],
+#         main_python_file_uri='hdfs:///SRC/JUPITER/YEAR_END_ESTIMATE/JUPITER_YEAR_END_ESTIMATE_FDM.py',
+#         python_file_uris=[
+#             'hdfs:///SRC/SHARED/EXTRACT_SETTING.py',
+#             'hdfs:///SRC/SHARED/SUPPORT_FUNCTIONS.py',
+#         ],
+#         file_uris=[
+#             's3a://data-proc-public/jobs/sources/data/config.json',
+#         ],
+#         args=save_params,
+#         properties={
+#             'spark.submit.deployMode': 'cluster'
+#         },
+#         packages=['org.slf4j:slf4j-simple:1.7.30'],
+#         repositories=['https://repo1.maven.org/maven2'],
+#         exclude_packages=['com.amazonaws:amazon-kinesis-client'],
+#     )
+    
+    ingest_to_hive_tables = DataprocCreateHiveJobOperator(
+        task_id="ingest_to_hive_tables",
+        query="SELECT 1;",
     )
     
    
-    parameters >> save_params >> build_model
+    parameters >> save_params >> ingest_to_hive_tables
