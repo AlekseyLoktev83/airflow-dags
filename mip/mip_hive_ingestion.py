@@ -172,12 +172,7 @@ with DAG(
     create_hive_table = DataprocCreateHiveJobOperator(
         cluster_id=parameters['JupiterDataprocClusterId'],
         task_id="create_hive_table",
-        query="""CREATE TABLE IF NOT EXISTS Letter(
-                 Id INT,
-                 Name String,
-                 src_file string,
-                 ingestion_ts timestamp
-                 );""",
+        query="""CREATE TABLE IF NOT EXISTS Letter(Id INT,Name String,src_file string,ingestion_ts timestamp);""",
     )    
     
     ingest_to_hive_tables = DataprocCreateHiveJobOperator(
