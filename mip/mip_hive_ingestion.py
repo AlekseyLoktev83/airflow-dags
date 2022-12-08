@@ -169,11 +169,25 @@ with DAG(
 #         exclude_packages=['com.amazonaws:amazon-kinesis-client'],
 #     )
     
+    create_hive_table = DataprocCreateHiveJobOperator(
+        cluster_id=parameters['JupiterDataprocClusterId'],
+        task_id="create_hive_table",
+        query="DROP TABLE Letter;
+CREATE TABLE IF NOT EXISTS Letter(
+        Id INT,
+        Name String,
+        src_file string,
+ingestion_ts timestamp
+);",
+    )    
+    
     ingest_to_hive_tables = DataprocCreateHiveJobOperator(
         cluster_id=parameters['JupiterDataprocClusterId'],
         task_id="ingest_to_hive_tables",
-        query="SELECT 1;",
+        query="with new_data as(select * from letter_stage)
+insert overwrite table letter
+select new_data.*, 'file_X.csv' as src_file, current_timestamp as ingestion_ts from new_data;",
     )
     
    
-    parameters >> save_params >> ingest_to_hive_tables
+    parameters >> save_params >> create_hive_table >> ingest_to_hive_tables
