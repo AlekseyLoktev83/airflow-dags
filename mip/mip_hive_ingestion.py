@@ -6,7 +6,7 @@ from airflow.decorators import dag, task
 from airflow.utils.trigger_rule import TriggerRule
 from airflow.providers.odbc.hooks.odbc import OdbcHook
 from airflow.providers.apache.hdfs.hooks.webhdfs import WebHDFSHook
-from cloud_scripts.custom_dataproc import  DataprocCreatePysparkJobOperator
+from cloud_scripts.custom_dataproc import  DataprocCreateHiveJobOperator
 from airflow.models import Variable
 from airflow.operators.bash import BashOperator
 from airflow.operators.dummy import DummyOperator
