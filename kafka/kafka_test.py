@@ -56,12 +56,12 @@ with DAG(
         topics=["jupiter"],
         apply_function=functools.partial(consumer_function, prefix="consumed:::"),
         consumer_config={
+            "bootstrap.servers": "rc1b-0qd2fn83sq9vp78r.mdb.yandexcloud.net:9091",
             "group.id": "foo",
             "enable.auto.commit": False,
             "auto.offset.reset": "beginning",
         },
         commit_cadence="end_of_batch",
-        kafka_config=connection_config,
         max_messages=30,
         max_batch_size=10,
     )
