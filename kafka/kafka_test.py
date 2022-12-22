@@ -18,7 +18,8 @@ connection_config = {
     "security.protocol": "SASL_SSL",
     "sasl.mechanism": "SCRAM-SHA-512",
     "sasl.username": "jupiter-user",
-    "sasl.password": "pass1234"
+    "sasl.password": "pass1234",
+    "ssl.ca.location": "/opt/ssl2/ca-cert"
 }
 
 with DAG(
