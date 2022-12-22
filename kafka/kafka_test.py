@@ -46,12 +46,12 @@ with DAG(
             yield (json.dumps(i), json.dumps(i+1))
 
     # define the producer task
-    producer_task = ProduceToTopicOperator(
-        task_id=f"produce_to_{my_topic}",
-        topic=my_topic,
-        producer_function=producer_function, 
-        kafka_config=connection_config
-    )
+#     producer_task = ProduceToTopicOperator(
+#         task_id=f"produce_to_{my_topic}",
+#         topic=my_topic,
+#         producer_function=producer_function, 
+#         kafka_config=connection_config
+#     )
     
     consumer_task = ConsumeFromTopicOperator(
         task_id="consume_from_topic",
@@ -72,4 +72,4 @@ with DAG(
         max_batch_size=10,
     )
     
-    producer_task >> consumer_task
+    consumer_task
