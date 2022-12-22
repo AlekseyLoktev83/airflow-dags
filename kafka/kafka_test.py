@@ -15,8 +15,8 @@ my_topic = "jupiter"
 # get Kafka configuration information
 connection_config = {
     "bootstrap.servers": "rc1b-0qd2fn83sq9vp78r.mdb.yandexcloud.net:9092",
-    "security.protocol": "SASL_PLAINTEXT",
-    "sasl.mechanism": "PLAIN",
+    "security.protocol": "SASL_SSL",
+    "sasl.mechanism": "SCRAM-SHA-512",
     "sasl.username": "jupiter-user",
     "sasl.password": "pass1234"
 }
