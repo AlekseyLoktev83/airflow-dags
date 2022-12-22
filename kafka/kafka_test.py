@@ -28,9 +28,9 @@ def consumer_function(message, prefix=None):
     key = json.loads(message.key())
     value = json.loads(message.value())
     print(f"{prefix} {message.topic()} @ {message.offset()}; {key} : {value}")
-#     consumer_logger.info(
-#         f"{prefix} {message.topic()} @ {message.offset()}; {key} : {value}"
-#     )
+    consumer_logger.info(
+        f"{prefix} {message.topic()} @ {message.offset()}; {key} : {value}"
+    )
     return
 
 with DAG(
