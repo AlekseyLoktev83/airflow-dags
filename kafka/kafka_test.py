@@ -14,12 +14,12 @@ my_topic = "jupiter"
 
 # get Kafka configuration information
 connection_config = {
-    "bootstrap.servers": "rc1b-0qd2fn83sq9vp78r.mdb.yandexcloud.net:9092",
+    "bootstrap.servers": "rc1b-0qd2fn83sq9vp78r.mdb.yandexcloud.net:9091",
     "security.protocol": "SASL_SSL",
     "sasl.mechanism": "SCRAM-SHA-512",
     "sasl.username": "jupiter-user",
     "sasl.password": "pass1234",
-    "ssl.ca.location": "/opt/ssl2/ca-cert"
+    "ssl.ca.location": "/tmp/YandexCA.crt"
 }
 
 with DAG(
