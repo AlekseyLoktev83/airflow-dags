@@ -63,6 +63,7 @@ with DAG(
                  "sasl.mechanism": "SCRAM-SHA-512",
                  "sasl.username": "jupiter-user",
                  "sasl.password": "pass1234",
+                 "ssl.ca.location": "/tmp/YandexCA.crt", 
             "group.id": "foo",
             "enable.auto.commit": False,
             "auto.offset.reset": "beginning",
