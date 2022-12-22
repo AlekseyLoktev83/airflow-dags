@@ -12,6 +12,7 @@ from airflow_provider_kafka.operators.consume_from_topic import ConsumeFromTopic
 
 # get the topic name from .env
 my_topic = "jupiter"
+consumer_logger = logging.getLogger("airflow")
 
 # get Kafka configuration information
 connection_config = {
