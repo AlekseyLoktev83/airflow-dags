@@ -58,7 +58,7 @@ with DAG(
         topics=["jupiter"],
         apply_function=functools.partial(consumer_function, prefix="consumed:::"),
         consumer_config={
-            **connection_config
+            **connection_config,
             "group.id": "foo",
             "enable.auto.commit": False,
             "auto.offset.reset": "beginning",
