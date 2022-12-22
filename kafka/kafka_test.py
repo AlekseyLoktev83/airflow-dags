@@ -8,6 +8,7 @@ from pendulum import datetime
 
 from airflow import DAG
 from airflow_provider_kafka.operators.produce_to_topic import ProduceToTopicOperator
+from airflow_provider_kafka.operators.consume_from_topic import ConsumeFromTopicOperator
 
 # get the topic name from .env
 my_topic = "jupiter"
