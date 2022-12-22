@@ -58,7 +58,11 @@ with DAG(
         topics=["jupiter"],
         apply_function=functools.partial(consumer_function, prefix="consumed:::"),
         consumer_config={
-            **connection_config,
+                "bootstrap.servers": "rc1b-0qd2fn83sq9vp78r.mdb.yandexcloud.net:9091",
+                "security.protocol": "SASL_SSL",
+                 "sasl.mechanism": "SCRAM-SHA-512",
+                 "sasl.username": "jupiter-user",
+                 "sasl.password": "pass1234",
             "group.id": "foo",
             "enable.auto.commit": False,
             "auto.offset.reset": "beginning",
