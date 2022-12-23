@@ -124,7 +124,8 @@ def generate_entity_list(parameters:dict):
 
 with DAG(
     dag_id='ycp_to_animotech',
-    schedule_interval='0 20 * * *',
+#     schedule_interval='0 20 * * *',
+    schedule_interval=None,
     start_date=pendulum.datetime(2022, 11, 29, tz="UTC"),
     catchup=False,
     tags=TAGS,
