@@ -1,3 +1,5 @@
+import os
+from airflow.hooks.base_hook import BaseHook
 
 def generate_hdfs_to_s3_copy_file_command(s3_connection_name, filename, src_path, dst_path):
     entity_file = os.path.basename(src_path)
