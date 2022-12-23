@@ -161,7 +161,8 @@ with DAG(
         topic=my_topic,
         producer_function=producer_function,
         producer_function_args=generate_entity_list,
-        kafka_config=connection_config
+        kafka_config=connection_config,
+        do_xcom_push=True,
     )
     
     copy_entities >> producer_task
