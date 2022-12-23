@@ -24,7 +24,7 @@ import urllib.parse
 import subprocess
 
 import cloud_scripts.mssql_scripts as mssql_scripts
-import cloud_scripts.azure_scripts as azure_scripts
+import cloud_scripts.kafka_scripts as kafka_scripts
 import json
 import pandas as pd
 import glob
@@ -38,7 +38,7 @@ from contextlib import closing
 MSSQL_CONNECTION_NAME = 'odbc_jupiter'
 HDFS_CONNECTION_NAME = 'webhdfs_default'
 VAULT_CONNECTION_NAME = 'vault_default'
-AZURE_CONNECTION_NAME = 'azure_jupiter_sp'
+S3_CONNECTION_NAME = 's3_default'
 TAGS=["animotech"]
 
 
@@ -68,9 +68,6 @@ def get_parameters(**kwargs):
     last_upload_date = Variable.get("LastUploadDate")
     
     db_conn = BaseHook.get_connection(MSSQL_CONNECTION_NAME)
-    azure_conn = BaseHook.get_connection(AZURE_CONNECTION_NAME)
-    print(azure_conn)
-    
     dst_dir = f'{raw_path}/SOURCES/SELLIN/'
     
 
@@ -100,11 +97,12 @@ def get_parameters(**kwargs):
 def generate_copy_script(parameters:dict, entity):
     src_path = entity['SrcPath']
     dst_path = entity['DstPath']
+    filename =  entity['Filename']
 
-    script = azure_scripts.generate_adls_to_hdfs_copy_folder_command(azure_connection_name=AZURE_CONNECTION_NAME,
+    script = kafka_scripts.generate_hdfs_to_s3_copy_file_command(s3_connection_name=S3_CONNECTION_NAME,
+                                                     filename=filename,            
                                                      src_path=src_path,
-                                                     dst_path=dst_path,
-                                                     folders_from_tail_count = 1)
+                                                     dst_path=dst_path)
     return script
 
 @task
@@ -116,11 +114,7 @@ def generate_entity_list(parameters:dict):
     hdfs_hook = WebHDFSHook(HDFS_CONNECTION_NAME)
     conn = hdfs_hook.get_conn()
     
-    entities = [{'Entity':f'{date_str}_{e}','SrcPath':f'{raw_path}/SCHEMAS/{e}' ,'DstPath':'s3://jupiter-app-test-storage/animotech/in/' } for e in conn.list(f'{raw_path}/SCHEMAS/')]
-#     entities = [
-#               {'SrcPath':'https://marsanalyticsprodadls.dfs.core.windows.net/output/RUSSIA_DATA_FOUNDATION/_SELLIN/MODEL/HELIOS_ACTUALS_BDM.parquet','DstPath':dst_dir},
-#               {'SrcPath':'https://marsanalyticsprodadls.dfs.core.windows.net/output/RUSSIA_DATA_FOUNDATION/_SELLIN/MODEL/YEAR_END_ESTIMATE_BDM.parquet','DstPath':dst_dir},
-#                ]
+    entities = [{'Filename':f'{date_str}_{e}','SrcPath':f'{raw_path}/SCHEMAS/{e}' ,'DstPath':'s3://jupiter-app-test-storage/animotech/in/' } for e in conn.list(f'{raw_path}/SCHEMAS/')]
     return entities
 
 with DAG(
@@ -134,8 +128,7 @@ with DAG(
 ) as dag:
 # Get dag parameters from vault    
     parameters = get_parameters()  
-    generate_copy_script.partial(parameters=parameters).expand(entity=generate_entity_list(parameters)) 
-#     copy_entities = BashOperator.partial(task_id="copy_entity",
-#                                        do_xcom_push=True,
-#                                       ).expand(bash_command=generate_azure_copy_script.partial(parameters=parameters).expand(entity=generate_entity_list(parameters)),
-#                                               )
+    copy_entities = BashOperator.partial(task_id="copy_entity",
+                                       do_xcom_push=True,
+                                      ).expand(bash_command=generate_copy_script.partial(parameters=parameters).expand(entity=generate_entity_list(parameters)),
+                                              )
