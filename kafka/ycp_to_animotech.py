@@ -136,8 +136,11 @@ def generate_entity_list(parameters:dict):
     return entities
 
 def producer_function(entities=None):
-    for e in list(entities):
-        yield (e)
+    print(entities)
+    for i in range(5):
+        yield (json.dumps(i), json.dumps(i+1))
+#     for e in list(entities):
+#         yield (e)
 
 with DAG(
     dag_id='ycp_to_animotech',
