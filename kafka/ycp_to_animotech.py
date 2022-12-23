@@ -111,11 +111,12 @@ def generate_copy_script(parameters:dict, entity):
 def generate_entity_list(parameters:dict):
     raw_path=parameters['RawPath']
     dst_dir=parameters['DstDir']
+    date_str=pendulum.now().strftime("%Y%m%d")
     
     hdfs_hook = WebHDFSHook(HDFS_CONNECTION_NAME)
     conn = hdfs_hook.get_conn()
     
-    entities = conn.list(f"{raw_path}/SCHEMAS/")
+    entities = [{'Entity':f'{date_str}_{e}','SrcPath':f'{raw_path}/SCHEMAS/{e}' ,'DstPath':'s3://jupiter-app-test-storage/animotech/in/' } for e in conn.list(f'{raw_path}/SCHEMAS/')]
 #     entities = [
 #               {'SrcPath':'https://marsanalyticsprodadls.dfs.core.windows.net/output/RUSSIA_DATA_FOUNDATION/_SELLIN/MODEL/HELIOS_ACTUALS_BDM.parquet','DstPath':dst_dir},
 #               {'SrcPath':'https://marsanalyticsprodadls.dfs.core.windows.net/output/RUSSIA_DATA_FOUNDATION/_SELLIN/MODEL/YEAR_END_ESTIMATE_BDM.parquet','DstPath':dst_dir},
