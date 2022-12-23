@@ -142,6 +142,17 @@ def producer_function(entities=None):
 #     for e in list(entities):
 #         yield (e)
 
+
+def consumer_function(message, prefix=None):
+    key = json.loads(message.key())
+    value = json.loads(message.value())
+    print(f"{prefix} {message.topic()} @ {message.offset()}; {key} : {value}")
+    consumer_logger.info(
+        f"{prefix} {message.topic()} @ {message.offset()}; {key} : {value}"
+    )
+    return
+
+
 with DAG(
     dag_id='ycp_to_animotech',
 #     schedule_interval='0 20 * * *',
@@ -168,5 +179,24 @@ with DAG(
         do_xcom_push=True,
     )
     
-    copy_entities >> producer_task
+    consumer_task = ConsumeFromTopicOperator(
+        task_id="consume_from_topic",
+        topics=["jupiter"],
+        apply_function=functools.partial(consumer_function, prefix="consumed:::"),
+        consumer_config={
+                "bootstrap.servers": "rc1b-0qd2fn83sq9vp78r.mdb.yandexcloud.net:9091",
+                "security.protocol": "SASL_SSL",
+                 "sasl.mechanism": "SCRAM-SHA-512",
+                 "sasl.username": "jupiter-user",
+                 "sasl.password": "pass1234",
+                 "ssl.ca.location": "/tmp/YandexCA.crt", 
+            "group.id": "foo",
+            "enable.auto.commit": False,
+            "auto.offset.reset": "beginning",
+        },
+        max_messages=30,
+        max_batch_size=10,
+    )    
+    
+    copy_entities >> producer_task >> consumer_task
     
