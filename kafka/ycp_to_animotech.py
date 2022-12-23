@@ -1,5 +1,6 @@
 import datetime
 import pendulum
+import logging
 
 from airflow import DAG, XComArg
 from airflow.decorators import dag, task
