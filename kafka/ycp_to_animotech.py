@@ -135,7 +135,7 @@ def generate_entity_list(parameters:dict):
     
     return entities
 
-def producer_function():
+def producer_function(**context):
     entities=context['ti'].xcom_pull(task_ids='generate_entity_list')
     for e in list(entities):
         yield (e)
@@ -162,6 +162,7 @@ with DAG(
         topic=my_topic,
         producer_function=producer_function,
         kafka_config=connection_config,
+        provide_context=True,
         do_xcom_push=True,
     )
     
