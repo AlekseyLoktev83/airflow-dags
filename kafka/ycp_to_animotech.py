@@ -137,8 +137,8 @@ def generate_entity_list(parameters:dict):
 
 def producer_function(entities=None):
     print(entities)
-    for i in range(5):
-        yield (json.dumps(i), json.dumps(i+1))
+    for i,e in enumerate(entities):
+        yield (json.dumps(i), json.dumps(e))
 #     for e in list(entities):
 #         yield (e)
 
