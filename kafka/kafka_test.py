@@ -34,9 +34,14 @@ def consumer_function(message, prefix=None):
     )
     return
 
-def await_function(message):
-    if json.loads(message.value()) % 5 == 0:
-        return f" Got the following message: {json.loads(message.value())}"
+# def await_function(message):
+#     if json.loads(message.value()) % 5 == 0:
+#         return f" Got the following message: {json.loads(message.value())}"
+
+# define the producer function
+def producer_function():
+    for i in range(5):
+        yield (json.dumps(i), json.dumps(i+1))
 
 with DAG(
     dag_id="kafka_test",
@@ -44,19 +49,12 @@ with DAG(
     schedule=None,
     catchup=False,
 ):
-
-    # define the producer function
-    def producer_function():
-        for i in range(5):
-            yield (json.dumps(i), json.dumps(i+1))
-
-    # define the producer task
-#     producer_task = ProduceToTopicOperator(
-#         task_id=f"produce_to_{my_topic}",
-#         topic=my_topic,
-#         producer_function=producer_function, 
-#         kafka_config=connection_config
-#     )
+    producer_task = ProduceToTopicOperator(
+        task_id=f"produce_to_{my_topic}",
+        topic=my_topic,
+        producer_function=producer_function, 
+        kafka_config=connection_config
+    )
     
     consumer_task = ConsumeFromTopicOperator(
         task_id="consume_from_topic",
@@ -77,22 +75,22 @@ with DAG(
         max_batch_size=10,
     )
     
-    await_task = AwaitKafkaMessageOperator(
-        task_id="awaiting_message",
-        topics=["jupiter"],
-        apply_function="kafka_test.await_function",
-        kafka_config={
-                "bootstrap.servers": "rc1b-0qd2fn83sq9vp78r.mdb.yandexcloud.net:9091",
-                "security.protocol": "SASL_SSL",
-                 "sasl.mechanism": "SCRAM-SHA-512",
-                 "sasl.username": "jupiter-user",
-                 "sasl.password": "pass1234",
-                 "ssl.ca.location": "/tmp/YandexCA.crt", 
-            "group.id": "awaiting_message",
-            "enable.auto.commit": False,
-            "auto.offset.reset": "beginning",
-        },
-        xcom_push_key="retrieved_message",
-    )    
+#     await_task = AwaitKafkaMessageOperator(
+#         task_id="awaiting_message",
+#         topics=["jupiter"],
+#         apply_function="kafka_test.await_function",
+#         kafka_config={
+#                 "bootstrap.servers": "rc1b-0qd2fn83sq9vp78r.mdb.yandexcloud.net:9091",
+#                 "security.protocol": "SASL_SSL",
+#                  "sasl.mechanism": "SCRAM-SHA-512",
+#                  "sasl.username": "jupiter-user",
+#                  "sasl.password": "pass1234",
+#                  "ssl.ca.location": "/tmp/YandexCA.crt", 
+#             "group.id": "awaiting_message",
+#             "enable.auto.commit": False,
+#             "auto.offset.reset": "beginning",
+#         },
+#         xcom_push_key="retrieved_message",
+#     )    
     
     consumer_task>>await_task
