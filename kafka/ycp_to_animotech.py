@@ -160,7 +160,7 @@ with DAG(
         task_id=f"produce_to_{my_topic}",
         topic=my_topic,
         producer_function=producer_function,
-        producer_function_args= XComArg(generate_entity_list),
+        producer_function_args=generate_entity_list,
         kafka_config=connection_config
     )
     
