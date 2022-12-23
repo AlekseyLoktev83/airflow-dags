@@ -97,7 +97,7 @@ def get_parameters(**kwargs):
 
 
 @task
-def generate_azure_copy_script(parameters:dict, entity):
+def generate_copy_script(parameters:dict, entity):
     src_path = entity['SrcPath']
     dst_path = entity['DstPath']
 
@@ -110,11 +110,16 @@ def generate_azure_copy_script(parameters:dict, entity):
 @task
 def generate_entity_list(parameters:dict):
     raw_path=parameters['RawPath']
-    dst_dir=parameters['DstDir'] 
-    entities = [
-              {'SrcPath':'https://marsanalyticsprodadls.dfs.core.windows.net/output/RUSSIA_DATA_FOUNDATION/_SELLIN/MODEL/HELIOS_ACTUALS_BDM.parquet','DstPath':dst_dir},
-              {'SrcPath':'https://marsanalyticsprodadls.dfs.core.windows.net/output/RUSSIA_DATA_FOUNDATION/_SELLIN/MODEL/YEAR_END_ESTIMATE_BDM.parquet','DstPath':dst_dir},
-               ]
+    dst_dir=parameters['DstDir']
+    
+    hdfs_hook = WebHDFSHook(HDFS_CONNECTION_NAME)
+    conn = hdfs_hook.get_conn()
+    
+    entities = conn.list(f"{raw_path}/SCHEMAS/")
+#     entities = [
+#               {'SrcPath':'https://marsanalyticsprodadls.dfs.core.windows.net/output/RUSSIA_DATA_FOUNDATION/_SELLIN/MODEL/HELIOS_ACTUALS_BDM.parquet','DstPath':dst_dir},
+#               {'SrcPath':'https://marsanalyticsprodadls.dfs.core.windows.net/output/RUSSIA_DATA_FOUNDATION/_SELLIN/MODEL/YEAR_END_ESTIMATE_BDM.parquet','DstPath':dst_dir},
+#                ]
     return entities
 
 with DAG(
@@ -127,8 +132,8 @@ with DAG(
 ) as dag:
 # Get dag parameters from vault    
     parameters = get_parameters()  
-  
-    copy_entities = BashOperator.partial(task_id="copy_entity",
-                                       do_xcom_push=True,
-                                      ).expand(bash_command=generate_azure_copy_script.partial(parameters=parameters).expand(entity=generate_entity_list(parameters)),
-                                              )
+    generate_copy_script.partial(parameters=parameters).expand(entity=generate_entity_list(parameters)) 
+#     copy_entities = BashOperator.partial(task_id="copy_entity",
+#                                        do_xcom_push=True,
+#                                       ).expand(bash_command=generate_azure_copy_script.partial(parameters=parameters).expand(entity=generate_entity_list(parameters)),
+#                                               )
