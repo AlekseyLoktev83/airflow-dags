@@ -80,7 +80,7 @@ with DAG(
     await_task = AwaitKafkaMessageOperator(
         task_id="awaiting_message",
         topics=["jupiter"],
-        apply_function="await_function",
+        apply_function="kafka_test.await_function",
         kafka_config={
                 "bootstrap.servers": "rc1b-0qd2fn83sq9vp78r.mdb.yandexcloud.net:9091",
                 "security.protocol": "SASL_SSL",
