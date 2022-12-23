@@ -93,4 +93,4 @@ with DAG(
 #         xcom_push_key="retrieved_message",
 #     )    
     
-    consumer_task>>await_task
+    producer_task>>consumer_task
