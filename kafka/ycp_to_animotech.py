@@ -17,6 +17,9 @@ from airflow.utils.task_group import TaskGroup
 from airflow.hooks.base_hook import BaseHook
 from airflow.providers.hashicorp.hooks.vault import VaultHook
 from airflow.providers.http.operators.http import SimpleHttpOperator
+from airflow_provider_kafka.operators.produce_to_topic import ProduceToTopicOperator
+from airflow_provider_kafka.operators.consume_from_topic import ConsumeFromTopicOperator
+from airflow_provider_kafka.operators.await_message import AwaitKafkaMessageOperator
 
 import uuid
 from io import StringIO
@@ -40,6 +43,18 @@ HDFS_CONNECTION_NAME = 'webhdfs_default'
 VAULT_CONNECTION_NAME = 'vault_default'
 S3_CONNECTION_NAME = 's3_default'
 TAGS=["animotech"]
+
+connection_config = {
+    "bootstrap.servers": "rc1b-0qd2fn83sq9vp78r.mdb.yandexcloud.net:9091",
+    "security.protocol": "SASL_SSL",
+    "sasl.mechanism": "SCRAM-SHA-512",
+    "sasl.username": "jupiter-user",
+    "sasl.password": "pass1234",
+    "ssl.ca.location": "/tmp/YandexCA.crt"
+}
+
+my_topic = "jupiter"
+consumer_logger = logging.getLogger("airflow")
 
 
 @task(multiple_outputs=True)
@@ -115,7 +130,13 @@ def generate_entity_list(parameters:dict):
     conn = hdfs_hook.get_conn()
     
     entities = [{'Filename':f'{date_str}_{e}','SrcPath':f'{raw_path}/SCHEMAS/{e}' ,'DstPath':'s3://jupiter-app-test-storage/animotech/in/' } for e in conn.list(f'{raw_path}/SCHEMAS/')]
+    entities = entities[0:3]
+    
     return entities
+
+def producer_function(entities):
+    for e in entities:
+        yield (e)
 
 with DAG(
     dag_id='ycp_to_animotech',
@@ -127,8 +148,20 @@ with DAG(
     render_template_as_native_obj=True,
 ) as dag:
 # Get dag parameters from vault    
-    parameters = get_parameters()  
+    parameters = get_parameters()
+    generate_entity_list = generate_entity_list(parameters)
     copy_entities = BashOperator.partial(task_id="copy_entity",
                                        do_xcom_push=True,
-                                      ).expand(bash_command=generate_copy_script.partial(parameters=parameters).expand(entity=generate_entity_list(parameters)),
+                                      ).expand(bash_command=generate_copy_script.partial(parameters=parameters).expand(entity=generate_entity_list),
                                               )
+    
+    producer_task = ProduceToTopicOperator(
+        task_id=f"produce_to_{my_topic}",
+        topic=my_topic,
+        producer_function=producer_function,
+        producer_function_args= generate_entity_list
+        kafka_config=connection_config
+    )
+    
+    copy_entities >> producer_task
+    
