@@ -151,7 +151,8 @@ def consumer_function(message, prefix=None):
     consumer_logger.info(
         f"{prefix} {message.topic()} @ {message.offset()}; {key} : {value}"
     )
-    return
+    
+    return message.value()
 
 
 with DAG(
